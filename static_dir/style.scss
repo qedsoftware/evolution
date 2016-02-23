@@ -1,0 +1,56 @@
+body {
+	font-family: 'Open Sans',sans-serif;
+	margin: 0;
+	padding: 0;
+	overflow-x: hidden;
+}
+
+h1{
+	margin: 0;
+}
+
+.left-pane {
+	h2 {
+		font-size: 15px;
+		font-variant: small-caps;
+		margin-bottom: 2px;
+	}
+	.logo img {
+		width: 150px;
+	}
+	ul {
+		list-style-type: none;
+		margin: 0;
+		padding: 0;
+		li {
+			padding-top: 3px;
+		}
+	}
+	height:100%;
+    width:150px;
+    float: left;
+    padding:10px;
+    margin-top: 0px;
+}
+
+.menu-item {
+	font-size: 13px;
+	a {
+		color: #2277DD;
+		text-decoration: none;
+	}
+	a:hover {
+		text-decoration: underline;
+	}
+}
+
+.footer {
+	position: absolute;
+	bottom: 0;
+	width: 100%
+}
+
+.page-content {
+	padding-left: 30px;
+	padding-top: 10px;
+}
