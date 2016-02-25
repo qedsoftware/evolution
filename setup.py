@@ -14,7 +14,7 @@ setup(
     include_package_data=True,
     license='???',
     description='A simple system for data-based contests.',
-    long_description='README',
+    long_description='README.rst',
     url='http://qed.ai',
     author='Stanisław Barzowski',
     author_email='stanislaw.barzowski@gmail.com',

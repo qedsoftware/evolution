@@ -24,4 +24,5 @@ class Command(BaseCommand):
         while True:
             submission, attempt = choose_for_grading()
             grade_attempt(attempt)
-            time.sleep(settings.GRADING_INTERVAL_SECONDS)
+            if submission is None:
+                time.sleep(settings.GRADING_POLL_FOR_JOB_INTERVAL_SECONDS)
