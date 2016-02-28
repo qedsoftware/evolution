@@ -1,0 +1,16 @@
+{% extends "system/layout.html" %}
+
+{% block content %}
+
+<form action="/contest/setup" method="post">
+    {% csrf_token %}
+    <ul>
+        <li>
+             <h1>Add contest</h2>
+        </li>
+        {{ form.as_ul }}
+        <li> <input type="submit" value="Submit" /> </li>
+    </ul>
+</form>
+
+{% endblock content %}

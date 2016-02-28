@@ -1,21 +1,40 @@
+@import url(https://fonts.googleapis.com/css?family=Roboto:400,700,400italic,700italic);
+@import url(https://fonts.googleapis.com/css?family=Droid+Sans+Mono);
+html {
+  height: 100%; }
+
 body {
-  font-family: 'Open Sans',sans-serif;
+  font-family: "Roboto", sans-serif;
   margin: 0;
   padding: 0;
-  overflow-x: hidden; }
+  overflow-x: hidden;
+  height: 100%; }
+
+.container {
+  height: 100%; }
+
+body > .container {
+  height: auto;
+  min-height: 100%; }
 
 h1 {
   margin: 0; }
+
+pre {
+  font-size: 12px;
+  font-family: "Droid Sans Mono"; }
 
 .left-pane {
   height: 100%;
   width: 150px;
   float: left;
   padding: 10px;
+  padding-right: 30px;
   margin-top: 0px; }
   .left-pane h2 {
-    font-size: 15px;
+    font-size: 18px;
     font-variant: small-caps;
+    font-weight: 900;
     margin-bottom: 2px; }
   .left-pane .logo img {
     width: 150px; }
@@ -34,13 +53,115 @@ h1 {
   .menu-item a:hover {
     text-decoration: underline; }
 
-.footer {
-  position: absolute;
-  bottom: 0;
-  width: 100%; }
-
 .page-content {
-  padding-left: 30px;
+  float: left;
+  max-width: 800px;
+  min-width: 400px;
+  padding: 10px; }
+  .page-content h1 {
+    font-size: 35px;
+    text-align: center; }
+  .page-content h2 {
+    font-size: 18px;
+    margin-bottom: 3px; }
+  .page-content .news-item p {
+    margin-top: 0px; }
+
+.footer {
+  clear: both;
+  position: relative;
+  z-index: 10;
+  margin-top: -3em;
+  height: 3em;
+  text-align: left;
+  width: 100%;
+  font-size: 10px; }
+
+.global-message {
+  padding: 7px;
+  clear: both;
+  text-align: center;
+  background-color: #FFFF7F; }
+
+form ul {
+  width: 750px;
+  list-style-type: none;
+  list-style-position: outside;
+  margin: 0px;
+  padding: 0px; }
+form h2 {
+  margin: 0;
+  display: inline; }
+form li {
+  padding: 12px;
+  border-bottom: 1px solid #eee;
+  position: relative; }
+form li:first-child, form form li:last-child {
+  border-bottom: 1px solid #777; }
+form label {
+  width: 150px;
+  margin-top: 3px;
+  display: inline-block;
+  float: left;
+  padding: 3px; }
+form input {
+  height: 20px;
+  width: 220px;
+  padding: 5px 8px; }
+form textarea {
+  padding: 8px;
+  width: 300px; }
+form button {
+  margin-left: 156px; }
+
+.left-login {
   padding-top: 10px; }
+
+.left-login form {
+  font-size: 13px; }
+  .left-login form ul {
+    width: 108px; }
+  .left-login form li {
+    padding: 2px 0;
+    border-bottom: 0px; }
+  .left-login form input {
+    width: 100px;
+    padding: 2px 2px; }
+  .left-login form .submit {
+    text-align: center; }
+  .left-login form input[type=submit] {
+    display: inline-block;
+    border: 1px solid #2277DD;
+    color: #2277DD;
+    background-color: white;
+    padding: 0px;
+    width: 108px; }
+
+/*
+input[type=text], select {
+	width: 100%;
+	padding: 12px 20px;
+	margin: 8px 0;
+	display: inline-block;
+	border: 1px solid #ccc;
+	border-radius: 4px;
+	box-sizing: border-box;
+}
+
+input[type=submit] {
+	width: 100%;
+	background-color: #4CAF50;
+	color: white;
+	padding: 14px 20px;
+	margin: 8px 0;
+	border: none;
+	border-radius: 4px;
+	cursor: pointer;
+}
+
+input[type=submit]:hover {
+	background-color: #45a049;
+}
+*/
 
 /*# sourceMappingURL=style.css.map */

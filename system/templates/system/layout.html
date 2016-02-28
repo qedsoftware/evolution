@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>{% block title %} {{ title }} {% endblock %} </title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/3.0.3/normalize.min.css">
+    <link rel="stylesheet" href="/static/style.css">
+    <link rel="stylesheet" href="/static/highlighting-github.css">
+    <!-- <script src="script.js"></script> -->
+  </head>
+  <body>
+    <div class="container">
+      <div class="global-message">This is a prototype. Expect instability and drastic changes.</div>
+      <div class="left-pane">
+        {% include "system/left-pane.html" %}
+      </div>
+      <div class="page-content">
+         {% block content %}{% endblock %}
+      </div>
+    </div>
+    <div class="footer">
+      In case of any problems: sbarzowski@talent.edu.pl <br>
+      Stanisław Barzowski for QED
+    </div>
+  </body>
+</html>
