@@ -10,10 +10,30 @@
 </ul>
 </div>
 
-<h2>All contests</h2>
-<ul>
-<li> contest1 </li>
-<li> Programming contest for ... </li>
-<li> Data science whatever </li>
-</ul>
+<div class="all-contests-list">
+	<h2>All contests</h2>
+	<ul>
+	{% for contest in contests %}
+	    <li>
+	    	<a href={% url 'contests:description' contest.code %}> {{contest.name}} ({{ contest.code }}) </a>
+	    </li>
+	{% endfor %}
+	</ul>
+
+	<div class="pagination">
+	    <span class="step-links">
+	        {% if contests.has_previous %}
+	            <a href="?page={{ contests.previous_page_number }}">previous</a>
+	        {% endif %}
+
+	        <span class="current">
+	            Page {{ contests.number }} of {{ contests.paginator.num_pages }}.
+	        </span>
+
+	        {% if contests.has_next %}
+	            <a href="?page={{ contests.next_page_number }}">next</a>
+	        {% endif %}
+	    </span>
+	</div>
+</div>
 {% endblock content %}

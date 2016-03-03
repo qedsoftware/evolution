@@ -9,34 +9,47 @@
       <li class="menu-item">
         <a href="{% url 'contests:description' contest.code %}">Description</a>
       </li>
+      <li class="menu-item">
+        <a href="{% url 'contests:rules' contest.code %}">Rules</a>
+      </li>
+      <li class="menu-item"><a href="{% url 'contests:submit' contest.code %}">Send Submission</a></li>
+      <li class="menu-item"><a href="{% url 'contests:submissions' contest.code %}">Submissions</a></li>
       <li class="menu-item"><a href="#">Leaderboard</a></li>
-      <li class="menu-item"><a href="#">Submissions</a></li>
-      <li class="menu-item"><a href="#">Rules</a></li>
     </ul>
   </div>
 {% endif %}
 <div class="system-menu">
   <h2>system menu</h2>
   <ul>
-    <li class="menu-item"><a href="#">Announcements</a></li>
-    <li class="menu-item"><a href="#">Contests</a></li>
-    <li class="menu-item"><a href="#">User Settings</a></li>
+    <li class="menu-item"><a href="{% url 'announcements' %}">Announcements</a></li>
+    <li class="menu-item"><a href="{% url 'contests:list' %}">Contests</a></li>
+    <li class="menu-item"><a href="{% url 'contests:setup_new' %}">New Contest</a></li>
+    <li class="menu-item"><a href="{% url 'admin:index' %}">Admin Panel</a></li>
+    <li class="menu-item"><a href="{% url 'user_settings' %}">User Settings</a></li>
   </ul>
 </div>
 
-<div class="left-login">
-  <form method="post" action="{% url 'login' %}?next={% firstof request.GET.next redirect_next request.path %}">
-    {% csrf_token %}
-    <ul>
-      <li>
-        <input id="left_username" maxlength="254" name="username" type="text" placeholder="Username">
-      </li>
-      <li>
-        <input id="left_password" name="password" type="password" placeholder="Password">
-      </li>
-      <li>
-        <input type="submit" value="login" />
-      </li>
-    </ul>
-  </form>
+<div class="left-user">
+  {% if user.is_authenticated %}
+    <div class="current-user">
+      User:
+      <span class="current-user-username"> {{user.username}} </span>
+    </div>
+    <a class="logout-button" href="{% url 'logout' %}">log out</a>
+  {% else %}
+    <form method="post" action="{% url 'login' %}?next={% firstof request.GET.next redirect_next request.path %}">
+      {% csrf_token %}
+      <ul>
+        <li>
+          <input id="left_username" maxlength="254" name="username" type="text" placeholder="Username">
+        </li>
+        <li>
+          <input id="left_password" name="password" type="password" placeholder="Password">
+        </li>
+        <li>
+          <input type="submit" value="log in" />
+        </li>
+      </ul>
+    </form>
+  {% endif %}
 </div>

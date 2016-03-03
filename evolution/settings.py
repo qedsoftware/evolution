@@ -25,6 +25,7 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'debug_toolbar',
     'base',
     'system',
     'contests'
@@ -38,7 +39,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'django.middleware.security.SecurityMiddleware',
+    'django.middleware.security.SecurityMiddleware'
 )
 
 ROOT_URLCONF = 'evolution.urls'
@@ -133,3 +134,4 @@ GRADING_CHECK_STATUS_INTERVAL_SECONDS=1
 # Site
 
 LOGIN_REDIRECT_URL = '/'
+LOGIN_URL = '/login/'

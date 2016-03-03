@@ -1,0 +1,15 @@
+{% extends "system/layout.html" %}
+
+{% block content %}
+
+<h1>Send Submission</h1>
+
+<form class="standard-form" action="{% url 'contests:submit' contest.code %}" enctype="multipart/form-data" method="post">
+    {% csrf_token %}
+    <ul>
+        {{ form.as_ul }}
+        <li> <input type="submit" value="Submit" /> </li>
+    </ul>
+</form>
+
+{% endblock content %}

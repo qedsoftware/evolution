@@ -12,7 +12,7 @@ from django.conf import settings
 
 
 class ScoringScript(models.Model):
-    source = models.FileField()
+    source = models.FileField(null=True)
 
     @classmethod
     def create(cls, source):
@@ -34,7 +34,8 @@ class DataGrader(models.Model):
         grader = cls()
         grader.scoring_script = scoring_script
         grader.time_limit_ms = time_limit_ms
-        grader.answer.save('grader_answer', answer)
+        if answer:
+            grader.answer.save('grader_answer', answer)
         return grader
 
 
@@ -62,7 +63,8 @@ class Submission(models.Model):
     @classmethod
     def create(cls, grader, output):
         submission = cls(grader=grader)
-        submission.output.save('output', output)
+        if output:
+            submission.output.save('output', output)
         return submission
 
 

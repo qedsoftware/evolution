@@ -13,6 +13,13 @@ body {
 .container {
   height: 100%; }
 
+a {
+  color: #2277DD;
+  text-decoration: none; }
+
+a:hover {
+  text-decoration: underline; }
+
 body > .container {
   height: auto;
   min-height: 100%; }
@@ -23,6 +30,15 @@ h1 {
 pre {
   font-size: 12px;
   font-family: "Droid Sans Mono"; }
+
+.action-button, .standard-form input[type=submit], .logout-button, .left-user form input[type=submit] {
+  display: table-cell;
+  border: 1px solid #2277DD;
+  color: #2277DD;
+  background-color: white;
+  text-decoration: none;
+  text-align: center;
+  vertical-align: middle; }
 
 .left-pane {
   height: 100%;
@@ -55,8 +71,7 @@ pre {
 
 .page-content {
   float: left;
-  max-width: 800px;
-  min-width: 400px;
+  width: 700px;
   padding: 10px; }
   .page-content h1 {
     font-size: 35px;
@@ -75,7 +90,8 @@ pre {
   height: 3em;
   text-align: left;
   width: 100%;
-  font-size: 10px; }
+  font-size: 10px;
+  padding: 5px; }
 
 .global-message {
   padding: 7px;
@@ -83,59 +99,79 @@ pre {
   text-align: center;
   background-color: #FFFF7F; }
 
-form ul {
-  width: 750px;
+.standard-form ul {
+  width: 700px;
   list-style-type: none;
   list-style-position: outside;
   margin: 0px;
   padding: 0px; }
-form h2 {
+.standard-form h2 {
   margin: 0;
   display: inline; }
-form li {
+.standard-form li {
   padding: 12px;
-  border-bottom: 1px solid #eee;
   position: relative; }
-form li:first-child, form form li:last-child {
-  border-bottom: 1px solid #777; }
-form label {
-  width: 150px;
+.standard-form label {
+  width: 120px;
   margin-top: 3px;
   display: inline-block;
   float: left;
   padding: 3px; }
-form input {
-  height: 20px;
-  width: 220px;
+.standard-form input {
+  box-sizing: border-box;
+  height: 30px;
+  width: 350px;
   padding: 5px 8px; }
-form textarea {
-  padding: 8px;
-  width: 300px; }
-form button {
-  margin-left: 156px; }
+.standard-form textarea {
+  box-sizing: border-box;
+  width: 350px;
+  padding: 5px 8px; }
+.standard-form input[type=submit] {
+  height: 30px;
+  margin-left: 126px; }
+.standard-form .helptext {
+  font-size: 10px;
+  color: #888;
+  display: block;
+  padding-top: 5px;
+  padding-left: 5px;
+  padding-right: 5px;
+                   /*
+margin-bottom: 0px;*/ }
 
-.left-login {
-  padding-top: 10px; }
-
-.left-login form {
+.left-user {
+  padding-top: 20px;
   font-size: 13px; }
-  .left-login form ul {
-    width: 108px; }
-  .left-login form li {
-    padding: 2px 0;
-    border-bottom: 0px; }
-  .left-login form input {
-    width: 100px;
-    padding: 2px 2px; }
-  .left-login form .submit {
-    text-align: center; }
-  .left-login form input[type=submit] {
-    display: inline-block;
-    border: 1px solid #2277DD;
-    color: #2277DD;
-    background-color: white;
-    padding: 0px;
-    width: 108px; }
+
+.logout-button {
+  width: 108px;
+  height: 20px;
+  padding: 0px; }
+
+.current-user {
+  padding-top: 2px;
+  padding-bottom: 4px;
+  font-weight: bold;
+  width: 110px; }
+  .current-user .current-user-username {
+    text-transform: none;
+    font-variant: normal;
+    font-weight: normal; }
+
+.left-user form ul {
+  width: 108px; }
+.left-user form li {
+  padding: 2px 0;
+  border-bottom: 0px; }
+.left-user form input {
+  width: 100px;
+  padding: 2px 2px; }
+.left-user form .submit {
+  text-align: center; }
+.left-user form input[type=submit] {
+  width: 108px;
+  height: 20px;
+  padding: 0px; }
 
 /*
 input[type=text], select {

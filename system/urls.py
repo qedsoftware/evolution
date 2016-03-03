@@ -1,6 +1,9 @@
-from django.conf.urls import url
+from django.conf.urls import include, url
+from django.contrib import admin
 
 from . import views
+
+import contests.urls
 
 from django.contrib.auth import views as auth_views
 
@@ -25,5 +28,8 @@ urlpatterns = [
         auth_views.password_reset_confirm, name='password_reset_confirm'),
     url(r'^reset/done/$', auth_views.password_reset_complete,
         name='password_reset_complete'),
-    url(r'^$', views.announcements),
+    url(r'^$', views.announcements, name="announcements"),
+    url(r'^user-settings/$', views.user_settings, name='user_settings'),
+    url(r'^', include(contests.urls)),
+    url(r'^admin/', include(admin.site.urls)),
 ]

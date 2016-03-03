@@ -22,6 +22,13 @@ class Post(models.Model):
         self.source = data.source
         self.html = data.html
 
+    @classmethod
+    def new_from_data(cls, data):
+        post = cls()
+        post.from_data(data)
+        post.save()
+        return post
+
 def markdown_to_html(source):
     return markdown.markdown(source, extensions=['mdx_gfm'])
 
@@ -35,6 +42,13 @@ class PostData(object):
     source_lang = None
     source = None
     html = None
+
+    @classmethod
+    def from_source(cls, source, source_lang):
+        data = cls()
+        data.source = source
+        data.source_lang = source_lang
+        return data
 
     def build_html(self):
         self.html = post_source_processors[self.source_lang](self.source)

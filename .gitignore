@@ -4,5 +4,6 @@
 .DS_Store
 /static/
 /grading_debug_log
+/media
 
 
