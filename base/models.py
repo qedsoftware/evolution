@@ -56,7 +56,7 @@ class Submission(models.Model):
     grader = models.ForeignKey('DataGrader')
     output = models.FileField(null=True)
     current_attempt = models.ForeignKey('GradingAttempt',
-        on_delete=models.PROTECT, null=True, related_name='+')
+        on_delete=models.PROTECT, blank=True, null=True, related_name='+')
     needs_grading = models.BooleanField(default=False)
     needs_grading_at = models.DateTimeField(null=True)
 
@@ -65,6 +65,7 @@ class Submission(models.Model):
         submission = cls(grader=grader)
         if output:
             submission.output.save('output', output)
+        submission.save()
         return submission
 
 

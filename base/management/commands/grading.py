@@ -7,7 +7,7 @@ from django.conf import settings
 
 from django.core.management.base import BaseCommand, CommandError
 
-from base.utils import choose_for_grading, grade
+from base.models import choose_for_grading, attempt_grading
 
 logger = logging.getLogger(__name__)
 
@@ -23,6 +23,7 @@ class Command(BaseCommand):
         signal.signal(signal.SIGTERM, exit_on_signal)
         while True:
             submission, attempt = choose_for_grading()
-            grade_attempt(attempt)
             if submission is None:
                 time.sleep(settings.GRADING_POLL_FOR_JOB_INTERVAL_SECONDS)
+            else:
+                attempt_grading(attempt)

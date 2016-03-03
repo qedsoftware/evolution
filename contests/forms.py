@@ -22,7 +22,7 @@ class ContestForm(forms.Form):
     code = forms.SlugField(help_text="A short, unique name for a contest. It is used for urls and identifying contests. <strong>Avoid changing it.</strong> It can contain lowercase letters, numbers, hyphens and underscores.")
     description = PostField(required=False)
     rules = PostField(required=False)
-    script_file = forms.FileField(required=False)
+    scoring_script = forms.FileField(required=False, help_text="Script used to score the results.")
     answer_for_verification = forms.FileField(required=False)
     #answer_test = forms.FileField()
 

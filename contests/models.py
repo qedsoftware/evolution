@@ -2,10 +2,12 @@ import datetime
 
 from django.db import models
 from django.db import transaction
+from django.utils import timezone
 
 from system.models import PostData, Post
 
-from base.models import ScoringScript, DataGrader
+from base.models import ScoringScript, DataGrader, Submission, \
+    request_submission_grading
 
 class Contest(models.Model):
     name = models.CharField(max_length=100)
@@ -23,6 +25,7 @@ class ContestFactory(object):
     code = None
     description = None
     scoring_script = None
+    answer_for_verification = None
 
     @classmethod
     def from_dict(cls, data):
@@ -39,8 +42,7 @@ class ContestFactory(object):
     def create(self):
         description = Post.new_from_data(self.description)
         rules = Post.new_from_data(self.rules)
-        scoring_script = ScoringScript()
-        scoring_script.source = self.scoring_script
+        scoring_script = ScoringScript.create(self.scoring_script)
         scoring_script.save()
         contest = Contest(name=self.name, code=self.code,
             description=description, rules=rules,
@@ -48,8 +50,8 @@ class ContestFactory(object):
         contest.save()
         stage = ContestStage()
         stage.contest = contest
-        stage.begin = datetime.datetime.now() # TODO
-        stage.end = datetime.datetime.now() # TODO
+        stage.begin = timezone.now() # TODO
+        stage.end = timezone.now() # TODO
         grader = DataGrader.create(scoring_script,
             self.answer_for_verification)
         grader.save()
@@ -73,12 +75,19 @@ class TeamMember(models.Model):
     user = models.ForeignKey('auth.User', related_name='memberships')
 
 class ContestSubmission(models.Model):
-    contest_stage = models.ForeignKey('ContestStage', related_name='+')
+    stage = models.ForeignKey('ContestStage', related_name='+')
     submission = models.OneToOneField('base.Submission')
     #team = models.ForeignKey('Team')
 
 class SubmissionData(object):
     output = None
 
+@transaction.atomic
 def submit(stage, submission_data):
-    pass
+    cs = ContestSubmission()
+    cs.stage = stage
+    submission = Submission.create(stage.grader, submission_data.output)
+    request_submission_grading(submission)
+    submission.save()
+    cs.submission = submission
+    cs.save()

@@ -38,7 +38,7 @@ class ContestCreate(FormView):
 
     def form_valid(self, form):
         factory = ContestFactory.from_dict(form.cleaned_data)
-        factory.scoring_script = self.request.FILES.get('scoring_script')
+        factory.scoring_script = self.request.FILES.get('script_file')
         factory.answer_for_verification = \
             self.request.FILES.get('answer_for_verification')
         self.code = form.cleaned_data['code']
@@ -105,7 +105,7 @@ class Submissions(ListView):
 
     def get_queryset(self):
         return ContestSubmission.objects. \
-            filter(contest_stage__contest__code=self.kwargs['contests_code'])
+            filter(stage__contest__code=self.kwargs['contests_code'])
 
     def get_context_data(self, **kwargs):
         context = super(Submissions, self).get_context_data()
