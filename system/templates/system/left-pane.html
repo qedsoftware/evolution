@@ -15,13 +15,17 @@
       <li class="menu-item"><a href="{% url 'contests:submit' contest.code %}">Send Submission</a></li>
       <li class="menu-item"><a href="{% url 'contests:submissions' contest.code %}">Submissions</a></li>
       <li class="menu-item"><a href="#">Leaderboard</a></li>
+      <li class="menu-item"><a href="{% url 'contests:team' contest.code '1' %}">My Team</a></li>
+      <li class="menu-item"><a href="{% url 'contests:teams' contest.code %}">Teams</a></li>
+      <li class="menu-item"><a href="{% url 'contests:setup' contest.code %}">Settings</a></li>
+      <li class="menu-item"><a href="{% url 'contests:rejudge' contest.code %}">Rejudge</a></li>
     </ul>
   </div>
 {% endif %}
 <div class="system-menu">
   <h2>system menu</h2>
   <ul>
-    <li class="menu-item"><a href="{% url 'announcements' %}">Announcements</a></li>
+    <li class="menu-item"><a href="{% url 'news' %}">News</a></li>
     <li class="menu-item"><a href="{% url 'contests:list' %}">Contests</a></li>
     <li class="menu-item"><a href="{% url 'contests:setup_new' %}">New Contest</a></li>
     <li class="menu-item"><a href="{% url 'admin:index' %}">Admin Panel</a></li>

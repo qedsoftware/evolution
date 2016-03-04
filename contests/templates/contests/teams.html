@@ -3,11 +3,11 @@
 {% block content %}
 <h1>Submissions</h1>
 
-<div class="submissions-list">
+<div class="teams-list">
 	<ul>
-	{% for submission in submissions %}
+	{% for team in submissions %}
 	    <li>
-	    	<a href="{% url 'contests:submission' contest.code submission.id %}">{{submission.id}} </a>
+	    	<a href="{% url 'contests:team' contest.code team.id %}">{{team.name}} </a>
 	    </li>
 	{% endfor %}
 	</ul>

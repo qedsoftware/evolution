@@ -9,6 +9,7 @@ from django.db import models
 from django.core.files.base import ContentFile
 from django.db.models.functions import Now
 from django.conf import settings
+from django.utils import timezone
 
 
 class ScoringScript(models.Model):
@@ -17,8 +18,14 @@ class ScoringScript(models.Model):
     @classmethod
     def create(cls, source):
         script = cls()
-        script.source.save('script', source)
+        script.save_source(source)
         return script
+
+    def save_source(self, source):
+        if source:
+            self.source.save('script.py', source)
+        elif source == False:
+            self.source.delete()
 
 
 DEFAULT_TIME_LIMIT = 1000
@@ -34,9 +41,14 @@ class DataGrader(models.Model):
         grader = cls()
         grader.scoring_script = scoring_script
         grader.time_limit_ms = time_limit_ms
-        if answer:
-            grader.answer.save('grader_answer', answer)
+        grader.save_answer(answer)
         return grader
+
+    def save_answer(self, answer):
+        if answer:
+            self.answer.save('grader_answer', answer)
+        elif answer == False:
+            self.answer.delete()
 
 
 def create_simple_grader(script_file, answer_file,
@@ -71,6 +83,8 @@ class Submission(models.Model):
 
 class GradingAttempt(models.Model):
     submission = models.ForeignKey('Submission', on_delete=models.PROTECT)
+    created_at = models.DateTimeField(auto_now_add=True)
+    finished_at = models.DateTimeField(null=True)
     started = models.BooleanField(default=False)
     finished = models.BooleanField(default=False)
     succed = models.BooleanField(default=False)
@@ -78,11 +92,12 @@ class GradingAttempt(models.Model):
     aborted = models.BooleanField(default=False)
     log = models.FileField()
 
-
-# TODO adapt to accept queryset
 def request_submission_grading(submission):
     submission.needs_grading = True
     submission.needs_grading_at = Now()
+
+def request_qs_grading(submissions):
+    submissions.update(needs_grading=True, needs_grading_at=Now())
 
 def choose_for_grading():
     submissions = Submission.objects.filter(needs_grading=True). \
@@ -160,6 +175,7 @@ def attempt_grading(attempt):
         except TimeoutExpired:
             pass
     attempt.finished = True
+    attempt.finished_at = timezone.now()
     if process.returncode == 0:
         # we got the answer!
         # TODO handle precision explicitly

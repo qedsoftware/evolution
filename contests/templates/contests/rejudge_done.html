@@ -1,0 +1,12 @@
+{% extends "system/layout.html" %}
+
+{% block content %}
+<h1>Rejudge Ordered</h1>
+<p>
+{% if contest_submission %}
+Submission <a href={% url 'contests:submission' contest.code contest_submission.id %}>{{contest_submission.id}}</a> was
+{% else %}
+All submissions in the contest were
+{% endif %}
+succesfully marked for rejudging.
+{% endblock content %}

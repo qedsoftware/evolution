@@ -1,0 +1,40 @@
+{% extends "system/layout.html" %}
+
+{% block content %}
+<h1>Submission</h1>
+<form method="POST" action="{% url 'contests:rejudge' contest.code contest_submission.id %}?next={% firstof request.GET.next redirect_next request.path %}" class="action-form">
+{% csrf_token %}
+<input type="submit" value="rejudge">
+</form>
+<ul>
+<li>
+Submitted at: <strong>{{submission.created_at}}</strong>
+</li>
+<li>
+Score: {{submission.current_attempt.score}}
+</li>
+<li>
+Needs grading: {{submission.needs_grading}}
+</li>
+<li>
+Grading requested at: {{submission.needs_grading_at}}
+</li>
+</ul>
+
+<h2>Grading history</h2>
+<ul>
+{% for attempt in grading_history %}
+    <li>
+    	<ul>
+    		<li>Started at: {{attempt.created_at}}</li>
+    		<li>Finished at: {{attempt.finished_at}}</li>
+    		<li>Finished: {{attempt.finished}}</li>
+    		<li>Succed: {{attempt.succed}}</li>
+    		<li>Score: {{attempt.score}}</li>
+    		<li>Aborted: {{attempt.aborted}}</li>
+    		<li>Log: {{attempt.log}}</li>{# TODO ADD ACTUAL LINK #}
+    	</ul>
+    </li>
+{% endfor %}
+</ul>
+{% endblock content %}

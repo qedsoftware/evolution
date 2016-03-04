@@ -1,0 +1,17 @@
+{% extends "system/layout.html" %}
+
+{% block content %}
+<h1>Rejudge all submissions</h1>
+
+<p>
+Here you can rejudge all submission in this contest. <strong>It can take a long time</strong>, depending on the number of submissions and how fast or slow is the scoring script.
+</p>
+<p>
+You can also rejudge individual submissions from their details view.
+</p>
+<form method="POST" action="{% url 'contests:rejudge' contest.code %}" class="action-form">
+{% csrf_token %}
+<input type="submit" value="Do it!">
+</form>
+
+{% endblock %}

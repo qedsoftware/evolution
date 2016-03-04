@@ -39,7 +39,8 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.SessionAuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'django.middleware.security.SecurityMiddleware'
+    'django.middleware.security.SecurityMiddleware',
+    #'django_downloadview.SmartDownloadMiddleware'
 )
 
 ROOT_URLCONF = 'evolution.urls'
@@ -117,6 +118,7 @@ LOGGING = {
 STATIC_URL = '/static/'
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+#MEDIA_URL = '/media/'
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
@@ -135,3 +137,9 @@ GRADING_CHECK_STATUS_INTERVAL_SECONDS=1
 
 LOGIN_REDIRECT_URL = '/'
 LOGIN_URL = '/login/'
+
+# Downloads
+
+DOWNLOADVIEW_BACKEND = 'django_downloadview.nginx.XAccelRedirectMiddleware'
+
+#DOWNLOADVIEW_BACKEND = 'django_downloadview.nginx.XAccelRedirectMiddleware'

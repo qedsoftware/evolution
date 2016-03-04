@@ -5,5 +5,5 @@
 /static/
 /grading_debug_log
 /media
-
-
+*.egg-info/*
+*/.sass-cache/*

@@ -53,10 +53,10 @@ class PostData(object):
     def build_html(self):
         self.html = post_source_processors[self.source_lang](self.source)
 
-class Announcement(models.Model):
+class NewsItem(models.Model):
     author = models.ForeignKey('auth.User')
     created = models.DateTimeField()
-    content = models.ForeignKey('Post', related_name='+')
+    content = models.OneToOneField('Post')
 
 class SystemSettings(models.Model):
     global_message = models.ForeignKey('Post', related_name='+', null=True)

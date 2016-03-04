@@ -2,12 +2,11 @@
 
 {% block content %}
 
-<form class="standard-form" action="{% url 'contests:setup_new' %}" enctype="multipart/form-data" method="post">
+<h1>{{content_title}}</h1>
+
+<form class="standard-form" action="{{ request.get_full_path }}" enctype="multipart/form-data" method="post">
     {% csrf_token %}
     <ul>
-        <li>
-             <h1>Add contest</h1>
-        </li>
         {{ form.as_ul }}
         <li> <input type="submit" value="Create" /> </li>
     </ul>
