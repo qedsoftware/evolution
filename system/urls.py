@@ -33,6 +33,5 @@ urlpatterns = [
     url(r'^', include(contests.urls)),
     url(r'^admin/', include(admin.site.urls)),
     url(r'^media/(?P<path>[a-zA-Z0-9_.-]+)$',
-        views.media_path,
-        name='media_path'),
+        views.media_path, name='media_path'),
 ]
