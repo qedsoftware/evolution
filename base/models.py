@@ -5,7 +5,7 @@ import json
 import subprocess
 from decimal import Decimal
 
-from django.db import models
+from django.db import models, transaction
 from django.core.files.base import ContentFile
 from django.db.models.functions import Now
 from django.conf import settings
@@ -13,7 +13,7 @@ from django.utils import timezone
 
 
 class ScoringScript(models.Model):
-    source = models.FileField(null=True)
+    source = models.FileField(null=True, blank=True)
 
     @classmethod
     def create(cls, source):
@@ -33,8 +33,8 @@ DEFAULT_TIME_LIMIT = 1000
 class DataGrader(models.Model):
     scoring_script = models.ForeignKey('ScoringScript',
         on_delete=models.PROTECT)
-    answer = models.FileField(null = True)
-    time_limit_ms = models.IntegerField()
+    answer = models.FileField(null = True, blank=True)
+    time_limit_ms = models.IntegerField(default=DEFAULT_TIME_LIMIT)
 
     @classmethod
     def create(cls, scoring_script, answer, time_limit_ms=DEFAULT_TIME_LIMIT):
@@ -62,6 +62,8 @@ def create_simple_grader_str(script_source, answer_data,
     return create_simple_grader(ContentFile(script_source),
         ContentFile(answer_data), time_limit_ms=time_limit_ms)
 
+def score_field():
+    return models.DecimalField(max_digits=30, decimal_places=6, null=True)
 
 class Submission(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
@@ -71,6 +73,7 @@ class Submission(models.Model):
         on_delete=models.PROTECT, blank=True, null=True, related_name='+')
     needs_grading = models.BooleanField(default=False)
     needs_grading_at = models.DateTimeField(null=True)
+    score = score_field()
 
     @classmethod
     def create(cls, grader, output):
@@ -88,7 +91,7 @@ class GradingAttempt(models.Model):
     started = models.BooleanField(default=False)
     finished = models.BooleanField(default=False)
     succed = models.BooleanField(default=False)
-    score = models.DecimalField(max_digits=30, decimal_places=6, null=True)
+    score = score_field()
     aborted = models.BooleanField(default=False)
     log = models.FileField()
 
@@ -99,6 +102,7 @@ def request_submission_grading(submission):
 def request_qs_grading(submissions):
     submissions.update(needs_grading=True, needs_grading_at=Now())
 
+@transaction.atomic
 def choose_for_grading():
     submissions = Submission.objects.filter(needs_grading=True). \
         order_by('needs_grading_at')[:1]
@@ -106,14 +110,14 @@ def choose_for_grading():
         return (None, None)
     submission = submissions[0]
     attempt = GradingAttempt(submission=submission)
-    submission.attempt = attempt
+    attempt.save()
+    submission.current_attempt = attempt
     submission.needs_grading = False
     submission.save()
-    attempt.save()
     return (submission, attempt)
 
 def dummy_grade(attempt):
-    attempt.score=42
+    attempt.score = 42
     attempt.finished = True
     attempt.succed = True
     attempt.submission.save()
@@ -124,7 +128,7 @@ def _mkdir_scoring():
     return tempfile.mkdtemp(prefix='scoring_', dir=settings.SCORING_TMP)
 
 def _file_path(field_file):
-    return os.path.join(settings.MEDIA_ROOT, field_file.url)
+    return field_file.path
 
 def _prepare_scoring_dir(attempt):
     scoring_dir = _mkdir_scoring()
@@ -157,6 +161,17 @@ def _run_scoring_popen(attempt, scoring_dir):
     return subprocess.Popen(args, stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)
 
+@transaction.atomic
+def update_submission_score(attempt):
+    # We dance a little to avoid races.
+    # TODO check this more carefully
+    submission = Submission.objects. \
+        filter(current_attempt=attempt).select_for_update()
+    if submission.exists():
+        submission = submission.get()
+        submission.score = attempt.score
+        submission.save()
+
 def attempt_grading(attempt):
     scoring_dir = _prepare_scoring_dir(attempt)
     process = _run_scoring_popen(attempt, scoring_dir)
@@ -188,3 +203,4 @@ def attempt_grading(attempt):
         attempt.succed = False
     # We don't want to overwrite abort
     attempt.save(update_fields=['succed', 'score', 'finished'])
+    update_submission_score(attempt)

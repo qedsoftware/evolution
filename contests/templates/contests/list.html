@@ -1,14 +1,28 @@
 {% extends "system/layout.html" %}
 
 {% block content %}
+
+{% if my_memberships %}
 <div class=my-contests>
-<h2>My contests</h2>
-<ul>
-<li> contest1 </li>
-<li> Programming contest for ... </li>
-<li> Data science whatever </li>
-</ul>
+	<h2>My contests</h2>
+	<ul>
+		{% for membership in my_memberships %}
+			<li><a href="{% url 'contests:description' membership.contest.code %}">{{membership.contest.name}}</a> in team <em>{{membership.team.name}}</em></li>
+		{% endfor %}
+	</ul>
 </div>
+{% endif %}
+
+{% if observed_contests %}
+<div class=observed-contests>
+	<h2>Observed contests</h2>
+	<ul>
+		{% for contest in observed_contests %}
+			<li><a href="{% url 'contests:description' contest.code %}">{{contest.name}}</a></li>
+		{% endfor %}
+	</ul>
+</div>
+{% endif %}
 
 <div class="all-contests-list">
 	<h2>All contests</h2>

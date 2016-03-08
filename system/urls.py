@@ -28,8 +28,11 @@ urlpatterns = [
         auth_views.password_reset_confirm, name='password_reset_confirm'),
     url(r'^reset/done/$', auth_views.password_reset_complete,
         name='password_reset_complete'),
-    url(r'^$', views.news, name="news"),
+    url(r'^$', views.NewsList.as_view(), name="news"),
     url(r'^user-settings/$', views.user_settings, name='user_settings'),
     url(r'^', include(contests.urls)),
     url(r'^admin/', include(admin.site.urls)),
+    url(r'^media/(?P<path>[a-zA-Z0-9_.-]+)$',
+        views.media_path,
+        name='media_path'),
 ]

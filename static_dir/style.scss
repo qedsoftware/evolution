@@ -1,5 +1,7 @@
 $link-color: #2277DD;
 $error-color: #B30000;
+$attention-background-color: #FFFF7F;
+$hint-color: #888;
 
 html {
 	height: 100%
@@ -85,7 +87,7 @@ a.action-button:hover {
 .menu-item {
 	font-size: 13px;
 	a {
-		color: #2277DD;
+		color: $link-color;
 		text-decoration: none;
 	}
 	a:hover {
@@ -126,7 +128,10 @@ a.action-button:hover {
 	padding: 7px;
 	clear: both;
 	text-align: center;
-	background-color: #FFFF7F;
+	background-color: $attention-background-color;
+	p {
+		margin: 0px;
+	}
 };
 
 .action-form {
@@ -135,6 +140,7 @@ a.action-button:hover {
 		height: 30px;
 		width: 100px;
 	}
+	display: inline-block;
 }
 
 $input-width: 400px;
@@ -160,7 +166,7 @@ $input-width: 400px;
 	}
 
 	.input-error {
-		border: 1px solid $error-color;
+		border: 1px dotted $error-color;
 	}
 
 	.errorlist {
@@ -199,13 +205,26 @@ $input-width: 400px;
 		margin-left: 126px;
 	}
 
+	select {
+		background: transparent;
+		box-sizing: border-box;
+		height: 30px;
+		width: $input-width;
+		padding: 5px 8px;
+		/*width: 268px;
+		line-height: 1;
+		border: 0;
+		border-radius: 0;
+		height: 34px;*/
+		-webkit-appearance: none;
+	}
+
 	.helptext {
 		font-size: 10px;
-		color: #888;
+		color: $hint-color;
 		display:block;
 		padding-top: 5px;
-		padding-right: 5px;/*
-		margin-bottom: 0px;*/
+		padding-right: 5px;
 		padding-left: 5px;
 		margin-left: 126px;
 		width: $input-width;
@@ -298,6 +317,34 @@ $input-width: 400px;
 .all-contests-list {
 	@extend .paginated-list
 }
+
+.result-table {
+	margin: 20px;
+	width: 100%;
+	border-collapse: collapse;
+	th, td {
+		border: 1px dotted $hint-color;
+	}
+	td {
+		padding: 5px;
+	}
+	.position-cell {
+		width: 30px;
+		text-align: center;
+	}
+	.team-cell {
+		text-align: left;
+		.team-members {
+			color: $hint-color;
+			font-size: 11px;
+		}
+	}
+	.score-cell {
+		width: 100px;
+		text-align: center;
+	}
+}
+
 /*
 input[type=text], select {
 	width: 100%;

@@ -24,6 +24,8 @@ setup(
       'django-debug-toolbar>=1.4',
       'Markdown>=2.6.5',
       'py-gfm>=0.1.1',
-      'Pygments>=2.1.1'
+      'Pygments>=2.1.1',
+      'bleach>=1.4.2',
+      'pytz'
     ]
 )

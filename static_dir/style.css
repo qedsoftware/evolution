@@ -101,10 +101,14 @@ a.action-button:hover, a.logout-button:hover {
   clear: both;
   text-align: center;
   background-color: #FFFF7F; }
+  .global-message p {
+    margin: 0px; }
 
-.action-form input[type=submit] {
-  height: 30px;
-  width: 100px; }
+.action-form {
+  display: inline-block; }
+  .action-form input[type=submit] {
+    height: 30px;
+    width: 100px; }
 
 .standard-form ul {
   width: 700px;
@@ -121,7 +125,7 @@ a.action-button:hover, a.logout-button:hover {
   margin: 10px;
   position: relative; }
 .standard-form .input-error {
-  border: 1px solid #B30000; }
+  border: 1px dotted #B30000; }
 .standard-form .errorlist {
   color: #B30000;
   padding-top: 5px;
@@ -146,14 +150,24 @@ a.action-button:hover, a.logout-button:hover {
 .standard-form input[type=submit] {
   height: 30px;
   margin-left: 126px; }
+.standard-form select {
+  background: transparent;
+  box-sizing: border-box;
+  height: 30px;
+  width: 400px;
+  padding: 5px 8px;
+  /*width: 268px;
+  line-height: 1;
+  border: 0;
+  border-radius: 0;
+  height: 34px;*/
+  -webkit-appearance: none; }
 .standard-form .helptext {
   font-size: 10px;
   color: #888;
   display: block;
   padding-top: 5px;
   padding-right: 5px;
-                   /*
-margin-bottom: 0px;*/
   padding-left: 5px;
   margin-left: 126px;
   width: 400px; }
@@ -212,6 +226,26 @@ margin-bottom: 0px;*/
 .paginated-list li, .all-contests-list li {
   list-style-type: none;
   height: 20px; }
+
+.result-table {
+  margin: 20px;
+  width: 100%;
+  border-collapse: collapse; }
+  .result-table th, .result-table td {
+    border: 1px dotted #888; }
+  .result-table td {
+    padding: 5px; }
+  .result-table .position-cell {
+    width: 30px;
+    text-align: center; }
+  .result-table .team-cell {
+    text-align: left; }
+    .result-table .team-cell .team-members {
+      color: #888;
+      font-size: 11px; }
+  .result-table .score-cell {
+    width: 100px;
+    text-align: center; }
 
 /*
 input[type=text], select {

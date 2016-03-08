@@ -1,0 +1,21 @@
+{% extends "system/layout.html" %}
+
+{% load standard %}
+
+{% block content %}
+<h1>Team <em>{{team.name}}</em></h1>
+{% if can_join %}
+	{% url 'contests:join_team' contest.code team.id as join_url %}
+	{% action_form 'join' join_url %}
+{% endif %}
+{% if in_team %}
+	{% url 'contests:leave_team' contest.code team.id as leave_url %}
+	{% action_form 'leave' leave_url %}
+{% endif %}
+<h2>Members</h2>
+<ul>
+	{% for member in members %}
+		<li>{{member.user.get_full_name}}</li>
+	{% endfor %}
+</ul>
+{% endblock content %}

@@ -20,12 +20,8 @@ data_2_and_2 = "2\n2\n"
 data_3_and_3 = "3\n3\n"
 data_3x3 = "3\n3\n3\n"
 
-def clean_media():
-    shutil.rmtree(settings.MEDIA_ROOT)
 
 class GraderTest(TestCase):
-    def tearDown(self):
-        clean_media()
 
     def test_create_grader(self):
         script = ScoringScript.create(ContentFile(script_always_42))
@@ -48,9 +44,6 @@ class SubmissionTest(TestCase):
         self.grader = create_simple_grader_str(script_always_42,
             data_2_and_2)
 
-    def tearDown(self):
-        clean_media()
-
     def test_make_submission(self):
         submission = Submission.create(self.grader, ContentFile(data_2_and_2))
         submission.save()
@@ -71,7 +64,7 @@ class SubmissionTest(TestCase):
         request_submission_grading(submission)
         submission.save()
         sub, attempt = choose_for_grading()
-        call_command('grade_attempt', attempt_id=attempt.id)
+        call_command('grading_attempt', str(attempt.id))
         sub.refresh_from_db()
         attempt.refresh_from_db()
         self.assertTrue(attempt.finished)
@@ -88,10 +81,6 @@ class ScoringTest(TestCase):
         self.submission.save()
         _, self.attempt = choose_for_grading()
         self.assertIsNotNone(self.attempt)
-
-    def tearDown(self):
-        shutil.rmtree(settings.SCORING_TMP)
-        clean_media()
 
     def test_mkdir_scoring(self):
         dir1 = _mkdir_scoring()

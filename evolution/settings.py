@@ -56,6 +56,8 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'system.context_processors.system_settings',
+                'system.context_processors.logo_link'
             ],
         },
     },
@@ -109,6 +111,16 @@ LOGGING = {
             'level': 'DEBUG',
             'propagate': True,
         },
+        'base.management.commands.grading_attempt_safe': {
+            'handlers': ['console', 'grading_file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+        'base.management.commands.grading_attempt': {
+            'handlers': ['console', 'grading_file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
     },
 }
 
@@ -118,7 +130,7 @@ LOGGING = {
 STATIC_URL = '/static/'
 
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
-#MEDIA_URL = '/media/'
+MEDIA_URL = '/media/'
 
 STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 
@@ -126,6 +138,8 @@ STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static_dir')]
 
 # Grading
 
+ATTEMPT_GRADING_COMMAND = [ os.path.join(BASE_DIR, './manage.py'),
+    'grading_attempt' ]
 RUNNER_PATH = os.path.join(BASE_DIR, 'run_scoring.py')
 
 SCORING_TMP = '/tmp/evolution_scoring'
@@ -137,9 +151,14 @@ GRADING_CHECK_STATUS_INTERVAL_SECONDS=1
 
 LOGIN_REDIRECT_URL = '/'
 LOGIN_URL = '/login/'
+LOGO_LINK_URL = 'http://qed.ai/'
 
 # Downloads
 
 DOWNLOADVIEW_BACKEND = 'django_downloadview.nginx.XAccelRedirectMiddleware'
 
 #DOWNLOADVIEW_BACKEND = 'django_downloadview.nginx.XAccelRedirectMiddleware'
+
+# Testing
+
+TEST_RUNNER = 'evolution.runner.CustomTestSuiteRunner'

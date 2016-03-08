@@ -27,22 +27,39 @@ class ClearableFileInput(forms.ClearableFileInput):
     )
     template_with_clear = '<label for="%(clear_checkbox_id)s">%(clear_checkbox_label)s:</label> %(clear)s'
 
+CONTEST_CODE_HELP_TEXT = "A short, unique name for a contest. It is used for urls and identifying contests. <strong>Choose it carefully and avoid changing it.</strong> It can contain lowercase letters, numbers, hyphens and underscores."
+
+class ContestCreateForm(forms.Form):
+    error_css_class = 'input-error'
+
+    name = forms.CharField(max_length=100)
+    code = forms.SlugField(help_text=CONTEST_CODE_HELP_TEXT)
+
 class ContestForm(forms.Form):
     error_css_class = 'input-error'
 
     name = forms.CharField(max_length=100)
-    code = forms.SlugField(help_text="A short, unique name for a contest. It is used for urls and identifying contests. <strong>Avoid changing it.</strong> It can contain lowercase letters, numbers, hyphens and underscores.")
+    code = forms.SlugField(help_text=CONTEST_CODE_HELP_TEXT)
     description = PostField(required=False)
     rules = PostField(required=False)
     scoring_script = forms.FileField(required=False,
         help_text="A script used to score the results.",
         widget=ClearableFileInput())
-    bigger_better = forms.BooleanField(label="The bigger the better", help_text="Are the bigger scores better (uncheck if smaller scores are better).")
+    bigger_better = forms.BooleanField(
+        label="The bigger the better",
+        help_text="Are the bigger scores better (uncheck if smaller scores "
+            "are better).", required=False)
     answer_for_verification = forms.FileField(required=False,
         widget=ClearableFileInput())
     verification_begin = forms.DateTimeField(required=False)
     verification_end = forms.DateTimeField(required=False)
-    #answer_test = forms.FileField()
+    answer_for_test = forms.FileField(required=False,
+        widget=ClearableFileInput())
+    test_begin = forms.DateTimeField(required=False)
+    test_end = forms.DateTimeField(required=False)
+    published_final_results = forms.BooleanField(required=False)
 
 class SubmitForm(forms.Form):
+    stage = forms.ChoiceField(choices=(('verification', 'Verification'),
+        ('test', 'Test')))
     output_file = forms.FileField()

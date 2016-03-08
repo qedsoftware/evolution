@@ -1,31 +1,27 @@
 {% extends "system/layout.html" %}
 
 {% block content %}
-<h1>Submissions</h1>
+<h1>Teams</h1>
 
 <div class="teams-list">
 	<ul>
-	{% for team in submissions %}
-	    <li>
-	    	<a href="{% url 'contests:team' contest.code team.id %}">{{team.name}} </a>
-	    </li>
+	{% for team in teams %}
+		<li>
+			<a href="{% url 'contests:team' contest.code team.id %}">{{team.name}} </a>
+			<ul>
+				{% for member in team.member_list %}
+					<li>
+						{{member.user.get_full_name}}
+					</li>
+				{% empty %}
+					Currently this team has no members.
+				{% endfor %}
+			</ul>
+		</li>
+	{% empty %}
+	<p>
+	There are currently no teams registered for this contest.
 	{% endfor %}
 	</ul>
-
-	<div class="pagination">
-	    <span class="step-links">
-	        {% if page_obj.has_previous %}
-	            <a href="?page={{ submissions.previous_page_number }}">previous</a>
-	        {% endif %}
-
-	        <span class="current">
-	            Page {{ page_obj.number }} of {{ paginator.num_pages }}.
-	        </span>
-
-	        {% if page_obj.has_next %}
-	            <a href="?page={{ page_obj.next_page_number }}">next</a>
-	        {% endif %}
-	    </span>
-	</div>
 </div>
 {% endblock content %}

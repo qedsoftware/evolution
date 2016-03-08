@@ -1,0 +1,39 @@
+{% extends "system/layout.html" %}
+
+{% block content %}
+<h1>Leaderboard</h1>
+
+<table class="result-table">
+	<tr>
+		<th>#</th>
+		<th>Team</th>
+		<th>Score</th>
+	</tr>
+	{% for entry in leaderboard %}
+	<tr>
+		<td class="position-cell">
+			{{entry.position}}
+		</td>
+		<td class="team-cell">
+			{{entry.team.name}}
+			<div class="team-members">
+				{% for member in entry.team.member_list %}
+					{{member.user.get_full_name}}
+				{% empty %}
+					This team has no members currently.
+				{% endfor %}
+			</div>
+		</td>
+		<td class="score-cell">
+			{% if entry.score %}
+			{{entry.score}}
+			{% endif %}
+		</td>
+	</tr>
+	{% empty %}
+	<p>
+	There are currently no teams in this leaderboard.
+	</p>
+	{% endfor %}
+</table>
+{% endblock content %}

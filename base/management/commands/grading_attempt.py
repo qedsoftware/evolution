@@ -18,7 +18,7 @@ def exit_on_signal(signum, frame):
 class Command(BaseCommand):
     help = 'Grades single attempt (internal)'
 
-    def add_argument():
+    def add_arguments(self, parser):
         parser.add_argument('attempt_id', type=int)
 
     def handle(self, *args, **options):

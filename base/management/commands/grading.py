@@ -6,6 +6,7 @@ import time
 from django.conf import settings
 
 from django.core.management.base import BaseCommand, CommandError
+from django.core.management import call_command
 
 from base.models import choose_for_grading, attempt_grading
 
@@ -26,4 +27,6 @@ class Command(BaseCommand):
             if submission is None:
                 time.sleep(settings.GRADING_POLL_FOR_JOB_INTERVAL_SECONDS)
             else:
-                attempt_grading(attempt)
+                logger.info('Grading submission %s, attempt %s', submission.id,
+                    attempt.id)
+                call_command('grading_attempt_safe', str(attempt.id))

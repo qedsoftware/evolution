@@ -2,41 +2,13 @@
 
 {% block content %}
   <h1>News</h1>
+  {% for news_item in news %}
   <div class="news-item">
-    <h2> ble ble ble </h2>
-    <p>
-    Lorem ipsum Commodo fugiat amet voluptate velit sit minim non esse cillum voluptate id aliqua eiusmod id deserunt proident Duis ex.
-    </p>
+    <h2> {{news_item.title}} </h2>
+    <div class="news-body">
+    {{news_item.content.html|safe}}
+    </div>
   </div>
-  <div class="news-item">
-    <h2> fdsfadafsfdsfas fdsfdsfssdfds </h2>
-    <p>
-    Lorem ipsum Deserunt cillum in ex elit Excepteur consectetur sint dolor amet consequat exercitation exercitation sunt voluptate sint dolore dolor esse sunt quis veniam aliqua in pariatur elit labore dolore consequat nulla ad in et veniam aute esse in culpa aliqua amet.
-    </p>
-  </div>
-  <div class="news-item">
-    <h2> sdsf  sdfjsldsfl sfsdlfdslsd dsfdse </h2>
-    <p>
-    Lorem ipsum Excepteur dolore sit tempor enim sit ad Excepteur consectetur eiusmod laborum tempor pariatur cillum irure aliqua dolor sed officia sed aliquip dolore ex culpa Duis ex elit adipisicing Duis sunt culpa deserunt commodo velit anim id adipisicing commodo cupidatat est dolor non tempor laborum id Ut enim in occaecat in enim in elit ex est ullamco in qui Duis non ullamco in sint anim ullamco cillum exercitation Excepteur minim consectetur anim fugiat Excepteur Excepteur ut culpa qui irure aliqua Excepteur aliqua exercitation et Ut in ex pariatur aute dolore Duis amet do adipisicing consectetur elit nostrud consectetur et incididunt ut sit ad anim eiusmod officia est commodo tempor qui irure consequat culpa aute velit et nulla veniam laborum eu qui non non deserunt incididunt Ut labore enim ad mollit aliquip voluptate consequat in do exercitation aliqua culpa sed veniam ex ut ad dolor dolor tempor do minim in aliquip ea dolor nostrud amet aliqua in eu eu deserunt sint mollit in adipisicing fugiat non culpa incididunt minim ullamco ex incididunt nulla cupidatat consectetur est exercitation ut pariatur dolore ullamco ullamco ullamco est deserunt ut magna aute Ut Excepteur eiusmod quis non laborum aliqua dolore amet ut anim nisi fugiat elit veniam anim qui in dolore nostrud elit nulla sint commodo in Excepteur mollit tempor sed nulla irure irure magna in officia minim et cillum qui nisi ea reprehenderit quis aute Excepteur enim Excepteur culpa ullamco ad veniam exercitation sunt nulla Duis incididunt mollit exercitation ad Ut sint.
-    </p>
-  </div>
-  <div class="news-item">
-    <h2> ble bledsfdssdfsd ble </h2>
-    <p>
-    Lorem ipsum Ad ex consequat ut mollit sunt proident nulla pariatur aliqua eu dolore enim aliquip aliquip aliquip commodo in sed ullamco non enim sit mollit sunt in sed nulla tempor non sunt ex esse ut aliquip laboris.
-    </p>
-  </div>
-  <div class="news-item">
-    <h2> ble bledsfdssdfsd ble </h2>
-    <p>
-    Lorem ipsum Irure enim nulla tempor aliquip tempor ex id ut Duis ullamco qui labore cillum fugiat aliqua ut dolore quis Ut cupidatat sed est officia incididunt elit magna ea.
-    </p>
-  </div>
-  <div class="news-item">
-    <h2> ble bledsfdssdfsd ble </h2>
-    <p>
-    Lorem ipsum Ea adipisicing officia amet amet aliqua dolor eiusmod dolor aute nulla exercitation in qui incididunt velit pariatur amet eiusmod exercitation velit sunt deserunt eiusmod dolor aliquip enim Ut dolore irure adipisicing commodo anim Ut aliquip laborum dolor fugiat nostrud ullamco id in exercitation non velit et eu Ut ex consectetur elit dolore et enim incididunt officia Duis commodo consectetur aliquip ea veniam amet aute est ea exercitation nostrud anim consectetur eiusmod fugiat dolor elit sit et eu qui ex ut non ex nisi in sunt aliqua Excepteur velit eu enim enim in ea eu occaecat ex et ullamco mollit est proident fugiat mollit minim aliquip pariatur commodo nulla tempor elit id ex Duis sint irure amet aliqua eu adipisicing esse laboris mollit non ullamco laboris laboris et amet dolore fugiat amet aliquip exercitation minim exercitation ea amet mollit Duis mollit reprehenderit.
-    </p>
-  </div>
+  {% endfor %}
 </div>
 {% endblock content %}

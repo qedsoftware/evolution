@@ -1,5 +1,5 @@
 <div class="logo">
-  <img src="/static/logo-prototype.png">
+  <a href={{logo_link}}><img src="/static/logo-prototype.png"></a>
 </div>
 
 {% if contest %}
@@ -12,13 +12,26 @@
       <li class="menu-item">
         <a href="{% url 'contests:rules' contest.code %}">Rules</a>
       </li>
-      <li class="menu-item"><a href="{% url 'contests:submit' contest.code %}">Send Submission</a></li>
-      <li class="menu-item"><a href="{% url 'contests:submissions' contest.code %}">Submissions</a></li>
-      <li class="menu-item"><a href="#">Leaderboard</a></li>
-      <li class="menu-item"><a href="{% url 'contests:team' contest.code '1' %}">My Team</a></li>
-      <li class="menu-item"><a href="{% url 'contests:teams' contest.code %}">Teams</a></li>
-      <li class="menu-item"><a href="{% url 'contests:setup' contest.code %}">Settings</a></li>
-      <li class="menu-item"><a href="{% url 'contests:rejudge' contest.code %}">Rejudge</a></li>
+      {% if contest_context.can_submit %}
+        <li class="menu-item"><a href="{% url 'contests:submit' contest.code %}">Send Submission</a></li>
+      {% endif %}
+      {% if contest_context.can_see_all_submissions %}
+        <li class="menu-item"><a href="{% url 'contests:submissions' contest.code %}">Submissions</a></li>
+      {% endif %}
+      {% if contest_context.can_see_verification_leaderboard %}
+        <li class="menu-item"><a href="{% url 'contests:leaderboard' contest.code contest.verification_stage_id %}">Public Leaderboard</a></li>
+      {% endif %}
+      {% if contest_context.can_see_test_leaderboard %}
+        <li class="menu-item"><a href="{% url 'contests:leaderboard' contest.code contest.test_stage_id %}">Final Leaderboard</a></li>
+      {% endif %}
+      {% if contest_context.user_team %}
+        <li class="menu-item"><a href="{% url 'contests:team' contest.code contest_context.user_team.id %}">My Team</a></li>
+      {% endif %}
+        <li class="menu-item"><a href="{% url 'contests:teams' contest.code %}">Teams</a></li>
+      {% if contest_context.is_contest_admin %}
+        <li class="menu-item"><a href="{% url 'contests:setup' contest.code %}">Settings</a></li>
+        <li class="menu-item"><a href="{% url 'contests:rejudge' contest.code %}">Rejudge</a></li>
+      {% endif %}
     </ul>
   </div>
 {% endif %}
@@ -26,10 +39,16 @@
   <h2>system menu</h2>
   <ul>
     <li class="menu-item"><a href="{% url 'news' %}">News</a></li>
+    {% if request.user.is_authenticated %}
     <li class="menu-item"><a href="{% url 'contests:list' %}">Contests</a></li>
+    {% endif %}
+    {% if request.user.is_superuser %}
     <li class="menu-item"><a href="{% url 'contests:setup_new' %}">New Contest</a></li>
     <li class="menu-item"><a href="{% url 'admin:index' %}">Admin Panel</a></li>
+    {% endif %}
+    {% if request.user.is_authenticated %}
     <li class="menu-item"><a href="{% url 'user_settings' %}">User Settings</a></li>
+    {% endif %}
   </ul>
 </div>
 
