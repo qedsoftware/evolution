@@ -157,9 +157,9 @@ class ContestStage(models.Model):
     requires_selection = models.BooleanField(default=False)
     selected_limit = models.IntegerField(default=-1)
 
-    def is_open():
+    def is_open(self):
         now = timezone.now()
-        return begin <= now <= end
+        return self.begin <= now <= self.end
 
 class Team(models.Model):
     name = models.CharField(max_length=100)

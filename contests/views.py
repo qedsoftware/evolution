@@ -337,7 +337,7 @@ class SubmissionView(UserPassesTestMixin, ContestMixin, TemplateView):
         return self._contest_submission
 
     def get_title(self):
-        return "Submission " + contest_submission.id
+        return "Submission " + str(self.contest_submission.id)
 
     def test_func(self):
         return self.contest_context.can_see_submission(self.contest_submission)
