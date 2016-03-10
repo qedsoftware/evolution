@@ -6,11 +6,11 @@
 <h1>Teams</h1>
 
 {% if contest_context.can_create_team %}
-	{% url 'contests:new_team' contest.code as new_team_url %}
-	{% action_form 'new team' new_team_url %}
+	<a class="action-button" href={% url 'contests:new_team' contest.code %}>new team</a>
 {% endif %}
 
 <div class="teams-list">
+	{% if teams %}
 	<ul>
 	{% for team in teams %}
 		<li>
@@ -21,14 +21,16 @@
 						{{member.user.get_full_name}}
 					</li>
 				{% empty %}
-					Currently this team has no members.
+					<li>Currently this team has no members.</li>
 				{% endfor %}
 			</ul>
 		</li>
 	{% empty %}
 	<p>
-	There are currently no teams registered for this contest.
 	{% endfor %}
 	</ul>
+	{% else %}
+	<p> There are currently no teams registered for this contest.</p>
+	{% endif %}
 </div>
 {% endblock content %}

@@ -24,6 +24,12 @@ class Contest(models.Model):
     observing = models.ManyToManyField('auth.User',
         related_name='observed_contests')
 
+    def __repr__(self):
+        return "<Contest " + "\"" + self.code + "\">"
+
+    def __str__(self):
+        return self.code
+
 def is_contest_admin(user, contest):
     return user is not None and user.is_superuser
 
@@ -165,6 +171,13 @@ class Team(models.Model):
     name = models.CharField(max_length=100)
     contest = models.ForeignKey('Contest')
 
+    def __repr__(self):
+        return "<Team " + repr(self.name) + " in contest \"" + \
+            self.contest.code + "\">"
+
+    def __str__(self):
+        return self.name
+
 class TeamMember(models.Model):
     team = models.ForeignKey('Team', related_name='members')
     user = models.ForeignKey('auth.User', related_name='memberships')
@@ -172,6 +185,10 @@ class TeamMember(models.Model):
 
     # user can be only in one team per contest
     unique_together = ('user', 'contest')
+
+    def __repr__(self):
+        return "TeamMember<%s in \"%s\" contest: \"%s\">" % \
+            (self.user.username, self.team.name, self.contest.code)
 
 def user_team(user, contest):
     if not user:
@@ -291,7 +308,7 @@ def teams_with_member_list(contest):
     # TOTAL_HOURS_WASTED_HERE: 1
     members = TeamMember.objects.filter(contest=contest). \
         select_related('user'). \
-        order_by('user__first_name', 'user__last_name')
+        order_by('user__last_name', 'user__first_name')
     team_members = dict()
     for member in members:
         if member.team_id in team_members:
@@ -311,6 +328,14 @@ class LeadboardEntry:
     team = None
     submission = None
     score = None
+
+    def __repr__(self):
+        "<LeadboardEntry %s %s %s %s>" % (
+            repr(self.position),
+            repr(self.team),
+            repr(self.ubmission),
+            repr(self.score))
+
 
 def build_leaderboard(contest, stage):
     def cmp_tuple(val):
@@ -343,12 +368,19 @@ def build_leaderboard(contest, stage):
             entry.submission = submission
             entry.score = entry.submission.submission.score
 
-    # sort them
+    # get them into list
     entries = [entry for _, entry in by_team.items()]
+    # boundary case
+    if not entries:
+        return []
+
+    # sort them
     # alphabetic order resolves draws (but position nr will be the same)
     entries = sorted(entries, key=lambda entry: entry.team.name)
     entries = sorted(entries, key=lambda entry: cmp_tuple(entry.submission),
         reverse=True)
+
+    # find teams positions
     last = entries[0]
     entries[0].position = 1
     cur_position = 1

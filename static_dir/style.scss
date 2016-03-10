@@ -51,7 +51,8 @@ pre {
 	text-decoration: none;
 	text-align: center;
 	vertical-align: middle;
-
+	height: 30px;
+	width: 100px;
 }
 
 a.action-button:hover {
@@ -141,6 +142,11 @@ a.action-button:hover {
 		width: 100px;
 	}
 	display: inline-block;
+}
+
+.helptext {
+	color: $hint-color;
+	font-size: 11px;
 }
 
 $input-width: 400px;
@@ -335,8 +341,18 @@ $input-width: 400px;
 	.team-cell {
 		text-align: left;
 		.team-members {
-			color: $hint-color;
-			font-size: 11px;
+			margin: 0px;
+			padding: 0px;
+  			list-style: none;
+  			li {
+  				display: inline;
+  			}
+  			li:after {
+  				content: ", ";
+  			}
+  			li:last-child:after {
+			    content: "";
+			}
 		}
 	}
 	.score-cell {

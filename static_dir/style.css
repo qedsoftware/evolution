@@ -38,7 +38,9 @@ pre {
   background-color: white;
   text-decoration: none;
   text-align: center;
-  vertical-align: middle; }
+  vertical-align: middle;
+  height: 30px;
+  width: 100px; }
 
 a.action-button:hover, a.logout-button:hover {
   text-decoration: none; }
@@ -109,6 +111,10 @@ a.action-button:hover, a.logout-button:hover {
   .action-form input[type=submit] {
     height: 30px;
     width: 100px; }
+
+.helptext {
+  color: #888;
+  font-size: 11px; }
 
 .standard-form ul {
   width: 700px;
@@ -241,8 +247,15 @@ a.action-button:hover, a.logout-button:hover {
   .result-table .team-cell {
     text-align: left; }
     .result-table .team-cell .team-members {
-      color: #888;
-      font-size: 11px; }
+      margin: 0px;
+      padding: 0px;
+      list-style: none; }
+      .result-table .team-cell .team-members li {
+        display: inline; }
+      .result-table .team-cell .team-members li:after {
+        content: ", "; }
+      .result-table .team-cell .team-members li:last-child:after {
+        content: ""; }
   .result-table .score-cell {
     width: 100px;
     text-align: center; }
