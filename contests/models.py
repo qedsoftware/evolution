@@ -214,6 +214,7 @@ def leave_team(user, team):
         return
     TeamMember.objects.filter(team=team, user=user).delete()
 
+@transaction.atomic
 def can_join_team(user, team):
     if not user.is_authenticated():
         return False
@@ -221,6 +222,7 @@ def can_join_team(user, team):
         select_for_update().exists()
     return not has_team
 
+@transaction.atomic
 def can_create_team(user, contest):
     if not user.is_authenticated():
         return False
