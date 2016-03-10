@@ -20,12 +20,14 @@ setup(
     author_email='stanislaw.barzowski@gmail.com',
     install_requires = [
       'django>=1.9.3,<1.10',
-      'django-downloadview >= 1.8',
+      'django-downloadview>=1.8',
       'django-debug-toolbar>=1.4',
       'Markdown>=2.6.5',
       'py-gfm>=0.1.1',
       'Pygments>=2.1.1',
       'bleach>=1.4.2',
-      'pytz'
+      'pytz',
+      'uwsgi>=2.0.12',
+      'psycopg2>=2.6.1'
     ]
 )

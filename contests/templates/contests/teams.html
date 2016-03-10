@@ -1,7 +1,14 @@
 {% extends "system/layout.html" %}
 
+{% load standard %}
+
 {% block content %}
 <h1>Teams</h1>
+
+{% if contest_context.can_create_team %}
+	{% url 'contests:new_team' contest.code as new_team_url %}
+	{% action_form 'new team' new_team_url %}
+{% endif %}
 
 <div class="teams-list">
 	<ul>

@@ -12,9 +12,6 @@ class AdminDownload(UserPassesTestMixin, StorageDownloadView):
     def test_func(self):
         return self.request.user.is_superuser
 
-
-media_path = AdminDownload.as_view()
-
 def title(text = None):
     return ' - '.join(filter(None, ["Evolution", text]))
 

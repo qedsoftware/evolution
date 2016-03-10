@@ -28,20 +28,29 @@ def is_contest_admin(user, contest):
     return user is not None and user.is_superuser
 
 class ContestFactory(object):
-    """Creates and updates a contest, with all the related objects"""
+    """
+    Creates and updates a contest, with all the related objects.
+
+    It presents simple, flat interface for creating and modifying contests.
+    May seem repetitive, but it is crucial to keep views clean and helps with
+    tests.
+    """
+    #TODO "automate" some trivial parts
     name = None
     code = None
     description = None
     rules = None
     scoring_script = None
+    bigger_better = None
     verification_begin = None
     verification_end = None
     answer_for_verification = None
     test_begin = None
     test_end = None
     answer_for_test = None
-    published_final_leaderboard = None
+    published_final_results = None
 
+    # TODO maybe move out of class. It is a proxy between ContestForm and this.
     @classmethod
     def from_dict(cls, data):
         factory = cls()
@@ -50,15 +59,19 @@ class ContestFactory(object):
         factory.description = data.get('description')
         factory.rules = data.get('rules')
         factory.scoring_script = data.get('scoring_script')
+        factory.bigger_better = data.get('bigger_better')
         factory.answer_for_verification = data.get('answer_for_verification')
         factory.verification_begin = data.get('verification_begin')
         factory.verification_end = data.get('verification_end')
-        factory.published_final_results = data.get(
-            'published_final_results')
+        factory.answer_for_verification = data.get('answer_for_test')
+        factory.test_begin = data.get('test_begin')
+        factory.test_end = data.get('test_end')
+        factory.published_final_results = data.get('published_final_results')
         return factory
 
     @transaction.atomic
     def create(self):
+        #Builds the contest structure then updates with data
         description = Post()
         description.save()
         rules = Post()
@@ -77,6 +90,7 @@ class ContestFactory(object):
         verification_stage.contest = contest
         verification_stage.begin = timezone.now()
         verification_stage.end = timezone.now()
+        verification_stage.requires_selection = False
         verification_stage.published_results = True
         verification_grader = DataGrader.create(scoring_script, None)
         verification_grader.save()
@@ -86,6 +100,7 @@ class ContestFactory(object):
         test_stage.contest = contest
         test_stage.begin = timezone.now()
         test_stage.end = timezone.now()
+        test_stage.requires_selection = True
         test_stage.published_results = False
         test_grader = DataGrader.create(scoring_script, None)
         test_grader.save()
@@ -99,6 +114,7 @@ class ContestFactory(object):
 
     @transaction.atomic
     def update(self, contest):
+        # these ifs are terrible, TODO change to single call
         if self.name:
             contest.name = self.name
         if self.code:
@@ -118,9 +134,11 @@ class ContestFactory(object):
             contest.test_stage.begin = self.test_begin
         if self.test_end:
             contest.test_stage.end = self.test_end
-        if self.published_final_leaderboard:
+        if self.published_final_results is not None:
             contest.test_stage.published_results = \
                 self.published_final_results
+        if self.bigger_better is not None:
+            contest.bigger_better = self.bigger_better
         contest.verification_stage.grader.save_answer(
             self.answer_for_verification)
         contest.verification_stage.grader.save()
@@ -136,6 +154,12 @@ class ContestStage(models.Model):
     begin = models.DateTimeField()
     end = models.DateTimeField()
     published_results = models.BooleanField(default=False)
+    requires_selection = models.BooleanField(default=False)
+    selected_limit = models.IntegerField(default=-1)
+
+    def is_open():
+        now = timezone.now()
+        return begin <= now <= end
 
 class Team(models.Model):
     name = models.CharField(max_length=100)
@@ -154,6 +178,10 @@ def user_team(user, contest):
         return None
     if not user.is_authenticated():
         return None
+    # admin should have team anyway
+    #if is_contest_admin(user, contest):
+    #    return None
+
     # Could it be simpler? I want to keep it ORM, but in SQL it is just:
     # SELECT team_id, etc FROM teams, teammembers WHERE user=:user AND
     #   teams.id = team
@@ -204,12 +232,21 @@ class ContestSubmission(models.Model):
     stage = models.ForeignKey('ContestStage', related_name='+')
     submission = models.OneToOneField('base.Submission')
     team = models.ForeignKey('Team', blank=True, null=True)
+    selected = models.BooleanField(default=False)
+
+    def __repr__(self):
+        return "ContestSubmission<%s>" % self.id
 
 class SubmissionData(object):
     output = None
 
+class StageIsClosed(Exception):
+    pass
+
 @transaction.atomic
 def submit(team, stage, submission_data):
+    if team and not stage.is_open():
+        raise StageIsClosed()
     cs = ContestSubmission()
     cs.stage = stage
     submission = Submission.create(stage.grader, submission_data.output)
@@ -218,6 +255,22 @@ def submit(team, stage, submission_data):
     cs.submission = submission
     cs.team = team
     cs.save()
+
+def can_select_submission(submission):
+    if submission.team is None:
+        return None
+    selected_count = Submission.objects.filter(selected=True,
+        team=submission.team).select_for_update().count()
+    return selected_count < submission.stage.selected_limit
+
+@transaction.atomic
+def select_submission(submission):
+    # TODO check for race condition
+    if can_select_submission(submission):
+        submission.selected = True
+        submission.save()
+    else:
+        raise PermissionDenied('Cannot select that submission')
 
 def rejudge_submission(contest_submission):
     request_submission_grading(contest_submission.submission)
@@ -271,6 +324,8 @@ def build_leaderboard(contest, stage):
 
     submissions = ContestSubmission.objects.select_related('submission'). \
         filter(stage=stage).order_by('submission__created_at')
+    if stage.requires_selection:
+        submissions = submissions.filter(selected=True)
     teams = teams_with_member_list(contest)
 
     # build entries
@@ -288,6 +343,8 @@ def build_leaderboard(contest, stage):
 
     # sort them
     entries = [entry for _, entry in by_team.items()]
+    # alphabetic order resolves draws (but position nr will be the same)
+    entries = sorted(entries, key=lambda entry: entry.team.name)
     entries = sorted(entries, key=lambda entry: cmp_tuple(entry.submission),
         reverse=True)
     last = entries[0]

@@ -1,12 +1,16 @@
 from django.shortcuts import render, redirect
 from django.core.urlresolvers import reverse
 from django.views.generic import View
+from django.views.generic.base import ContextMixin, TemplateView, \
+    RedirectView, View
 from django.views.generic.list import ListView
+from django.views.generic import DetailView
 from django.views.generic.edit import FormView, CreateView
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.core.exceptions import PermissionDenied, SuspiciousOperation
 from django.contrib.auth.decorators import login_required
-from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.db import transaction
 
 from system.views import title
 
@@ -21,28 +25,115 @@ from .forms import ContestForm, ContestCreateForm, SubmitForm
 from base.models import GradingAttempt
 
 class ContestContext:
+    # TODO move to model
     """ Common data, required by all contest views. """
+    user = None
+    contest = None
     is_contest_admin = None
     can_submit = None
+    can_create_team = None
     can_see_team_submissions = None
     can_see_all_submissions = None
     can_see_verification_leaderboard = None
     can_see_test_leaderboard = None
     user_team = None
 
+    repr_attributes = [
+        'user',
+        'contest',
+        'is_contest_admin',
+        'can_submit',
+        'can_create_team',
+        'can_see_team_submissions',
+        'can_see_all_submissions',
+        'can_see_verification_leaderboard',
+        'can_see_test_leaderboard',
+        'user_team',
+    ]
+
     def __init__(self, request, contest):
-        user = request.user
-        if not user.is_authenticated():
-            user = None
-        self.user_team = user_team(user, contest)
-        self.is_contest_admin = is_contest_admin(user, contest)
+        self.contest = contest
+        self.user = request.user
+        # we want it to be a model - so we can query easier
+        if not self.user.is_authenticated():
+            self.user = None
+        self.user_team = user_team(self.user, contest)
+        self.is_contest_admin = is_contest_admin(self.user, contest)
+        self.can_create_team = self.user_team is None
         self.can_see_team_submissions = self.user_team is not None
         self.can_see_all_submissions = self.is_contest_admin
         self.can_submit = self.user_team is not None or self.is_contest_admin
         self.can_see_verification_leaderboard = \
-            contest.verification_stage.published_results
+            self.can_see_stage_leaderboard(contest.verification_stage)
         self.can_see_test_leaderboard = \
-            self.is_contest_admin or contest.test_stage.published_results
+            self.can_see_stage_leaderboard(contest.test_stage)
+
+    def can_see_submission(self, submission):
+        return is_contest_admin(self.user, self.contest) or \
+            (submission.team is not None and submission.team == self.user_team)
+
+    def can_see_stage_leaderboard(self, stage):
+        return self.is_contest_admin or stage.published_results
+
+    def __repr__(self):
+        result = ['<ContestContext:']
+        first = True
+        for attr in self.repr_attributes:
+            if not first:
+                result.append(', ')
+            first = False
+            result.append(attr + ': ' + repr(getattr(self, attr, '?')))
+        result.append('>')
+        return ''.join(result)
+
+def contest_title(contest, text = None):
+    return ' - '.join(filter(None, [contest.name, text]))
+
+class ContestMixin(object):
+    """
+    Common logic for views within a Contest
+
+    Uses:
+        contest_related - iterable of fields that will be
+            select_related for contest
+    """
+
+    contest_related = []
+
+    _contest = None
+    _contest_context = None
+
+    title = None
+
+    @property
+    def contest_code(self):
+        return self.kwargs['contests_code']
+
+    @property
+    def contest_context(self):
+        if not self._contest_context:
+            self._contest_context = ContestContext(self.request, self.contest)
+        return self._contest_context
+
+    @property
+    def contest(self):
+        if not self._contest:
+            contest_qs = Contest.objects.filter(code=self.contest_code)
+            for related in self.contest_related:
+                contest_qs = contest_qs.select_related(related)
+            self._contest = contest_qs.get()
+        return self._contest
+
+    def get_context_data(self, **kwargs):
+        context = super(ContestMixin, self).get_context_data()
+        context['contest'] = self.contest
+        context['contest_context'] = self.contest_context
+        if hasattr(self, 'get_title'):
+            title = self.get_title()
+        else:
+            title = self.title
+        context['title'] = contest_title(self.contest, title)
+        return context
 
 @login_required
 def list(request):
@@ -70,13 +161,16 @@ def list(request):
         'observed_contests': observed_contests
     })
 
-def contest_title(contest, text = None):
-    return ' - '.join(filter(None, [contest.name, text]))
 
 
 class ContestCreate(LoginRequiredMixin, FormView):
     form_class = ContestCreateForm
     template_name = "contests/contest_create_form.html"
+
+    def get_context_data(self):
+        context = super(ContestCreate, self).get_context_data()
+        context['title'] = 'New Contest'
+        return context
 
     def form_valid(self, form):
         factory = ContestFactory.from_dict(form.cleaned_data)
@@ -88,9 +182,13 @@ class ContestCreate(LoginRequiredMixin, FormView):
     def get_success_url(self):
         return reverse('contests:setup', args=[self.code])
 
-class ContestUpdate(LoginRequiredMixin, FormView):
+class ContestUpdate(UserPassesTestMixin, ContestMixin, FormView):
     form_class = ContestForm
     template_name = "contests/contest_form.html"
+    title = "Settings"
+
+    def test_func(self):
+        return self.contest_context.is_contest_admin
 
     def get_code(self):
         return self.kwargs['contests_code']
@@ -117,7 +215,7 @@ class ContestUpdate(LoginRequiredMixin, FormView):
         initial['verification_end'] = contest.verification_stage.end
         initial['test_begin'] = contest.test_stage.begin
         initial['test_end'] = contest.test_stage.end
-        initial['published_final_leaderboard'] = \
+        initial['published_final_results'] = \
             contest.test_stage.published_results
         return initial
 
@@ -139,223 +237,308 @@ class ContestUpdate(LoginRequiredMixin, FormView):
                 self.request.FILES.get('answer_for_verification')
         else:
             factory.answer_for_verification = False
-        self.code = form.cleaned_data['code']
-        contest = Contest.objects.get(code=self.get_code())
-        factory.update(contest)
-        contest.observing.add(self.request.user)
-        contest.save()
+        if form.cleaned_data['answer_for_test']:
+            factory.answer_for_test = \
+                self.request.FILES.get('answer_for_test')
+        else:
+            factory.answer_for_test = False
+        factory.update(self.contest)
+        self.contest.observing.add(self.request.user)
+        self.contest.save()
         return super(ContestUpdate, self).form_valid(form)
 
     def get_success_url(self):
-        return reverse('contests:setup', args=[self.code])
+        return reverse('contests:setup', args=[self.contest.code])
 
+class Description(LoginRequiredMixin, ContestMixin, TemplateView):
+    template_name = "system/title_and_text.html"
+    title = "Description"
 
-def description(request, contests_code=None):
-    contest = Contest.objects.select_related('description'). \
-        get(code=contests_code)
-    return render(request, 'system/title_and_text.html', {
-        'page_title': contest_title(contest, 'Description'),
-        'content_title': 'Description',
-        'text': contest.description.html,
-        'contest': contest,
-        'contest_context': ContestContext(request, contest)
-    })
+    def get_context_data(self, **kwargs):
+        context = super(Description, self).get_context_data()
+        context['content_title'] = 'Description'
+        context['text'] = self.contest.description.html
+        return context
 
-def rules(request, contests_code=None):
-    contest = Contest.objects.select_related('rules'). \
-        get(code=contests_code)
-    return render(request, 'system/title_and_text.html', {
-        'page_title': contest_title(contest, 'Rules'),
-        'content_title': 'Rules',
-        'text': contest.rules.html,
-        'contest': contest,
-        'contest_context': ContestContext(request, contest)
-    })
+description = Description.as_view()
 
+class Rules(LoginRequiredMixin, ContestMixin, TemplateView):
+    template_name = "system/title_and_text.html"
+    title = "Rules"
 
-class Submit(LoginRequiredMixin, FormView):
+    def get_context_data(self, **kwargs):
+        context = super(Rules, self).get_context_data()
+        context['content_title'] = 'Rules'
+        context['text'] = self.contest.rules.html
+        return context
+
+rules = Rules.as_view()
+
+class Submit(UserPassesTestMixin, ContestMixin, FormView):
     form_class = SubmitForm
     template_name = "contests/submit_form.html"
+    title = "Submit"
 
     code = None
 
-    def get_code(self):
-        return self.kwargs['contests_code']
-
-    def get_context_data(self, **kwargs):
-        context = super(Submit, self).get_context_data()
-        contest = Contest.objects.get(code=self.get_code())
-        context['contest'] = contest
-        context['contest_context'] = ContestContext(self.request, contest)
-        return context
+    def test_func(self):
+        return self.contest_context.can_submit
 
     def get_success_url(self):
         return reverse('contests:submissions',
-            args=[self.get_code()])
+            args=[self.contest.code])
 
-    def get_stage(self, contest, form):
+    def get_stage(self, form):
         stage_name = form.cleaned_data['stage']
         if stage_name == 'verification':
-            return contest.verification_stage
+            return self.contest.verification_stage
         elif stage_name == 'test':
-            return contest.test_stage
+            return self.contest.test_stage
 
     def form_valid(self, form):
         data = SubmissionData()
         data.output = self.request.FILES['output_file']
-        contest = Contest.objects.get(code=self.get_code())
-        stage = self.get_stage(contest, form)
-        submit(user_team(self.request.user, contest), stage, data)
+        stage = self.get_stage(form)
+        # TODO move to model
+        team = self.contest_context.user_team
+        if team is None and not self.contest_context.is_contest_admin:
+            raise PermissionDenied()
+        submit(team, stage, data)
         return super(Submit, self).form_valid(form)
 
-class Submissions(LoginRequiredMixin, ListView):
+
+class Submissions(LoginRequiredMixin, ContestMixin, ListView):
     context_object_name = 'submissions'
     template_name = "contests/submissions.html"
     paginate_by = 10
+    title = "Submissions"
 
     def get_queryset(self):
         return ContestSubmission.objects. \
-            filter(stage__contest__code=self.kwargs['contests_code'])
-
-    def get_context_data(self, **kwargs):
-        context = super(Submissions, self).get_context_data()
-        code = self.kwargs['contests_code']
-        contest = Contest.objects.get(code=code)
-        context['contest'] = contest
-        context['contest_context'] = ContestContext(self.request, contest)
-        return context
+            filter(stage__contest=self.contest)
 
 def ensure_submission_contest_match(submission, contest):
     if submission.stage.contest != contest:
         raise PermissionDenied()
 
-@login_required
-def submission(request, contests_code, submission_id):
-    contest = Contest.objects.get(code=contests_code)
-    contest_submission = ContestSubmission.objects. \
-        select_related('submission').get(id=submission_id)
-    submission = contest_submission.submission
-    ensure_submission_contest_match(contest_submission, contest)
-    grading_history = GradingAttempt.objects.filter(submission=submission). \
-        order_by('-created_at').all()
-    rejudge_url = reverse('contests:rejudge', args=[contest.code,
-        contest_submission.id]) + '?next=' + request.path
+class SubmissionView(UserPassesTestMixin, ContestMixin, TemplateView):
+    template_name = 'contests/submission.html'
 
-    return render(request, 'contests/submission.html', {
-        'contest': contest,
-        'contest_context': ContestContext(request, contest),
-        'contest_submission': contest_submission,
-        'submission': submission,
-        'grading_history': grading_history,
-        'rejudge_url': rejudge_url
-    })
+    _contest_submission = None
 
-@login_required
-def rejudge_view(request, contests_code, submission_id=None):
-    contest = Contest.objects.get(code=contests_code)
-    if request.method == "POST":
-        if submission_id:
+    @property
+    def contest_submission(self):
+        if not self._contest_submission:
+            submission_id = self.kwargs['submission_id']
+            self._contest_submission = ContestSubmission.objects. \
+                select_related('submission').get(id=submission_id)
+            ensure_submission_contest_match(self._contest_submission,
+                self.contest)
+        return self._contest_submission
+
+    def get_title(self):
+        return "Submission " + contest_submission.id
+
+    def test_func(self):
+        return self.contest_context.can_see_submission(self.contest_submission)
+
+    def rejudge_url(self):
+        return reverse('contests:rejudge',
+            args=[self.contest.code, self.contest_submission.id]) + \
+            '?next=' + self.request.path
+
+    def get_context_data(self, **kwargs):
+        context = super(SubmissionView, self).get_context_data()
+        cs = self.contest_submission
+        submission = self.contest_submission.submission
+        grading_history = GradingAttempt.objects. \
+            filter(submission=submission).order_by('-created_at').all()
+        context['contest_submission'] = cs
+        context['submission'] = submission
+        context['grading_history'] = grading_history
+        context['rejudge_url'] = self.rejudge_url()
+        return context
+
+submission = SubmissionView.as_view()
+
+class RejudgeView(UserPassesTestMixin, ContestMixin, ContextMixin, View):
+    template_name = 'contests/rejudge_all.html'
+    title = "Rejudge"
+
+    def test_func(self):
+        return self.contest_context.is_contest_admin
+
+    @property
+    def submission_id(self):
+        return self.kwargs.get('submission_id')
+
+    def get(self, request, *args, **kwargs):
+        if self.submission_id:
+            return redirect(reverse('contests:submission',
+                args=[self.contest.code, submission_id]))
+        else:
+            context = self.get_context_data()
+            return render(request, self.template_name, context)
+
+    def post(self, request, *args, **kwargs):
+        if self.submission_id:
             contest_submission = ContestSubmission.objects. \
-                get(id=submission_id)
-            ensure_submission_contest_match(contest_submission, contest)
+                get(id=self.submission_id)
+            ensure_submission_contest_match(contest_submission, self.contest)
             rejudge_submission(contest_submission)
             next = request.GET.get('next',
                 default=reverse('contests:rejudge_done',
-                    args=[contests_code, submission_id]))
+                    args=[self.contest.code, self.submission_id]))
         else:
-            rejudge_contest(contest)
+            rejudge_contest(self.contest)
             next = request.GET.get('next',
                 default=reverse('contests:rejudge_done',
-                    args=[contests_code]))
+                    args=[self.contest.code]))
         return redirect(next)
-    else:
+
+
+rejudge_view = RejudgeView.as_view()
+
+class RejudgeDone(LoginRequiredMixin, ContestMixin, TemplateView):
+    template_name = "contests/rejudge_done.html"
+    title = "Rejudge"
+
+    def get_context_data(self, **kwargs):
+        context = super(RejudgeDone, self).get_context_data()
+        submission_id = kwargs.get('submission_id')
         if submission_id:
-            return redirect(reverse('contests:submission',
-                args=[contests_code, submission_id]))
-        else:
-            return render(request, 'contests/rejudge_all.html', {
-                'contest': contest,
-                'contest_context': ContestContext(request, contest)
-            })
+            contest_submission = ContestSubmission.objects.get(
+                id=submission_id)
+            ensure_submission_contest_match(contest_submission, self.contest)
+            context['contest_submission'] = contest_submission
+        return context
 
-@login_required
-def rejudge_done(request, contests_code, submission_id=None):
-    contest = Contest.objects.get(code=contests_code)
-    contest_submission = None
-    if submission_id:
-        contest_submission = ContestSubmission.objects.get(id=submission_id)
-        ensure_submission_contest_match(contest_submission, contest)
-    return render(request, 'contests/rejudge_done.html', {
-        'contest': contest,
-        'contest_context': ContestContext(request, contest),
-        'contest_submission': contest_submission
-    })
+rejudge_done = RejudgeDone.as_view()
 
-def teams(request, contests_code):
-    contest = Contest.objects.get(code=contests_code)
-    return render(request, 'contests/teams.html', {
-        'contest': contest,
-        'contest_context': ContestContext(request, contest),
-        'teams': teams_with_member_list(contest)
-    })
+class Teams(LoginRequiredMixin, ContestMixin, TemplateView):
+    template_name = "contests/teams.html"
+    title = "Teams"
 
-def leaderboard(request, contests_code, stage_id):
-    contest = Contest.objects.get(code=contests_code)
-    stage = ContestStage.objects.get(id=stage_id)
-    if stage.contest != contest:
-        raise SuspiciousOperation("Stage doesn't match contest")
-    leaderboard = build_leaderboard(contest, stage)
-    return render(request, 'contests/leaderboard.html', {
-        'contest': contest,
-        'contest_context': ContestContext(request, contest),
-        'leaderboard': leaderboard
-    })
+    def get_context_data(self, **kwargs):
+        context = super(Teams, self).get_context_data()
+        context['teams'] = teams_with_member_list(self.contest)
+        return context
 
-class TeamCreate(CreateView):
+teams = Teams.as_view()
+
+class Leaderboard(UserPassesTestMixin, ContestMixin, TemplateView):
+    template_name = 'contests/leaderboard.html'
+
+    _stage = None
+
+    title = "Leaderboard"
+
+    @property
+    def stage(self):
+        if not self._stage:
+            self._stage = ContestStage.objects.get(id=self.kwargs['stage_id'])
+        return self._stage
+
+    def test_func(self):
+        return self.contest_context.can_see_stage_leaderboard(self.stage)
+
+    def get_context_data(self, **kwargs):
+        context = super(Leaderboard, self).get_context_data()
+        if self.stage.contest != self.contest:
+            raise SuspiciousOperation("Stage doesn't match contest")
+        context['leaderboard'] = build_leaderboard(self.contest, self.stage)
+        return context
+
+leaderboard = Leaderboard.as_view()
+
+class TeamCreate(UserPassesTestMixin, ContestMixin, CreateView):
     template_name='contests/new_team.html'
     model = Team
     fields = ['name']
+    title = 'New Team'
 
-    def get_code(self):
-        return self.kwargs['contests_code']
+    def test_func(self):
+        return self.contest_context.can_create_team
 
-    def get_context_data(self, **kwargs):
-        context = super(TeamCreate, self).get_context_data()
-        contest = Contest.objects.get(code=self.get_code())
-        context['contest'] = contest
-        context['contest_context'] = ContestContext(self.request, contest)
-        return context
-
+    @transaction.atomic
     def form_valid(self, form):
-        contest = Contest.objects.get(code=self.get_code())
-        form.instance.contest = contest
+        # TODO maybe move to model
+        form.instance.contest = self.contest
         form.save()
+        membership = TeamMember(
+            team=form.instance,
+            user=self.request.user,
+            contest=self.contest
+        )
+        membership.save()
         return super(TeamCreate, self).form_valid(form)
 
     def get_success_url(self):
-        return reverse('contests:team', args=[self.get_code(), self.object.id])
+        return reverse('contests:team',
+            args=[self.contest.code, self.object.id])
 
-def join_team_view(request, contests_code, team_id):
-    contest = Contest.objects.get(code=contests_code)
-    team = Team.objects.get(id=team_id)
-    join_team_action(request.user, team)
-    return redirect(reverse('contests:team', args=(contests_code, team_id)))
+class JoinTeam(UserPassesTestMixin, ContestMixin, ContextMixin, View):
+    _team = None
 
-def leave_team_view(request, contests_code, team_id):
-    contest = Contest.objects.get(code=contests_code)
-    team = Team.objects.get(id=team_id)
-    leave_team_action(request.user, team)
-    return redirect(reverse('contests:team', args=(contests_code, team_id)))
+    @property
+    def team(self):
+        if not self._team:
+            self._team = Team.objects.get(id=self.kwargs['team_id'])
+        return self._team
 
-def team(request, contests_code, team_id):
-    contest = Contest.objects.get(code=contests_code)
-    team = Team.objects.get(id=team_id)
-    members = TeamMember.objects.select_related('user').filter(team=team).all()
-    return render(request, 'contests/team.html', {
-        'contest': contest,
-        'contest_context': ContestContext(request, contest),
-        'team': team,
-        'members': members,
-        'can_join': can_join_team(request.user, team),
-        'in_team': in_team(request.user, team)
-    })
+    def test_func(self):
+        return can_join_team(self.request.user, self.team)
+
+    def post(self, request, *args, **kwargs):
+        context = self.get_context_data()
+        join_team_action(request.user, self.team)
+        return redirect(
+            reverse('contests:team', args=(self.contest.code, self.team.id)))
+
+join_team_view = JoinTeam.as_view()
+
+class LeaveTeam(UserPassesTestMixin, ContestMixin, ContextMixin, View):
+    _team = None
+
+    @property
+    def team(self):
+        if not self._team:
+            self._team = Team.objects.get(id=self.kwargs['team_id'])
+        return self._team
+
+    def test_func(self):
+        return self.contest_context.user_team == self.team
+
+    def post(self, request, *args, **kwargs):
+        context = self.get_context_data()
+        leave_team_action(request.user, self.team)
+        return redirect(
+            reverse('contests:team', args=(self.contest.code, self.team.id)))
+
+leave_team_view = LeaveTeam.as_view()
+
+class TeamView(LoginRequiredMixin, ContestMixin, TemplateView):
+    template_name = 'contests/team.html'
+
+    _team = None
+
+    @property
+    def team(self):
+        if not self._team:
+            return Team.objects.get(id=self.kwargs['team_id'])
+        return self._team
+
+    def get_title(self):
+        return 'Team ' + self.team.name
+
+    def get_context_data(self, **kwargs):
+        context = super(TeamView, self).get_context_data()
+        members = TeamMember.objects.select_related('user'). \
+            filter(team=self.team).all()
+        context['team'] = self.team
+        context['members'] = members
+        context['can_join'] = can_join_team(self.request.user, self.team)
+        context['in_team'] = in_team(self.request.user, self.team)
+        return context
+
+team = TeamView.as_view()
