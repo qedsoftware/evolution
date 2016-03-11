@@ -72,7 +72,8 @@ class ContestContext:
             self.can_see_stage_leaderboard(contest.verification_stage)
         self.can_see_test_leaderboard = \
             self.can_see_stage_leaderboard(contest.test_stage)
-        self.is_observing = contest.observing.filter(id=self.user.id).exists()
+        self.is_observing = self.user and \
+            contest.observing.filter(id=self.user.id).exists()
 
     def can_see_submission(self, submission):
         return is_contest_admin(self.user, self.contest) or \
@@ -173,7 +174,7 @@ class ContestCreate(LoginRequiredMixin, FormView):
 
     contest = None
 
-    def get_context_data(self):
+    def get_context_data(self, **kwargs):
         context = super(ContestCreate, self).get_context_data()
         context['title'] = 'New Contest'
         return context
@@ -401,6 +402,12 @@ class RejudgeView(UserPassesTestMixin, ContestMixin, ContextMixin, View):
     def test_func(self):
         return self.contest_context.is_contest_admin
 
+    rejudge_single_msg = "Submission <strong>%s</strong> was successfully " \
+        "marked for rejudging."
+
+    rejudge_all_msg = "All submissions in the contest <strong>%s</strong> " \
+        "were successfully marked for rejudging."
+
     @property
     def submission_id(self):
         return self.kwargs.get('submission_id')
@@ -419,30 +426,20 @@ class RejudgeView(UserPassesTestMixin, ContestMixin, ContextMixin, View):
                 get(id=self.submission_id)
             ensure_submission_contest_match(contest_submission, self.contest)
             rejudge_submission(contest_submission)
+            messages.add_message(self.request, messages.SUCCESS, mark_safe(
+                self.rejudge_single_msg % contest_submission.id))
             next = request.GET.get('next',
-                default=reverse('contests:rejudge_done',
-                    args=[self.contest.code, self.submission_id]))
+                default=reverse('contests:description',
+                    args=[self.contest.code]))
         else:
             rejudge_contest(self.contest)
+            messages.add_message(self.request, messages.SUCCESS, mark_safe(
+                    self.rejudge_all_msg % self.contest.name))
             next = request.GET.get('next',
-                default=reverse('contests:rejudge_done',
+                default=reverse('contests:submissions',
                     args=[self.contest.code]))
         return redirect(next)
 
-
-class RejudgeDone(LoginRequiredMixin, ContestMixin, TemplateView):
-    template_name = "contests/rejudge_done.html"
-    title = "Rejudge"
-
-    def get_context_data(self, **kwargs):
-        context = super(RejudgeDone, self).get_context_data()
-        submission_id = kwargs.get('submission_id')
-        if submission_id:
-            contest_submission = ContestSubmission.objects.get(
-                id=submission_id)
-            ensure_submission_contest_match(contest_submission, self.contest)
-            context['contest_submission'] = contest_submission
-        return context
 
 class Teams(LoginRequiredMixin, ContestMixin, TemplateView):
     template_name = "contests/teams.html"

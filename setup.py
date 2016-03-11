@@ -28,6 +28,7 @@ setup(
       'bleach>=1.4.2',
       'pytz',
       'uwsgi>=2.0.12',
-      'psycopg2>=2.6.1'
+      'psycopg2>=2.6.1',
+      'django-webtest>=1.7.8'
     ]
 )

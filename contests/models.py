@@ -222,17 +222,19 @@ def join_team(user, team):
     membership.save()
 
 def in_team(user, team):
-    if not user.is_authenticated():
+    if not user or not user.is_authenticated():
         return False
     return TeamMember.objects.filter(team=team, user=user).exists()
 
 def leave_team(user, team):
-    if not user.is_authenticated:
+    if not user or not user.is_authenticated:
         return
     TeamMember.objects.filter(team=team, user=user).delete()
 
 @transaction.atomic
 def can_join_team(user, team):
+    if not user:
+        return False
     is_admin = is_contest_admin(user, team.contest)
     if not user.is_authenticated() or is_admin:
         return False
@@ -242,6 +244,8 @@ def can_join_team(user, team):
 
 @transaction.atomic
 def can_create_team(user, contest):
+    if not user:
+        return False
     if not user.is_authenticated() or is_contest_admin(user, contest):
         return False
     has_team = TeamMember.objects.filter(contest=contest, user=user). \

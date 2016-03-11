@@ -1,13 +1,17 @@
 from django.test import TestCase, RequestFactory, Client
+from django_webtest import WebTest
 from django.utils import timezone
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.core.files.base import ContentFile
+from datetime import timedelta
 
 from .models import *
 from .views import ContestContext
 
 from system.models import PostData
+
+future_time = timezone.now() + timedelta(weeks=1)
 
 class ContestFactoryTest(TestCase):
 
@@ -205,3 +209,179 @@ class LeaderboardTest(TestCase):
         submit_with_score(None, self.empty_contest.verification_stage, 42)
         entries = build_leaderboard(self.empty_contest, self.empty_contest.verification_stage)
         self.assertEqual(entries, [])
+
+class EmptyContestListTest(TestCase):
+    def setUp(self):
+        self.user = new_user('user')
+
+    def test(self):
+        client = Client()
+        client.force_login(self.user)
+        response = client.get(reverse('contests:list'))
+        self.assertContains(response, 'Contests')
+
+class ContestCreateAndSetupTest(WebTest):
+    def setUp(self):
+        self.admin = new_user('admin', admin=True)
+
+    def test(self):
+        # add a contest
+        page = self.app.get(reverse('contests:setup_new'), user='admin')
+        self.assertContains(page, 'New Contest')
+        self.assertContains(page, 'Create')
+        name = 'contest name'
+        page.form['name'] = name
+        page.form['code'] = 'contest-code'
+        page = page.form.submit().follow()
+        contest = Contest.objects.get()
+        self.assertEqual(contest.code, 'contest-code')
+        self.assertEqual(contest.name, name)
+        page.mustcontain('created contest', 'Contest Settings', name)
+        form = page.forms[1] # TODO, give it proper id
+        form['bigger_better'] = False
+        form['published_final_results'] = True
+        self.assertEqual(contest.bigger_better, True);
+        self.assertEqual(contest.verification_stage.published_results, True)
+        self.assertEqual(contest.test_stage.published_results, False)
+        page = form.submit().follow()
+        page.mustcontain('Successfully updated')
+        contest = Contest.objects.get()
+        self.assertEqual(contest.code, 'contest-code')
+        self.assertEqual(contest.bigger_better, False);
+        self.assertEqual(contest.verification_stage.published_results, True)
+        self.assertEqual(contest.test_stage.published_results, True)
+
+class RulesAndDescriptionTest(WebTest):
+    def setUp(self):
+        self.user = new_user('user')
+        description = PostData.from_source('__description__', 'html')
+        description.build_html()
+        rules = PostData.from_source('__rules__', 'html')
+        rules.build_html()
+        ContestFactory.from_dict({
+            'name': 'Contest',
+            'code': 'contest',
+            'description': description,
+            'rules': rules
+        }).create()
+
+    def test_description(self):
+        page = self.app.get(reverse('contests:description', args=['contest']),
+            user='user')
+        page.mustcontain('Description', '__description__')
+
+    def test_rules(self):
+        page = self.app.get(reverse('contests:rules', args=['contest']),
+            user='user')
+        page.mustcontain('Rules', '__rules__')
+
+
+ACCESS_DENIED = "You don't have access"
+
+class SubmitTest(WebTest):
+    def setUp(self):
+        self.user = new_user('user')
+        self.contest = ContestFactory.from_dict({
+            'name': 'Contest',
+            'code': 'contest',
+            'verification_end': future_time
+        }).create()
+        self.team = Team(contest=self.contest, name='Team')
+        self.team.save()
+        join_team(self.user, self.team)
+
+    def test_anon_submit(self):
+        page = self.app.get(reverse('contests:submit',
+            args=[self.contest.code]))
+        page = page.follow()
+        page.mustcontain('log in')
+
+    def test_submit(self):
+        page = self.app.get(reverse('contests:submit',
+            args=[self.contest.code]), user='user')
+        page.mustcontain('Send Submission')
+
+class MySubmissionsTest(WebTest):
+    def setUp(self):
+        self.user = new_user('user')
+        self.user_no_team = new_user('user_no_team')
+        self.contest = ContestFactory.from_dict({
+            'name': 'Contest',
+            'code': 'contest',
+        }).create()
+        self.team = Team(contest=self.contest, name='Team')
+        self.team.save()
+        join_team(self.user, self.team)
+
+    def test_my_submissions_no_team(self):
+        unauthorized_get(self.app,
+            reverse('contests:my_submissions', args=['contest']),
+            user=self.user_no_team)
+
+    def test_my_submissions(self):
+        page = self.app.get(reverse('contests:my_submissions',
+            args=['contest']), user='user')
+        page.mustcontain('My Submissions')
+
+def unauthorized_get(app, url, user):
+    page = app.get(url, user=user.username)
+    page = page.follow()
+    page.mustcontain(ACCESS_DENIED)
+
+def standard_base(test_obj):
+    test_obj.user = new_user('user')
+    test_obj.admin = new_user('admin', admin=True)
+    test_obj.contest = ContestFactory.from_dict({
+        'name': 'Contest',
+        'code': 'contest',
+    }).create()
+
+class SubmissionsTest(WebTest):
+    def setUp(self):
+        standard_base(self)
+        self.team = Team(contest=self.contest, name='Team')
+        self.team.save()
+        join_team(self.user, self.team)
+
+    def test_submissions_user(self):
+        unauthorized_get(self.app,
+            reverse('contests:submissions', args=['contest']),
+            user=self.user)
+
+    def test_submissions(self):
+        page = self.app.get(reverse('contests:submissions',
+            args=['contest']), user='admin')
+        page.mustcontain('Submissions')
+
+class RejudgeTest(WebTest):
+    def setUp(self):
+        standard_base(self)
+
+    def test_rejudge(self):
+        page = self.app.get(reverse('contests:rejudge',
+            args=['contest']), user='admin')
+        page.mustcontain('Rejudge All Submissions')
+        page = page.form.submit().follow()
+        page.mustcontain('All submissions', 'marked for rejudging')
+
+    def test_rejudge_user(self):
+        unauthorized_get(self.app,
+            reverse('contests:rejudge', args=['contest']),
+            user=self.user)
+
+    def test_rejudge_single(self):
+        submission = submit_with_score(None, self.contest.test_stage, 42)
+        page = self.app.get(reverse('contests:submission',
+            args=[self.contest.code, submission.id]), user='admin')
+        page = page.form.submit().follow()
+        page.mustcontain('Submission', str(submission.id),
+            'marked for rejudging')
+
+class Teams(WebTest):
+    def setUp(self):
+        standard_base(self)
+
+    def test_teams(self):
+        page = self.app.get(reverse('contests:teams',
+            args=['contest']), user='user')
+        page.mustcontain('Teams', 'new team')

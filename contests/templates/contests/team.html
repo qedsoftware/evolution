@@ -7,11 +7,11 @@
 {% block content %}
 {% if can_join %}
     {% url 'contests:join_team' contest.code team.id as join_url %}
-    {% action_form 'join' join_url %}
+    {% action_form 'join-team' 'join' join_url %}
 {% endif %}
 {% if in_team %}
     {% url 'contests:leave_team' contest.code team.id as leave_url %}
-    {% action_form 'leave' leave_url %}
+    {% action_form 'leave-team' 'leave' leave_url %}
 {% endif %}
 <h2>Members</h2>
 <ul>

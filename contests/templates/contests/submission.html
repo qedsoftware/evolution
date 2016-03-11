@@ -5,7 +5,7 @@
 {% block contest_title %} Submission {% endblock %}
 
 {% block content %}
-{% action_form 'rejudge' rejudge_url %}
+{% action_form 'rejudge-single' 'rejudge' rejudge_url %}
 <ul>
 <li>Submitted at: <strong>{{submission.created_at}}</strong></li>
 <li>Score: {{submission.current_attempt.score}}</li>

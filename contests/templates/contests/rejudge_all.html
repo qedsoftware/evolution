@@ -2,7 +2,7 @@
 
 {% load standard %}
 
-{% block contest_title %} Rejudge all submissions {% endblock %}
+{% block contest_title %} Rejudge All Submissions {% endblock %}
 
 {% block content %}
 
@@ -14,6 +14,6 @@
 </p>
 
 {% url 'contests:rejudge' contest.code as rejudge_url %}
-{% action_form 'Do it!' rejudge_url %}
+{% action_form 'rejudge-all' 'Do it!' rejudge_url %}
 
 {% endblock %}
