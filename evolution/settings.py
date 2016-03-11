@@ -3,19 +3,6 @@ import os
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/1.8/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'uq07x4ph-#*t7rjei1gouulzin(v6@7*ke@3-w9n%ga4q0jv-&'
-
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
-ALLOWED_HOSTS = []
-
-
 # Application definition
 
 INSTALLED_APPS = (
@@ -64,17 +51,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'evolution.wsgi.application'
-
-
-# Database
-# https://docs.djangoproject.com/en/1.8/ref/settings/#databases
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
-    }
-}
 
 
 # Internationalization
@@ -159,6 +135,12 @@ DOWNLOADVIEW_BACKEND = 'django_downloadview.nginx.XAccelRedirectMiddleware'
 
 #DOWNLOADVIEW_BACKEND = 'django_downloadview.nginx.XAccelRedirectMiddleware'
 
-# Testing
+# Django Testing
 
 TEST_RUNNER = 'evolution.runner.CustomTestSuiteRunner'
+
+# we do it this way, so that local settings can read and change
+# the parameters set here
+local_settings_path = os.path.join(BASE_DIR, 'local_settings.py')
+with open(local_settings_path) as local_file:
+    exec(local_file.read(), globals())

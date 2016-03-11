@@ -7,3 +7,4 @@
 /media
 *.egg-info/*
 */.sass-cache/*
+local_settings.py
