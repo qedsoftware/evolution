@@ -1,7 +1,8 @@
-{% extends "system/layout.html" %}
+{% extends "contests/layout.html" %}
+
+{% block contest_title %} Rejudge Ordered {% endblock %}
 
 {% block content %}
-<h1>Rejudge Ordered</h1>
 <p>
 {% if contest_submission %}
 Submission <a href={% url 'contests:submission' contest.code contest_submission.id %}>{{contest_submission.id}}</a> was

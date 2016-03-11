@@ -1,8 +1,8 @@
-{% extends "system/layout.html" %}
+{% extends "contests/layout.html" %}
+
+{% block contest_title %} New Team {% endblock %}
 
 {% block content %}
-
-<h1>New team</h1>
 
 <form class="standard-form" action="{{ request.get_full_path }}" enctype="multipart/form-data" method="post">
     {% csrf_token %}

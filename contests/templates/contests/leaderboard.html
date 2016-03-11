@@ -1,7 +1,8 @@
-{% extends "system/layout.html" %}
+{% extends "contests/layout.html" %}
+
+{% block contest_title %} Leaderboard {% endblock %}
 
 {% block content %}
-<h1>Leaderboard</h1>
 
 {{leaderboard_description}}
 
@@ -23,7 +24,7 @@
 					{% for member in entry.team.member_list %}
 						<li>{{member.user.get_full_name}}</li>
 					{% empty %}
-						This team has no members currently.
+						<li><em>No members</em></li>
 					{% endfor %}
 				</ul>
 			</td>

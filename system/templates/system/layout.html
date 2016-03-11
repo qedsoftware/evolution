@@ -4,6 +4,8 @@
     <meta charset="utf-8">
     <title>{% block title %} {{ title }} {% endblock %} </title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/normalize/3.0.3/normalize.min.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons"
+      rel="stylesheet">
     <link rel="stylesheet" href="/static/style.css">
     <link rel="stylesheet" href="/static/highlighting-github.css">
   </head>
@@ -18,7 +20,15 @@
         {% include "system/left-pane.html" %}
       </div>
       <div class="page-content">
-         {% block content %}{% endblock %}
+        <h1>{% block content_title %} {{ content_title }} {% endblock %}</h1>
+        {% if messages %}
+          <ul class="messages">
+              {% for message in messages %}
+                <li{% if message.tags %} class="{{ message.tags }}"{% endif %}><div message-icon><i class="material-icons message-icon"></i></div> <div class=message>{{ message }} </div> </li>
+              {% endfor %}
+          </ul>
+        {% endif %}
+        {% block content %}{% endblock %}
       </div>
     </div>
     {% if system_settings.footer.html %}

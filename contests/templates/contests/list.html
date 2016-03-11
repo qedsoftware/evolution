@@ -1,5 +1,7 @@
 {% extends "system/layout.html" %}
 
+{% block content_title %} Contests {% endblock %}
+
 {% block content %}
 
 {% if my_memberships %}
@@ -17,7 +19,7 @@
 {% if observed_contests %}
 <div class=observed-contests>
 	<h2>Observed contests</h2>
-	<span class="helptext">You can start or stop observing a contest at any time. Also whenever you update or create any contest, you automatically start observing it.</span>
+	{% include "contests/observing-helptext.html" %}
 	<ul>
 		{% for contest in observed_contests %}
 			<li><a href="{% url 'contests:description' contest.code %}">{{contest.name}}</a></li>

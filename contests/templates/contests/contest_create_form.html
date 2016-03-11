@@ -1,8 +1,8 @@
 {% extends "system/layout.html" %}
 
-{% block content %}
+{% block content_title %} New Contest {% endblock %}
 
-<h1>New Contest</h1>
+{% block content %}
 
 <form class="standard-form" action="{{ request.get_full_path }}" enctype="multipart/form-data" method="post">
     {% csrf_token %}

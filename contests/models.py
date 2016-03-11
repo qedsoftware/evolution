@@ -333,7 +333,7 @@ class LeadboardEntry:
         "<LeadboardEntry %s %s %s %s>" % (
             repr(self.position),
             repr(self.team),
-            repr(self.ubmission),
+            repr(self.submission),
             repr(self.score))
 
 

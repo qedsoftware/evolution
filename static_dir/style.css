@@ -31,6 +31,34 @@ pre {
   font-size: 12px;
   font-family: "Droid Sans Mono"; }
 
+.messages {
+  padding: 0px;
+  margin: 40px;
+  margin-top: 20px;
+  margin-bottom: 20px;
+  list-style-type: none; }
+  .messages li {
+    width: 100%;
+    padding: 10px;
+    margin: 5px;
+    padding-left: 5px;
+    font-size: 13px;
+    margin: 0px;
+    display: flex;
+    align-items: center; }
+  .messages li.success {
+    background-color: #dfd; }
+    .messages li.success i.message-icon:after {
+      content: 'done'; }
+  .messages .message-icon {
+    height: 100%;
+    font-size: 24px;
+    display: inline-block;
+    padding: 5px; }
+  .messages .message {
+    height: 100%;
+    display: inline-block; }
+
 .action-button, .action-form input[type=submit], .standard-form input[type=submit], .logout-button, .left-user form input[type=submit] {
   display: table-cell;
   border: 1px solid #2277DD;
@@ -40,7 +68,7 @@ pre {
   text-align: center;
   vertical-align: middle;
   height: 30px;
-  width: 100px; }
+  width: 130px; }
 
 a.action-button:hover, a.logout-button:hover {
   text-decoration: none; }
@@ -82,7 +110,7 @@ a.action-button:hover, a.logout-button:hover {
     font-size: 35px;
     text-align: center; }
   .page-content h2 {
-    font-size: 18px;
+    font-size: 19px;
     margin-bottom: 3px; }
   .page-content .news-item p {
     margin-top: 0px; }
@@ -108,13 +136,10 @@ a.action-button:hover, a.logout-button:hover {
 
 .action-form {
   display: inline-block; }
-  .action-form input[type=submit] {
-    height: 30px;
-    width: 100px; }
 
 .helptext {
   color: #888;
-  font-size: 11px; }
+  font-size: 10px; }
 
 .standard-form ul {
   width: 700px;
@@ -154,6 +179,7 @@ a.action-button:hover, a.logout-button:hover {
   width: 400px;
   padding: 5px 8px; }
 .standard-form input[type=submit] {
+  width: 400px;
   height: 30px;
   margin-left: 126px; }
 .standard-form select {
@@ -162,15 +188,8 @@ a.action-button:hover, a.logout-button:hover {
   height: 30px;
   width: 400px;
   padding: 5px 8px;
-  /*width: 268px;
-  line-height: 1;
-  border: 0;
-  border-radius: 0;
-  height: 34px;*/
   -webkit-appearance: none; }
 .standard-form .helptext {
-  font-size: 10px;
-  color: #888;
   display: block;
   padding-top: 5px;
   padding-right: 5px;
@@ -238,15 +257,17 @@ a.action-button:hover, a.logout-button:hover {
   width: 100%;
   border-collapse: collapse; }
   .result-table th, .result-table td {
-    border: 1px dotted #888; }
+    border: 1px dotted #aaa; }
   .result-table td {
-    padding: 5px; }
+    padding: 5px 10px; }
   .result-table .position-cell {
     width: 30px;
     text-align: center; }
   .result-table .team-cell {
     text-align: left; }
     .result-table .team-cell .team-members {
+      color: #888;
+      font-size: 11px;
       margin: 0px;
       padding: 0px;
       list-style: none; }
@@ -260,31 +281,14 @@ a.action-button:hover, a.logout-button:hover {
     width: 100px;
     text-align: center; }
 
-/*
-input[type=text], select {
-	width: 100%;
-	padding: 12px 20px;
-	margin: 8px 0;
-	display: inline-block;
-	border: 1px solid #ccc;
-	border-radius: 4px;
-	box-sizing: border-box;
-}
+table {
+  margin: 10px; }
+  table th, table td {
+    padding: 6px 12px;
+    border: 1px solid #ddd; }
 
-input[type=submit] {
-	width: 100%;
-	background-color: #4CAF50;
-	color: white;
-	padding: 14px 20px;
-	margin: 8px 0;
-	border: none;
-	border-radius: 4px;
-	cursor: pointer;
-}
-
-input[type=submit]:hover {
-	background-color: #45a049;
-}
-*/
+.contest-subtitle {
+  font-size: 18px;
+  font-weight: normal; }
 
 /*# sourceMappingURL=style.css.map */

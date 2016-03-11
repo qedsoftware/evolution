@@ -1,9 +1,10 @@
-{% extends "system/layout.html" %}
+{% extends "contests/layout.html" %}
 
 {% load standard %}
 
+{% block contest_title %} Team <em>{{team.name}}</em> {% endblock %}
+
 {% block content %}
-<h1>Team <em>{{team.name}}</em></h1>
 {% if can_join %}
 	{% url 'contests:join_team' contest.code team.id as join_url %}
 	{% action_form 'join' join_url %}

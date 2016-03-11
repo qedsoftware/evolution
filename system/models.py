@@ -54,7 +54,19 @@ MARKDOWN_ALLOWED_TAGS = [
     'span',
     'strong',
     'ul',
-    'p'
+    'p',
+    'table',
+    'thead',
+    'tr',
+    'th',
+    'td',
+    'tbody',
+    'tfoot',
+    #'blockquote', # TODO support in css
+    # definition lists - TODO support them in css
+    #'dl',
+    #'dt',
+    #'dd'
 ]
 
 ALLOWED_CSS_CLASSES = ['highlight', 'bp', 'c', 'c1', 'cm', 'cp', 'cs', 'err', 'gd', 'ge', 'gh', 'gi', 'go', 'gp', 'gr', 'gs', 'gt', 'gu', 'hll', 'il', 'k', 'kc', 'kd', 'kn', 'kp', 'kr', 'kt', 'm', 'mf', 'mh', 'mi', 'mo', 'na', 'nb', 'nc', 'nd', 'ne', 'nf', 'ni', 'nl', 'nn', 'no', 'nt', 'nv', 'o', 'ow', 's', 's1', 's2', 'sb', 'sc', 'sd', 'se', 'sh', 'si', 'sr', 'ss', 'sx', 'vc', 'vg', 'vi', 'w']
@@ -67,7 +79,12 @@ MARKDOWN_ALLOWED_ATTRIBUTES = {
     'acronym': ['title'],
     'a': ['href', 'title'],
     'span': safe_class,
-    'div': safe_class
+    'div': safe_class,
+    'tr': ['align'],
+    'th': ['align'],
+    'td': ['align'],
+    'tbody': ['align'],
+    'tfoot': ['align']
 }
 
 def markdown_to_html(source):

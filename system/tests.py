@@ -56,6 +56,19 @@ for i in [1, 2, 3]:
         self.assertTrue('<div class="highlight">' in markdown.html)
         self.assertTrue('<span class="k">' in markdown.html)
 
+    def test_markdown_table(self):
+        source = """\
+| Tables        | Are           | Cool  |
+| ------------- |:-------------:| -----:|
+| col 3 is      | right-aligned | $1600 |
+| col 2 is      | centered      |   $12 |
+| zebra stripes | are neat      |    $1 |
+"""
+        markdown = PostData.from_source(source, 'markdown')
+        markdown.build_html()
+        self.assertFalse('&lt' in markdown.html)
+        self.assertFalse('&gt' in markdown.html)
+
 class PostTest(TestCase):
     def test_from_data(self):
         post = Post()

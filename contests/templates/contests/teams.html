@@ -1,10 +1,8 @@
-{% extends "system/layout.html" %}
+{% extends "contests/layout.html" %}
 
-{% load standard %}
+{% block contest_title %} Teams {% endblock %}
 
 {% block content %}
-<h1>Teams</h1>
-
 {% if contest_context.can_create_team %}
 	<a class="action-button" href={% url 'contests:new_team' contest.code %}>new team</a>
 {% endif %}

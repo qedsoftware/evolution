@@ -1,0 +1,7 @@
+{% extends "system/layout.html" %}
+{% block content_title %}
+	{% block contest_title %} {{content_title}} {% endblock contest_title %}
+	{% if contest %}
+		<div class="contest-subtitle">{{contest.name}}</div>
+	{% endif %}
+{% endblock %}

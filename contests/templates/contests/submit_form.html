@@ -1,8 +1,8 @@
-{% extends "system/layout.html" %}
+{% extends "contests/layout.html" %}
+
+{% block contest_title %} Send Submission {% endblock %}
 
 {% block content %}
-
-<h1>Send Submission</h1>
 
 <form class="standard-form" action="{% url 'contests:submit' contest.code %}" enctype="multipart/form-data" method="post">
     {% csrf_token %}

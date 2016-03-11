@@ -129,6 +129,7 @@ class TeamViewTests(TestCase):
             name='another_team')
         self.another_contest_team.save()
         self.client = Client()
+        self.client.force_login(self.alice)
 
     def test_list(self):
         join_team(self.alice, self.team_a)
@@ -147,3 +148,41 @@ class TeamViewTests(TestCase):
         self.assertEqual(team_1, self.team_b)
         self.assertEqual(team_1.member_list, [])
         self.assertContains(response, 'no members')
+
+class LeaderboardTest(TestCase):
+    def setUp(self):
+        self.contest = ContestFactory.from_dict({
+            'name': 'Contest',
+            'code': 'contest'
+        }).create()
+        # non-alphabetic order
+        self.team_b = Team(contest=self.contest, name='B')
+        self.team_b.save()
+        self.team_a = Team(contest=self.contest, name='A')
+        self.team_a.save()
+        self.team_d= Team(contest=self.contest, name='D')
+        self.team_d.save()
+        self.team_c= Team(contest=self.contest, name='C')
+        self.team_c.save()
+        self.empty_contest = ContestFactory.from_dict({
+            'name': 'Empty',
+            'code': 'empty'
+        }).create()
+
+    def test_no_submissions(self):
+        entries = build_leaderboard(self.contest, self.contest.test_stage)
+        for entry in entries:
+            self.assertEqual(entry.position, 1)
+            self.assertIsNone(entry.score)
+            self.assertIsNone(entry.submission)
+            self.assertIsNotNone(entry.team)
+            self.assertEqual(entry.team.member_list, [])
+        self.assertEqual([e.team.name for e in entries], ['A', 'B', 'C', 'D'])
+
+    def test_empty_contest(self):
+        entries_test = build_leaderboard(self.empty_contest,
+            self.empty_contest.test_stage)
+        self.assertEqual(entries_test, [])
+        entries_verification = build_leaderboard(self.empty_contest,
+            self.empty_contest.verification_stage)
+        self.assertEqual(entries_verification, [])

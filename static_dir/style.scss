@@ -2,6 +2,7 @@ $link-color: #2277DD;
 $error-color: #B30000;
 $attention-background-color: #FFFF7F;
 $hint-color: #888;
+$success-background-color: #dfd;
 
 html {
 	height: 100%
@@ -43,6 +44,41 @@ pre {
 	font-family: 'Droid Sans Mono'
 }
 
+.messages {
+	padding: 0px;
+	margin: 40px;
+	margin-top: 20px;
+	margin-bottom: 20px;
+	list-style-type: none;
+	li {
+		width: 100%;
+		padding: 10px;
+		margin: 5px;
+		padding-left: 5px;
+		font-size: 13px;
+		margin: 0px;
+		display: flex;
+		align-items: center;
+	}
+	li.success {
+		background-color: #dfd;
+		i.message-icon:after {
+			content: 'done';
+		}
+	}
+	.message-icon {
+		height: 100%;
+		font-size: 24px;
+		display: inline-block;
+		padding: 5px;
+	}
+
+	.message {
+		height: 100%;
+		display: inline-block;
+	}
+}
+
 .action-button {
 	display: table-cell;
 	border: 1px solid $link-color;
@@ -52,7 +88,7 @@ pre {
 	text-align: center;
 	vertical-align: middle;
 	height: 30px;
-	width: 100px;
+	width: 130px;
 }
 
 a.action-button:hover {
@@ -105,7 +141,7 @@ a.action-button:hover {
 		text-align: center;
 	}
 	h2 {
-		font-size: 18px;
+		font-size: 19px;
 		margin-bottom: 3px;
 	}
 	.news-item p {
@@ -138,15 +174,13 @@ a.action-button:hover {
 .action-form {
 	input[type=submit] {
 		@extend .action-button;
-		height: 30px;
-		width: 100px;
 	}
 	display: inline-block;
 }
 
 .helptext {
 	color: $hint-color;
-	font-size: 11px;
+	font-size: 10px;
 }
 
 $input-width: 400px;
@@ -207,6 +241,7 @@ $input-width: 400px;
 
 	input[type=submit] {
 		@extend .action-button;
+		width: $input-width;
 		height: 30px;
 		margin-left: 126px;
 	}
@@ -217,17 +252,10 @@ $input-width: 400px;
 		height: 30px;
 		width: $input-width;
 		padding: 5px 8px;
-		/*width: 268px;
-		line-height: 1;
-		border: 0;
-		border-radius: 0;
-		height: 34px;*/
 		-webkit-appearance: none;
 	}
 
 	.helptext {
-		font-size: 10px;
-		color: $hint-color;
 		display:block;
 		padding-top: 5px;
 		padding-right: 5px;
@@ -329,10 +357,10 @@ $input-width: 400px;
 	width: 100%;
 	border-collapse: collapse;
 	th, td {
-		border: 1px dotted $hint-color;
+		border: 1px dotted #aaa;
 	}
 	td {
-		padding: 5px;
+		padding: 5px 10px;
 	}
 	.position-cell {
 		width: 30px;
@@ -341,6 +369,8 @@ $input-width: 400px;
 	.team-cell {
 		text-align: left;
 		.team-members {
+			color: $hint-color;
+			font-size: 11px;
 			margin: 0px;
 			padding: 0px;
   			list-style: none;
@@ -361,29 +391,15 @@ $input-width: 400px;
 	}
 }
 
-/*
-input[type=text], select {
-	width: 100%;
-	padding: 12px 20px;
-	margin: 8px 0;
-	display: inline-block;
-	border: 1px solid #ccc;
-	border-radius: 4px;
-	box-sizing: border-box;
+table {
+	margin: 10px;
+	th, td {
+		padding: 6px 12px;
+		border: 1px solid #ddd;
+	}
 }
 
-input[type=submit] {
-	width: 100%;
-	background-color: #4CAF50;
-	color: white;
-	padding: 14px 20px;
-	margin: 8px 0;
-	border: none;
-	border-radius: 4px;
-	cursor: pointer;
+.contest-subtitle {
+	font-size: 18px;
+	font-weight: normal;
 }
-
-input[type=submit]:hover {
-	background-color: #45a049;
-}
-*/

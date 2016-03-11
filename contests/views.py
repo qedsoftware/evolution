@@ -11,6 +11,8 @@ from django.core.exceptions import PermissionDenied, SuspiciousOperation
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.db import transaction
+from django.contrib import messages
+from django.utils.safestring import mark_safe
 
 from system.views import title
 
@@ -37,9 +39,11 @@ class ContestContext:
     can_see_verification_leaderboard = None
     can_see_test_leaderboard = None
     user_team = None
+    is_observing = None
 
     repr_attributes = [
         'user',
+        'user_team',
         'contest',
         'is_contest_admin',
         'can_submit',
@@ -48,7 +52,7 @@ class ContestContext:
         'can_see_all_submissions',
         'can_see_verification_leaderboard',
         'can_see_test_leaderboard',
-        'user_team',
+        'is_observing'
     ]
 
     def __init__(self, request, contest):
@@ -67,6 +71,7 @@ class ContestContext:
             self.can_see_stage_leaderboard(contest.verification_stage)
         self.can_see_test_leaderboard = \
             self.can_see_stage_leaderboard(contest.test_stage)
+        self.is_observing = contest.observing.filter(id=self.user.id).exists()
 
     def can_see_submission(self, submission):
         return is_contest_admin(self.user, self.contest) or \
@@ -86,8 +91,10 @@ class ContestContext:
         result.append('>')
         return ''.join(result)
 
+
 def contest_title(contest, text = None):
     return ' - '.join(filter(None, [contest.name, text]))
+
 
 class ContestMixin(object):
     """
@@ -128,12 +135,9 @@ class ContestMixin(object):
         context = super(ContestMixin, self).get_context_data()
         context['contest'] = self.contest
         context['contest_context'] = self.contest_context
-        if hasattr(self, 'get_title'):
-            title = self.get_title()
-        else:
-            title = self.title
-        context['title'] = contest_title(self.contest, title)
+        context['title'] = contest_title(self.contest, self.title)
         return context
+
 
 @login_required
 def list(request):
@@ -162,10 +166,11 @@ def list(request):
     })
 
 
-
 class ContestCreate(LoginRequiredMixin, FormView):
     form_class = ContestCreateForm
     template_name = "contests/contest_create_form.html"
+
+    contest = None
 
     def get_context_data(self):
         context = super(ContestCreate, self).get_context_data()
@@ -177,10 +182,16 @@ class ContestCreate(LoginRequiredMixin, FormView):
         self.code = form.cleaned_data['code']
         contest = factory.create()
         contest.observing.add(self.request.user)
+        self.contest = contest
         return super(ContestCreate, self).form_valid(form)
 
     def get_success_url(self):
+        messages.add_message(self.request, messages.SUCCESS,
+            mark_safe('You have created contest <em>%s</em>. '
+                'Now you can start setting it up.'
+                % self.contest.name))
         return reverse('contests:setup', args=[self.code])
+
 
 class ContestUpdate(UserPassesTestMixin, ContestMixin, FormView):
     form_class = ContestForm
@@ -248,7 +259,10 @@ class ContestUpdate(UserPassesTestMixin, ContestMixin, FormView):
         return super(ContestUpdate, self).form_valid(form)
 
     def get_success_url(self):
+        messages.add_message(self.request, messages.SUCCESS,
+            'Successfully updated contest settings.')
         return reverse('contests:setup', args=[self.contest.code])
+
 
 class Description(LoginRequiredMixin, ContestMixin, TemplateView):
     template_name = "system/title_and_text.html"
@@ -260,7 +274,6 @@ class Description(LoginRequiredMixin, ContestMixin, TemplateView):
         context['text'] = self.contest.description.html
         return context
 
-description = Description.as_view()
 
 class Rules(LoginRequiredMixin, ContestMixin, TemplateView):
     template_name = "system/title_and_text.html"
@@ -272,7 +285,6 @@ class Rules(LoginRequiredMixin, ContestMixin, TemplateView):
         context['text'] = self.contest.rules.html
         return context
 
-rules = Rules.as_view()
 
 class Submit(UserPassesTestMixin, ContestMixin, FormView):
     form_class = SubmitForm
@@ -317,9 +329,11 @@ class Submissions(LoginRequiredMixin, ContestMixin, ListView):
         return ContestSubmission.objects. \
             filter(stage__contest=self.contest)
 
+
 def ensure_submission_contest_match(submission, contest):
     if submission.stage.contest != contest:
         raise PermissionDenied()
+
 
 class SubmissionView(UserPassesTestMixin, ContestMixin, TemplateView):
     template_name = 'contests/submission.html'
@@ -336,7 +350,8 @@ class SubmissionView(UserPassesTestMixin, ContestMixin, TemplateView):
                 self.contest)
         return self._contest_submission
 
-    def get_title(self):
+    @property
+    def title(self):
         return "Submission " + str(self.contest_submission.id)
 
     def test_func(self):
@@ -359,9 +374,9 @@ class SubmissionView(UserPassesTestMixin, ContestMixin, TemplateView):
         context['rejudge_url'] = self.rejudge_url()
         return context
 
-submission = SubmissionView.as_view()
 
 class RejudgeView(UserPassesTestMixin, ContestMixin, ContextMixin, View):
+    # TODO maybe split into separate views for single or massive rejudge.
     template_name = 'contests/rejudge_all.html'
     title = "Rejudge"
 
@@ -397,8 +412,6 @@ class RejudgeView(UserPassesTestMixin, ContestMixin, ContextMixin, View):
         return redirect(next)
 
 
-rejudge_view = RejudgeView.as_view()
-
 class RejudgeDone(LoginRequiredMixin, ContestMixin, TemplateView):
     template_name = "contests/rejudge_done.html"
     title = "Rejudge"
@@ -413,8 +426,6 @@ class RejudgeDone(LoginRequiredMixin, ContestMixin, TemplateView):
             context['contest_submission'] = contest_submission
         return context
 
-rejudge_done = RejudgeDone.as_view()
-
 class Teams(LoginRequiredMixin, ContestMixin, TemplateView):
     template_name = "contests/teams.html"
     title = "Teams"
@@ -424,7 +435,6 @@ class Teams(LoginRequiredMixin, ContestMixin, TemplateView):
         context['teams'] = teams_with_member_list(self.contest)
         return context
 
-teams = Teams.as_view()
 
 class Leaderboard(UserPassesTestMixin, ContestMixin, TemplateView):
     template_name = 'contests/leaderboard.html'
@@ -449,7 +459,6 @@ class Leaderboard(UserPassesTestMixin, ContestMixin, TemplateView):
         context['leaderboard'] = build_leaderboard(self.contest, self.stage)
         return context
 
-leaderboard = Leaderboard.as_view()
 
 class TeamCreate(UserPassesTestMixin, ContestMixin, CreateView):
     template_name='contests/new_team.html'
@@ -477,6 +486,7 @@ class TeamCreate(UserPassesTestMixin, ContestMixin, CreateView):
         return reverse('contests:team',
             args=[self.contest.code, self.object.id])
 
+
 class JoinTeam(UserPassesTestMixin, ContestMixin, ContextMixin, View):
     _team = None
 
@@ -495,7 +505,6 @@ class JoinTeam(UserPassesTestMixin, ContestMixin, ContextMixin, View):
         return redirect(
             reverse('contests:team', args=(self.contest.code, self.team.id)))
 
-join_team_view = JoinTeam.as_view()
 
 class LeaveTeam(UserPassesTestMixin, ContestMixin, ContextMixin, View):
     _team = None
@@ -515,7 +524,6 @@ class LeaveTeam(UserPassesTestMixin, ContestMixin, ContextMixin, View):
         return redirect(
             reverse('contests:team', args=(self.contest.code, self.team.id)))
 
-leave_team_view = LeaveTeam.as_view()
 
 class TeamView(LoginRequiredMixin, ContestMixin, TemplateView):
     template_name = 'contests/team.html'
@@ -528,7 +536,8 @@ class TeamView(LoginRequiredMixin, ContestMixin, TemplateView):
             return Team.objects.get(id=self.kwargs['team_id'])
         return self._team
 
-    def get_title(self):
+    @property
+    def title(self):
         return 'Team ' + self.team.name
 
     def get_context_data(self, **kwargs):
@@ -541,4 +550,27 @@ class TeamView(LoginRequiredMixin, ContestMixin, TemplateView):
         context['in_team'] = in_team(self.request.user, self.team)
         return context
 
-team = TeamView.as_view()
+
+class StartObserving(LoginRequiredMixin, ContestMixin, ContextMixin, View):
+
+    def post(self, request, *args, **kwargs):
+        context = self.get_context_data()
+        messages.add_message(request, messages.SUCCESS,
+            mark_safe('You started observing contest <strong>%s</strong>.' %
+                self.contest.name))
+        self.contest.observing.add(request.user)
+        return redirect(
+            reverse('contests:description', args=(self.contest.code,)))
+
+
+class StopObserving(LoginRequiredMixin, ContestMixin, ContextMixin, View):
+
+    def post(self, request, *args, **kwargs):
+        context = self.get_context_data()
+        self.contest.observing.remove(request.user)
+        messages.add_message(request, messages.SUCCESS,
+            mark_safe(
+                'You are no longer observing contest <strong>%s</strong>.' %
+                    self.contest.name))
+        return redirect(
+            reverse('contests:description', args=(self.contest.code,)))

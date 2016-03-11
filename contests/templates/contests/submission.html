@@ -1,9 +1,10 @@
-{% extends "system/layout.html" %}
+{% extends "contests/layout.html" %}
 
 {% load standard %}
 
+{% block contest_title %} Submission {% endblock %}
+
 {% block content %}
-<h1>Submission</h1>
 {% action_form 'rejudge' rejudge_url %}
 <ul>
 <li>
