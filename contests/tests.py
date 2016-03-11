@@ -2,6 +2,7 @@ from django.test import TestCase, RequestFactory, Client
 from django.utils import timezone
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
+from django.core.files.base import ContentFile
 
 from .models import *
 from .views import ContestContext
@@ -149,6 +150,17 @@ class TeamViewTests(TestCase):
         self.assertEqual(team_1.member_list, [])
         self.assertContains(response, 'no members')
 
+def submit_with_score(team, stage, score):
+    cs = ContestSubmission()
+    cs.stage = stage
+    submission = Submission.create(stage.grader, ContentFile('mock_file'))
+    submission.score = score
+    submission.save();
+    cs.submission = submission
+    cs.team = team
+    cs.save()
+    return cs
+
 class LeaderboardTest(TestCase):
     def setUp(self):
         self.contest = ContestFactory.from_dict({
@@ -186,3 +198,10 @@ class LeaderboardTest(TestCase):
         entries_verification = build_leaderboard(self.empty_contest,
             self.empty_contest.verification_stage)
         self.assertEqual(entries_verification, [])
+
+    def test_admin_submission(self):
+        data = SubmissionData()
+        data.output = ''
+        submit_with_score(None, self.empty_contest.verification_stage, 42)
+        entries = build_leaderboard(self.empty_contest, self.empty_contest.verification_stage)
+        self.assertEqual(entries, [])

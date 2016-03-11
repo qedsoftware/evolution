@@ -244,7 +244,7 @@ def can_join_team(user, team):
 def can_create_team(user, contest):
     if not user.is_authenticated() or is_contest_admin(user, contest):
         return False
-    has_team = TeamMember.objects.filter(contest=team.contest, user=user). \
+    has_team = TeamMember.objects.filter(contest=contest, user=user). \
         select_for_update().exists()
     return not has_team
 
@@ -276,6 +276,7 @@ def submit(team, stage, submission_data):
     cs.submission = submission
     cs.team = team
     cs.save()
+    return cs
 
 def can_select_submission(submission):
     if submission.team is None:
@@ -352,7 +353,8 @@ def build_leaderboard(contest, stage):
             return (True, -val)
 
     submissions = ContestSubmission.objects.select_related('submission'). \
-        filter(stage=stage).order_by('submission__created_at')
+        filter(stage=stage).exclude(team__isnull=True). \
+        order_by('submission__created_at')
     if stage.requires_selection:
         submissions = submissions.filter(selected=True)
     teams = teams_with_member_list(contest)
