@@ -20,7 +20,8 @@ from .models import Contest, ContestFactory, ContestSubmission, \
     SubmissionData, submit, ContestStage, rejudge_submission, \
     rejudge_contest, Team, TeamMember, join_team as join_team_action, \
     leave_team as leave_team_action, can_join_team, in_team, \
-    is_contest_admin, teams_with_member_list, build_leaderboard, user_team
+    is_contest_admin, teams_with_member_list, build_leaderboard, user_team, \
+    can_create_team
 
 from .forms import ContestForm, ContestCreateForm, SubmitForm
 
@@ -63,7 +64,7 @@ class ContestContext:
             self.user = None
         self.user_team = user_team(self.user, contest)
         self.is_contest_admin = is_contest_admin(self.user, contest)
-        self.can_create_team = self.user_team is None
+        self.can_create_team = can_create_team(self.user, contest)
         self.can_see_team_submissions = self.user_team is not None
         self.can_see_all_submissions = self.is_contest_admin
         self.can_submit = self.user_team is not None or self.is_contest_admin
@@ -319,11 +320,14 @@ class Submit(UserPassesTestMixin, ContestMixin, FormView):
         return super(Submit, self).form_valid(form)
 
 
-class Submissions(LoginRequiredMixin, ContestMixin, ListView):
+class Submissions(UserPassesTestMixin, ContestMixin, ListView):
     context_object_name = 'submissions'
     template_name = "contests/submissions.html"
     paginate_by = 10
     title = "Submissions"
+
+    def test_func(self):
+        return self.contest_context.is_contest_admin
 
     def get_queryset(self):
         return ContestSubmission.objects. \
@@ -373,6 +377,20 @@ class SubmissionView(UserPassesTestMixin, ContestMixin, TemplateView):
         context['grading_history'] = grading_history
         context['rejudge_url'] = self.rejudge_url()
         return context
+
+class MySubmissions(UserPassesTestMixin, ContestMixin, ListView):
+    context_object_name = 'submissions'
+    template_name = "contests/submissions.html"
+    paginate_by = 10
+    title = "My Submissions"
+
+    def test_func(self):
+        return self.contest_context.is_contest_admin or \
+            self.contest_context.user_team is not None
+
+    def get_queryset(self):
+        return ContestSubmission.objects.filter(
+            team=self.contest_context.user_team)
 
 
 class RejudgeView(UserPassesTestMixin, ContestMixin, ContextMixin, View):

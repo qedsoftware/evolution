@@ -1,7 +1,8 @@
 {% extends "system/layout.html" %}
 
+{% block content_title %} News {% endblock %}
+
 {% block content %}
-  <h1>News</h1>
   {% for news_item in news %}
   <div class="news-item">
     <h2> {{news_item.title}} </h2>

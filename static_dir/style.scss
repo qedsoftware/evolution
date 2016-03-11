@@ -1,8 +1,12 @@
 $link-color: #2277DD;
 $error-color: #B30000;
-$attention-background-color: #FFFF7F;
 $hint-color: #888;
+
+$debug-background-color: #eee;
+$info-background-color: #ccf;
 $success-background-color: #dfd;
+$attention-background-color: #FFFF7F;
+$error-background-color: #faa;
 
 html {
 	height: 100%
@@ -37,6 +41,7 @@ body > .container { height: auto; min-height: 100%; }
 
 h1 {
 	margin: 0;
+	margin-bottom: 20px;
 }
 
 pre {
@@ -52,25 +57,55 @@ pre {
 	list-style-type: none;
 	li {
 		width: 100%;
-		padding: 10px;
-		margin: 5px;
-		padding-left: 5px;
+		padding: 5px;
 		font-size: 13px;
 		margin: 0px;
+	}
+	.message-box {
+		width: 100%;
+		padding: 10px;
+		padding-left: 5px;
 		display: flex;
 		align-items: center;
+		p, pre {
+			margin: 5px 0px;
+		}
 	}
-	li.success {
-		background-color: #dfd;
+	.message-box.debug {
+		background-color: $debug-background-color;
+		i.message-icon:after {
+			content: 'build';
+		}
+	}
+	.message-box.info {
+		background-color: $info-background-color;
+		i.message-icon:after {
+			content: 'info';
+		}
+	}
+	.message-box.success {
+		background-color: $success-background-color;
 		i.message-icon:after {
 			content: 'done';
+		}
+	}
+	.message-box.warning {
+		background-color: $attention-background-color;
+		i.message-icon:after {
+			content: 'warning';
+		}
+	}
+	.message-box.error {
+		background-color: $error-background-color;
+		i.message-icon:after {
+			content: 'error';
 		}
 	}
 	.message-icon {
 		height: 100%;
 		font-size: 24px;
 		display: inline-block;
-		padding: 5px;
+		padding: 5px 7px;
 	}
 
 	.message {
@@ -402,4 +437,18 @@ table {
 .contest-subtitle {
 	font-size: 18px;
 	font-weight: normal;
+}
+
+.submission-table {
+	width: 100%;
+	tr {
+		cursor: pointer;
+		-webkit-user-select: none; /* Chrome/Safari */
+		-moz-user-select: none; /* Firefox */
+		-ms-user-select: none; /* IE10+ */
+		user-select: none;
+	}
+	tr.submission_row:hover {
+		background-color: #bcd6ff;
+	}
 }

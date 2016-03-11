@@ -15,6 +15,9 @@
       {% if contest_context.can_submit %}
         <li class="menu-item"><a href="{% url 'contests:submit' contest.code %}">Send Submission</a></li>
       {% endif %}
+      {% if contest_context.user_team or contest_context.is_contest_admin %}
+        <li class="menu-item"><a href="{% url 'contests:my_submissions' contest.code %}">My Submissions</a></li>
+      {% endif %}
       {% if contest_context.can_see_all_submissions %}
         <li class="menu-item"><a href="{% url 'contests:submissions' contest.code %}">Submissions</a></li>
       {% endif %}

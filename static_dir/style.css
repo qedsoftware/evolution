@@ -25,7 +25,8 @@ body > .container {
   min-height: 100%; }
 
 h1 {
-  margin: 0; }
+  margin: 0;
+  margin-bottom: 20px; }
 
 pre {
   font-size: 12px;
@@ -39,22 +40,42 @@ pre {
   list-style-type: none; }
   .messages li {
     width: 100%;
-    padding: 10px;
-    margin: 5px;
-    padding-left: 5px;
+    padding: 5px;
     font-size: 13px;
-    margin: 0px;
+    margin: 0px; }
+  .messages .message-box {
+    width: 100%;
+    padding: 10px;
+    padding-left: 5px;
     display: flex;
     align-items: center; }
-  .messages li.success {
+    .messages .message-box p, .messages .message-box pre {
+      margin: 5px 0px; }
+  .messages .message-box.debug {
+    background-color: #eee; }
+    .messages .message-box.debug i.message-icon:after {
+      content: 'build'; }
+  .messages .message-box.info {
+    background-color: #ccf; }
+    .messages .message-box.info i.message-icon:after {
+      content: 'info'; }
+  .messages .message-box.success {
     background-color: #dfd; }
-    .messages li.success i.message-icon:after {
+    .messages .message-box.success i.message-icon:after {
       content: 'done'; }
+  .messages .message-box.warning {
+    background-color: #FFFF7F; }
+    .messages .message-box.warning i.message-icon:after {
+      content: 'warning'; }
+  .messages .message-box.error {
+    background-color: #faa; }
+    .messages .message-box.error i.message-icon:after {
+      content: 'error'; }
   .messages .message-icon {
     height: 100%;
     font-size: 24px;
     display: inline-block;
-    padding: 5px; }
+    padding: 5px 7px; }
   .messages .message {
     height: 100%;
     display: inline-block; }
@@ -290,5 +311,19 @@ table {
 .contest-subtitle {
   font-size: 18px;
   font-weight: normal; }
+
+.submission-table {
+  width: 100%; }
+  .submission-table tr {
+    cursor: pointer;
+    -webkit-user-select: none;
+    /* Chrome/Safari */
+    -moz-user-select: none;
+    /* Firefox */
+    -ms-user-select: none;
+    /* IE10+ */
+    user-select: none; }
+  .submission-table tr.submission_row:hover {
+    background-color: #bcd6ff; }
 
 /*# sourceMappingURL=style.css.map */

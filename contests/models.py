@@ -233,7 +233,8 @@ def leave_team(user, team):
 
 @transaction.atomic
 def can_join_team(user, team):
-    if not user.is_authenticated():
+    is_admin = is_contest_admin(user, team.contest)
+    if not user.is_authenticated() or is_admin:
         return False
     has_team = TeamMember.objects.filter(contest=team.contest, user=user). \
         select_for_update().exists()
@@ -241,7 +242,7 @@ def can_join_team(user, team):
 
 @transaction.atomic
 def can_create_team(user, contest):
-    if not user.is_authenticated():
+    if not user.is_authenticated() or is_contest_admin(user, contest):
         return False
     has_team = TeamMember.objects.filter(contest=team.contest, user=user). \
         select_for_update().exists()
@@ -251,6 +252,7 @@ class ContestSubmission(models.Model):
     stage = models.ForeignKey('ContestStage', related_name='+')
     submission = models.OneToOneField('base.Submission')
     team = models.ForeignKey('Team', blank=True, null=True)
+    comment = models.CharField(max_length=255, blank=True, default="")
     selected = models.BooleanField(default=False)
 
     def __repr__(self):

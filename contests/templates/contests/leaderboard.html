@@ -7,39 +7,39 @@
 {{leaderboard_description}}
 
 {% if leaderboard %}
-	<table class="result-table">
-		<tr>
-			<th>#</th>
-			<th>Team</th>
-			<th>Score</th>
-		</tr>
-		{% for entry in leaderboard %}
-		<tr>
-			<td class="position-cell">
-				{{entry.position}}
-			</td>
-			<td class="team-cell">
-				{{entry.team.name}}
-				<ul class="team-members">
-					{% for member in entry.team.member_list %}
-						<li>{{member.user.get_full_name}}</li>
-					{% empty %}
-						<li><em>No members</em></li>
-					{% endfor %}
-				</ul>
-			</td>
-			<td class="score-cell">
-				{% if entry.score %}
-				{{entry.score}}
-				{% endif %}
-			</td>
-		</tr>
-		{% empty %}
-		{% endfor %}
-	</table>
+    <table class="result-table">
+        <tr>
+            <th>#</th>
+            <th>Team</th>
+            <th>Score</th>
+        </tr>
+        {% for entry in leaderboard %}
+        <tr>
+            <td class="position-cell">
+                {{entry.position}}
+            </td>
+            <td class="team-cell">
+                {{entry.team.name}}
+                <ul class="team-members">
+                    {% for member in entry.team.member_list %}
+                        <li>{{member.user.get_full_name}}</li>
+                    {% empty %}
+                        <li><em>No members</em></li>
+                    {% endfor %}
+                </ul>
+            </td>
+            <td class="score-cell">
+                {% if entry.score %}
+                {{entry.score}}
+                {% endif %}
+            </td>
+        </tr>
+        {% empty %}
+        {% endfor %}
+    </table>
 {% else %}
-	<p>
-		There are currently no teams in this leaderboard.
-	</p>
+    <p>
+        There are currently no teams in this leaderboard.
+    </p>
 {% endif %}
 {% endblock content %}

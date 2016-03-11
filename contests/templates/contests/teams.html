@@ -4,31 +4,31 @@
 
 {% block content %}
 {% if contest_context.can_create_team %}
-	<a class="action-button" href={% url 'contests:new_team' contest.code %}>new team</a>
+    <a class="action-button" href={% url 'contests:new_team' contest.code %}>new team</a>
 {% endif %}
 
 <div class="teams-list">
-	{% if teams %}
-	<ul>
-	{% for team in teams %}
-		<li>
-			<a href="{% url 'contests:team' contest.code team.id %}">{{team.name}} </a>
-			<ul>
-				{% for member in team.member_list %}
-					<li>
-						{{member.user.get_full_name}}
-					</li>
-				{% empty %}
-					<li>Currently this team has no members.</li>
-				{% endfor %}
-			</ul>
-		</li>
-	{% empty %}
-	<p>
-	{% endfor %}
-	</ul>
-	{% else %}
-	<p> There are currently no teams registered for this contest.</p>
-	{% endif %}
+    {% if teams %}
+    <ul>
+    {% for team in teams %}
+        <li>
+            <a href="{% url 'contests:team' contest.code team.id %}">{{team.name}} </a>
+            <ul>
+                {% for member in team.member_list %}
+                    <li>
+                        {{member.user.get_full_name}}
+                    </li>
+                {% empty %}
+                    <li>Currently this team has no members.</li>
+                {% endfor %}
+            </ul>
+        </li>
+    {% empty %}
+    <p>
+    {% endfor %}
+    </ul>
+    {% else %}
+    <p> There are currently no teams registered for this contest.</p>
+    {% endif %}
 </div>
 {% endblock content %}

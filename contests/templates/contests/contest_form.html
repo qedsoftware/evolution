@@ -7,11 +7,11 @@
 {% block content %}
 
 {% if contest_context.is_observing %}
-{% url 'contests:unobserve' contest.code as unobserve_url %}
-{% action_form 'stop observing' unobserve_url %}
+	{% url 'contests:unobserve' contest.code as unobserve_url %}
+	{% action_form 'stop observing' unobserve_url %}
 {% else %}
-{% url 'contests:observe' contest.code as observe_url %}
-{% action_form 'start observing' observe_url %}
+	{% url 'contests:observe' contest.code as observe_url %}
+	{% action_form 'start observing' observe_url %}
 {% endif %}
 
 <form class="standard-form" action="{{ request.get_full_path }}" enctype="multipart/form-data" method="post">

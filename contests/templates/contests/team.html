@@ -6,17 +6,17 @@
 
 {% block content %}
 {% if can_join %}
-	{% url 'contests:join_team' contest.code team.id as join_url %}
-	{% action_form 'join' join_url %}
+    {% url 'contests:join_team' contest.code team.id as join_url %}
+    {% action_form 'join' join_url %}
 {% endif %}
 {% if in_team %}
-	{% url 'contests:leave_team' contest.code team.id as leave_url %}
-	{% action_form 'leave' leave_url %}
+    {% url 'contests:leave_team' contest.code team.id as leave_url %}
+    {% action_form 'leave' leave_url %}
 {% endif %}
 <h2>Members</h2>
 <ul>
-	{% for member in members %}
-		<li>{{member.user.get_full_name}}</li>
-	{% endfor %}
+    {% for member in members %}
+        <li>{{member.user.get_full_name}}</li>
+    {% endfor %}
 </ul>
 {% endblock content %}

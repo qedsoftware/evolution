@@ -6,52 +6,52 @@
 
 {% if my_memberships %}
 <div class=my-contests>
-	<h2>My contests</h2>
-	<span class="helptext">These are the contests that you participate in (you are a member of a team in the contest).</span>
-	<ul>
-		{% for membership in my_memberships %}
-			<li><a href="{% url 'contests:description' membership.contest.code %}">{{membership.contest.name}}</a> in team <em>{{membership.team.name}}</em></li>
-		{% endfor %}
-	</ul>
+    <h2>My contests</h2>
+    <span class="helptext">These are the contests that you participate in (you are a member of a team in the contest).</span>
+    <ul>
+        {% for membership in my_memberships %}
+            <li><a href="{% url 'contests:description' membership.contest.code %}">{{membership.contest.name}}</a> in team <em>{{membership.team.name}}</em></li>
+        {% endfor %}
+    </ul>
 </div>
 {% endif %}
 
 {% if observed_contests %}
 <div class=observed-contests>
-	<h2>Observed contests</h2>
-	{% include "contests/observing-helptext.html" %}
-	<ul>
-		{% for contest in observed_contests %}
-			<li><a href="{% url 'contests:description' contest.code %}">{{contest.name}}</a></li>
-		{% endfor %}
-	</ul>
+    <h2>Observed contests</h2>
+    {% include "contests/observing-helptext.html" %}
+    <ul>
+        {% for contest in observed_contests %}
+            <li><a href="{% url 'contests:description' contest.code %}">{{contest.name}}</a></li>
+        {% endfor %}
+    </ul>
 </div>
 {% endif %}
 
 <div class="all-contests-list">
-	<h2>All contests</h2>
-	<ul>
-	{% for contest in contests %}
-	    <li>
-	    	<a href={% url 'contests:description' contest.code %}> {{contest.name}} ({{ contest.code }}) </a>
-	    </li>
-	{% endfor %}
-	</ul>
+    <h2>All contests</h2>
+    <ul>
+    {% for contest in contests %}
+        <li>
+            <a href={% url 'contests:description' contest.code %}> {{contest.name}} ({{ contest.code }}) </a>
+        </li>
+    {% endfor %}
+    </ul>
 
-	<div class="pagination">
-	    <span class="step-links">
-	        {% if contests.has_previous %}
-	            <a href="?page={{ contests.previous_page_number }}">previous</a>
-	        {% endif %}
+    <div class="pagination">
+        <span class="step-links">
+            {% if contests.has_previous %}
+                <a href="?page={{ contests.previous_page_number }}">previous</a>
+            {% endif %}
 
-	        <span class="current">
-	            Page {{ contests.number }} of {{ contests.paginator.num_pages }}.
-	        </span>
+            <span class="current">
+                Page {{ contests.number }} of {{ contests.paginator.num_pages }}.
+            </span>
 
-	        {% if contests.has_next %}
-	            <a href="?page={{ contests.next_page_number }}">next</a>
-	        {% endif %}
-	    </span>
-	</div>
+            {% if contests.has_next %}
+                <a href="?page={{ contests.next_page_number }}">next</a>
+            {% endif %}
+        </span>
+    </div>
 </div>
 {% endblock content %}

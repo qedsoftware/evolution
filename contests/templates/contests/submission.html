@@ -7,41 +7,33 @@
 {% block content %}
 {% action_form 'rejudge' rejudge_url %}
 <ul>
-<li>
-Submitted at: <strong>{{submission.created_at}}</strong>
-</li>
-<li>
-Score: {{submission.current_attempt.score}}
-</li>
-<li>
-Needs grading: {{submission.needs_grading}}
-</li>
-<li>
-Grading requested at: {{submission.needs_grading_at}}
-</li>
+<li>Submitted at: <strong>{{submission.created_at}}</strong></li>
+<li>Score: {{submission.current_attempt.score}}</li>
+<li>Needs grading: {{submission.needs_grading}}</li>
+<li>Grading requested at: {{submission.needs_grading_at}}</li>
 {% if contest_context.is_contest_admin %}
-<li>
-Current attempt: {{submission.current_attempt.id}}
-</li>
+<li>Current attempt: {{submission.current_attempt.id}}</li>
 {% endif %}
 
 </ul>
 
-<h2>Grading history</h2>
-<ul>
-{% for attempt in grading_history %}
-    <li>
-    	<ul>
-            <li>Attempt Id: {{attempt.id}}</li>
-    		<li>Started at: {{attempt.created_at}}</li>
-    		<li>Finished at: {{attempt.finished_at}}</li>
-    		<li>Finished: {{attempt.finished}}</li>
-    		<li>Succed: {{attempt.succed}}</li>
-    		<li>Score: {{attempt.score}}</li>
-    		<li>Aborted: {{attempt.aborted}}</li>
-    		<li>Log: {{attempt.log}}</li>{# TODO ADD ACTUAL LINK #}
-    	</ul>
-    </li>
-{% endfor %}
-</ul>
+{% if contest_context.is_contest_admin %}
+    <h2>Grading history</h2>
+    <ul>
+    {% for attempt in grading_history %}
+        <li>
+            <ul>
+                <li>Attempt Id: {{attempt.id}}</li>
+                <li>Started at: {{attempt.created_at}}</li>
+                <li>Finished at: {{attempt.finished_at}}</li>
+                <li>Finished: {{attempt.finished}}</li>
+                <li>Succed: {{attempt.succed}}</li>
+                <li>Score: {{attempt.score}}</li>
+                <li>Aborted: {{attempt.aborted}}</li>
+                <li>Log: {{attempt.log}}</li>{# TODO ADD ACTUAL LINK #}
+            </ul>
+        </li>
+    {% endfor %}
+    </ul>
+{% endif %}
 {% endblock content %}

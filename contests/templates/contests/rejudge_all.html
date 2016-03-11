@@ -7,11 +7,12 @@
 {% block content %}
 
 <p>
-Here you can rejudge all submission in this contest. <strong>It can take a long time</strong>, depending on the number of submissions and how fast or slow is the scoring script.
+	Here you can rejudge all submission in this contest. <strong>It can take a long time</strong>, depending on the number of submissions and how fast or slow is the scoring script.
 </p>
 <p>
-You can also rejudge individual submissions from their details view.
+	You can also rejudge individual submissions from their details view.
 </p>
+
 {% url 'contests:rejudge' contest.code as rejudge_url %}
 {% action_form 'Do it!' rejudge_url %}
 

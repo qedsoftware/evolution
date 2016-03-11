@@ -5,29 +5,40 @@
 {% block contest_title %} Submissions {% endblock %}
 
 {% block content %}
-<div class="submissions-list">
-	<ul>
-	{% for submission in submissions %}
-	    <li>
-	    	<a href="{% url 'contests:submission' contest.code submission.id %}">{{submission.id}} </a>
-	    </li>
-	{% endfor %}
-	</ul>
+<div class="submission-table">
+    <table class="submission-table">
+    <tr>
+        <th>Team</th>
+        <th>Id</th>
+        <th>Submission Time</th>
+        <th>Score</th>
+        <th>Comment</th>
+    </tr>
+    {% for submission in submissions %}
+        <tr class="submission_row" onclick="document.location = '{% url 'contests:submission' contest.code submission.id %}';">
+            <td class="team-cell">{{submission.team}}</td>
+            <td class="id-cell">{{submission.id}}</td>
+            <td class="time-cell">{{submission.submission.created_at}}</td>
+            <td class="score-cell">{{submission.submission.score}}</td>
+            <td class="comment-cell">{{submission.comment}}</td>
+        </tr>
+    {% endfor %}
+    </table>
 
-	<div class="pagination">
-	    <span class="step-links">
-	        {% if page_obj.has_previous %}
-	            <a href="?page={{ submissions.previous_page_number }}">previous</a>
-	        {% endif %}
+    <div class="pagination">
+        <span class="step-links">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ submissions.previous_page_number }}">previous</a>
+            {% endif %}
 
-	        <span class="current">
-	            Page {{ page_obj.number }} of {{ paginator.num_pages }}.
-	        </span>
+            <span class="current">
+                Page {{ page_obj.number }} of {{ paginator.num_pages }}.
+            </span>
 
-	        {% if page_obj.has_next %}
-	            <a href="?page={{ page_obj.next_page_number }}">next</a>
-	        {% endif %}
-	    </span>
-	</div>
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}">next</a>
+            {% endif %}
+        </span>
+    </div>
 </div>
 {% endblock content %}

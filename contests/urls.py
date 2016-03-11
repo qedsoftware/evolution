@@ -14,6 +14,8 @@ urlpatterns = [
         views.Submit.as_view(), name='submit'),
     url(r'^contest/(?P<contests_code>[-\w]+)/submissions/$',
         views.Submissions.as_view(), name='submissions'),
+    url(r'^contest/(?P<contests_code>[-\w]+)/my_submissions/$',
+        views.MySubmissions.as_view(), name='my_submissions'),
     url(r'^contest/(?P<contests_code>[-\w]+)/submission/(?P<submission_id>[0-9]+)/$',
         views.SubmissionView.as_view(), name='submission'),
     url(r'^contest/(?P<contests_code>[-\w]+)/rejudge/(?P<submission_id>[0-9]+)/$',
