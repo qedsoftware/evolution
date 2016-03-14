@@ -378,6 +378,14 @@ table {
   text-align: center;
   font-size: 12px;
   padding: 10px; }
+  .selection-box .action-form input[type=submit] {
+    text-transform: uppercase;
+    padding: 0px;
+    width: auto;
+    border: 0px;
+    height: auto; }
+  .selection-box .selection-remaining {
+    display: block; }
 
 .selection-state {
   text-transform: uppercase;

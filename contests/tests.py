@@ -114,6 +114,15 @@ class ContestContextTest(TestCase):
             contest=self.another_contest)
         self.assertEqual(context.user_team, self.another_team)
 
+class Teams(WebTest):
+    def setUp(self):
+        standard_base(self)
+
+    def test_teams(self):
+        page = self.app.get(reverse('contests:teams',
+            args=['contest']), user='user')
+        page.mustcontain('Teams', 'new team')
+
 class TeamViewTests(TestCase):
     def setUp(self):
         self.alice = new_user('alice')
@@ -153,7 +162,7 @@ class TeamViewTests(TestCase):
         self.assertEqual(team_0, self.team_a)
         self.assertEqual(team_1, self.team_b)
         self.assertEqual(team_1.member_list, [])
-        self.assertContains(response, 'no members')
+        self.assertContains(response, 'No members')
 
 def submit_with_score(team, stage, score):
     cs = ContestSubmission()
@@ -377,15 +386,6 @@ class RejudgeTest(WebTest):
         submission = submit_with_score(None, self.contest.test_stage, 42)
         page = self.app.get(reverse('contests:submission',
             args=[self.contest.code, submission.id]), user='admin')
-        page = page.form.submit().follow()
+        page = page.forms['rejudge-single'].submit().follow()
         page.mustcontain('Submission', str(submission.id),
             'marked for rejudging')
-
-class Teams(WebTest):
-    def setUp(self):
-        standard_base(self)
-
-    def test_teams(self):
-        page = self.app.get(reverse('contests:teams',
-            args=['contest']), user='user')
-        page.mustcontain('Teams', 'new team')

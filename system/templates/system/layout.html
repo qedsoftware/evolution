@@ -21,9 +21,17 @@
       </div>
       <div class="page-content">
         <h1>{% block content_title %} {{ content_title }} {% endblock %}</h1>
-        {% if messages %}
+        {% if messages or static_messages %}
           <ul class="messages">
               {% for message in messages %}
+                <li>
+                  <div class="message-box {{ message.tags }}">
+                    <div message-icon><i class="material-icons message-icon"></i></div>
+                    <div class=message>{{ message }} </div>
+                  </div>
+                </li>
+              {% endfor %}
+              {% for message in static_messages %}
                 <li>
                   <div class="message-box {{ message.tags }}">
                     <div message-icon><i class="material-icons message-icon"></i></div>

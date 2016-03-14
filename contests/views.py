@@ -14,18 +14,20 @@ from django.db import transaction
 from django.contrib import messages
 from django.utils.safestring import mark_safe
 
-from system.views import title, PostDataView
+from system.views import title, PostDataView, add_static_message
 
 from .models import Contest, ContestFactory, ContestSubmission, \
     SubmissionData, submit, ContestStage, rejudge_submission, \
     rejudge_contest, Team, TeamMember, join_team as join_team_action, \
     leave_team as leave_team_action, can_join_team, in_team, \
     is_contest_admin, teams_with_member_list, build_leaderboard, user_team, \
-    can_create_team, StageIsClosed
+    can_create_team, StageIsClosed, SelectionError, select_submission, \
+    unselect_submission
 
 from .forms import ContestForm, ContestCreateForm, SubmitForm
 
 from base.models import GradingAttempt
+
 
 class ContestContext:
     # TODO move to model
@@ -76,8 +78,8 @@ class ContestContext:
         self.is_observing = self.user and \
             contest.observing.filter(id=self.user.id).exists()
         self.stage_names = {
-            contest.verification_stage.id: 'verification',
-            contest.test_stage.id: 'final'
+            contest.verification_stage.id: 'Verification',
+            contest.test_stage.id: 'Final'
         }
         self.stages = [contest.verification_stage, contest.test_stage]
 
@@ -114,6 +116,13 @@ class ContestContext:
         result.append('>')
         return ''.join(result)
 
+
+def add_contest_messages(context, contest_context):
+    cc = contest_context
+    if cc.user_team is None and not cc.is_contest_admin:
+        add_static_message(context, messages.INFO,
+            "To participate in the contest, join a team"
+            " or create your own.")
 
 def contest_title(contest, text = None):
     return ' - '.join(filter(None, [contest.name, text]))
@@ -160,11 +169,16 @@ class ContestMixin(object):
             self._contest = contest_qs.get()
         return self._contest
 
+    @property
+    def contest_url(self):
+        return reverse('contests:description', args=(self.contest.code,))
+
     def get_context_data(self, **kwargs):
         context = super(ContestMixin, self).get_context_data(**kwargs)
         context['contest'] = self.contest
         context['contest_context'] = self.contest_context
         context['title'] = contest_title(self.contest, self.title)
+        add_contest_messages(context, self.contest_context)
         return context
 
 
@@ -257,6 +271,7 @@ class ContestUpdate(UserPassesTestMixin, ContestMixin, FormView):
         initial['test_end'] = contest.test_stage.end
         initial['published_final_results'] = \
             contest.test_stage.published_results
+        initial['selected_limit'] = contest.test_stage.selected_limit
         return initial
 
     def get_context_data(self, **kwargs):
@@ -379,54 +394,10 @@ class Submissions(UserPassesTestMixin, ContestMixin, ListView):
 
     def get_queryset(self):
         return ContestSubmission.objects. \
+            select_related('submission'). \
             filter(stage__contest=self.contest). \
             order_by('-submission__created_at')
 
-
-def ensure_submission_contest_match(submission, contest):
-    if submission.stage.contest != contest:
-        raise PermissionDenied()
-
-
-class SubmissionView(UserPassesTestMixin, ContestMixin, TemplateView):
-    template_name = 'contests/submission.html'
-
-    _contest_submission = None
-
-    @property
-    def contest_submission(self):
-        if not self._contest_submission:
-            submission_id = self.kwargs['submission_id']
-            self._contest_submission = ContestSubmission.objects. \
-                select_related('submission').get(id=submission_id)
-            ensure_submission_contest_match(self._contest_submission,
-                self.contest)
-        return self._contest_submission
-
-    @property
-    def title(self):
-        return "Submission " + str(self.contest_submission.id)
-
-    def test_func(self):
-        return self.contest_context.can_see_submission(self.contest_submission)
-
-    def rejudge_url(self):
-        return reverse('contests:rejudge',
-            args=[self.contest.code, self.contest_submission.id]) + \
-            '?next=' + self.request.path
-
-    def get_context_data(self, **kwargs):
-        context = super(SubmissionView, self).get_context_data(**kwargs)
-        cs = self.contest_submission
-        submission = self.contest_submission.submission
-        grading_history = GradingAttempt.objects. \
-            filter(submission=submission).order_by('-created_at').all()
-        context['result'] = self.contest_context.visible_submission_result(cs)
-        context['contest_submission'] = cs
-        context['submission'] = submission
-        context['grading_history'] = grading_history
-        context['rejudge_url'] = self.rejudge_url()
-        return context
 
 class MySubmissions(UserPassesTestMixin, ContestMixin, ListView):
     context_object_name = 'submissions'
@@ -439,65 +410,112 @@ class MySubmissions(UserPassesTestMixin, ContestMixin, ListView):
             self.contest_context.user_team is not None
 
     def get_queryset(self):
-        return ContestSubmission.objects.filter(
-            team=self.contest_context.user_team)
+        return ContestSubmission.objects. \
+            select_related('submission'). \
+            filter(team=self.contest_context.user_team). \
+            order_by('-submission__created_at')
 
 
-class RejudgeView(UserPassesTestMixin, ContestMixin, ContextMixin, View):
-    # TODO maybe split into separate views for single or massive rejudge.
-    template_name = 'contests/rejudge_all.html'
-    title = "Rejudge"
+
+def ensure_submission_contest_match(submission, contest):
+    if submission.stage.contest != contest:
+        raise PermissionDenied()
+
+class SubmissionMixin(ContestMixin):
+    _submission = None
+
+    @property
+    def submission(self):
+        if not self._submission:
+            self._submission = ContestSubmission.objects. \
+                select_related('submission'). \
+                select_related('stage'). \
+                get(id=self.kwargs['submission_id'])
+            ensure_submission_contest_match(self._submission,
+                self.contest)
+        return self._submission
+
+    @property
+    def selection_change_active(self):
+        """
+        If the user can change the selection. This shouldn't take
+        into account the number of selected submissions. Only the matters
+        specific to this submission and stage.
+        """
+        # Maybe move to model?
+        return self.submission.stage.requires_selection and \
+            self.submission.stage.is_open() and \
+            self.submission.team is not None and \
+            contest_context.user_team == self.submission.team
+
+
+    def get_context_data(self, **kwargs):
+        context = super(SubmissionMixin, self).get_context_data(**kwargs)
+        context['contest_submission'] = self.submission
+        context['submission'] = self.submission.submission
+        context['selection_change_active'] = self.selection_change_active
+        return context
+
+class SubmissionView(UserPassesTestMixin, SubmissionMixin, TemplateView):
+
+    template_name = 'contests/submission.html'
+
+    @property
+    def title(self):
+        return "Submission " + str(self.submission.id)
 
     def test_func(self):
-        return self.contest_context.is_contest_admin
+        return self.contest_context.can_see_submission(self.submission)
 
-    rejudge_single_msg = "Submission <strong>%s</strong> was successfully " \
-        "marked for rejudging."
+    def rejudge_url(self):
+        return reverse('contests:rejudge',
+            args=[self.contest.code, self.submission.id]) + \
+            '?next=' + self.request.path
+
+    def get_context_data(self, **kwargs):
+        context = super(SubmissionView, self).get_context_data(**kwargs)
+        cs = self.submission
+        submission = self.submission.submission
+        grading_history = GradingAttempt.objects. \
+            filter(submission=submission).order_by('-created_at').all()
+        context['result'] = self.contest_context.visible_submission_result(cs)
+        context['grading_history'] = grading_history
+        context['rejudge_url'] = self.rejudge_url()
+        context['stage_name'] = \
+            self.contest_context.stage_names[self.submission.stage.id]
+        return context
+
+
+class ContestRejudgeView(UserPassesTestMixin, ContestMixin, TemplateView):
+    template_name = 'contests/rejudge_all.html'
+    title = "Rejudge"
 
     rejudge_all_msg = "All submissions in the contest <strong>%s</strong> " \
         "were successfully marked for rejudging."
 
-    @property
-    def submission_id(self):
-        return self.kwargs.get('submission_id')
-
-    def get(self, request, *args, **kwargs):
-        if self.submission_id:
-            return redirect(reverse('contests:submission',
-                args=[self.contest.code, submission_id]))
-        else:
-            context = self.get_context_data(**kwargs)
-            return render(request, self.template_name, context)
+    def test_func(self):
+        return self.contest_context.is_contest_admin
 
     def post(self, request, *args, **kwargs):
-        if self.submission_id:
-            contest_submission = ContestSubmission.objects. \
-                get(id=self.submission_id)
-            ensure_submission_contest_match(contest_submission, self.contest)
-            rejudge_submission(contest_submission)
-            messages.add_message(self.request, messages.SUCCESS, mark_safe(
-                self.rejudge_single_msg % contest_submission.id))
-            next = request.GET.get('next',
-                default=reverse('contests:description',
-                    args=[self.contest.code]))
-        else:
-            rejudge_contest(self.contest)
-            messages.add_message(self.request, messages.SUCCESS, mark_safe(
-                    self.rejudge_all_msg % self.contest.name))
-            next = request.GET.get('next',
-                default=reverse('contests:submissions',
-                    args=[self.contest.code]))
-        return redirect(next)
+        rejudge_contest(self.contest)
+        messages.add_message(self.request, messages.SUCCESS, mark_safe(
+                self.rejudge_all_msg % self.contest.name))
+        return redirect(request.GET.get('next', default=self.contest_url))
 
 
-class Teams(LoginRequiredMixin, ContestMixin, TemplateView):
-    template_name = "contests/teams.html"
-    title = "Teams"
+class SubmissionRejudgeView(UserPassesTestMixin, SubmissionMixin, ContextMixin,
+                            View):
+    rejudge_single_msg = "Submission <strong>%s</strong> was successfully " \
+        "marked for rejudging."
 
-    def get_context_data(self, **kwargs):
-        context = super(Teams, self).get_context_data(**kwargs)
-        context['teams'] = teams_with_member_list(self.contest)
-        return context
+    def test_func(self):
+        return self.contest_context.is_contest_admin
+
+    def post(self, request, *args, **kwargs):
+        rejudge_submission(self.submission)
+        messages.add_message(self.request, messages.SUCCESS, mark_safe(
+            self.rejudge_single_msg % self.submission.id))
+        return redirect(request.GET.get('next', default=self.contest_url))
 
 
 class Leaderboard(UserPassesTestMixin, ContestMixin, TemplateView):
@@ -513,6 +531,7 @@ class Leaderboard(UserPassesTestMixin, ContestMixin, TemplateView):
         context['leaderboard'] = build_leaderboard(self.contest, self.stage)
         return context
 
+
 class PublicLeaderboard(Leaderboard):
     template_name = 'contests/public_leaderboard.html'
 
@@ -522,6 +541,7 @@ class PublicLeaderboard(Leaderboard):
     def stage(self):
         return self.contest.verification_stage
 
+
 class TestLeaderboard(Leaderboard):
     template_name = 'contests/test_leaderboard.html'
 
@@ -530,6 +550,16 @@ class TestLeaderboard(Leaderboard):
     @property
     def stage(self):
         return self.contest.test_stage
+
+
+class Teams(LoginRequiredMixin, ContestMixin, TemplateView):
+    template_name = "contests/teams.html"
+    title = "Teams"
+
+    def get_context_data(self, **kwargs):
+        context = super(Teams, self).get_context_data(**kwargs)
+        context['teams'] = teams_with_member_list(self.contest)
+        return context
 
 
 class TeamCreate(UserPassesTestMixin, ContestMixin, CreateView):
@@ -627,12 +657,11 @@ class StartObserving(LoginRequiredMixin, ContestMixin, ContextMixin, View):
 
     def post(self, request, *args, **kwargs):
         context = self.get_context_data(**kwargs)
+        self.contest.observing.add(request.user)
         messages.add_message(request, messages.SUCCESS,
             mark_safe('You started observing contest <strong>%s</strong>.' %
                 self.contest.name))
-        self.contest.observing.add(request.user)
-        return redirect(
-            reverse('contests:description', args=(self.contest.code,)))
+        return redirect(self.contest_url)
 
 
 class StopObserving(LoginRequiredMixin, ContestMixin, ContextMixin, View):
@@ -644,8 +673,51 @@ class StopObserving(LoginRequiredMixin, ContestMixin, ContextMixin, View):
             mark_safe(
                 'You are no longer observing contest <strong>%s</strong>.' %
                     self.contest.name))
+        return redirect(self.contest_url)
+
+
+class SelectSubmission(UserPassesTestMixin, SubmissionMixin, ContextMixin,
+                       View):
+
+    def test_func(self):
+        return self.contest_context.user_team == self.submission.team
+
+    def post(self, request, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        try:
+            select_submission(self.submission)
+            messages.add_message(request, messages.SUCCESS,
+                mark_safe("Submission <strong>%s</strong> selected." %
+                    self.submission.id))
+        except SelectionError as e:
+            messages.error(request, mark_safe(
+                "<p>You failed to unselect submission <strong>%s</strong>.</p>"
+                "<p>%s</p>" % (self.submission.id, str(e))))
         return redirect(
-            reverse('contests:description', args=(self.contest.code,)))
+            reverse('contests:submission',
+                args=(self.contest.code, self.submission.id)))
+
+class UnselectSubmission(UserPassesTestMixin, SubmissionMixin, ContextMixin,
+                         View):
+
+    def test_func(self):
+        return self.contest_context.user_team == self.submission.team
+
+    def post(self, request, *args, **kwargs):
+        context = self.get_context_data(**kwargs)
+        try:
+            unselect_submission(self.submission)
+            messages.add_message(request, messages.SUCCESS,
+                mark_safe("Submission <strong>%s</strong> unselected." %
+                    self.submission.id))
+        except SelectionError as e:
+            messages.error(request, mark_safe(
+                "<p>You failed to unselect submission <strong>%s</strong>.</p>"
+                "<p>%s</p>" % (submission.id, str(e))))
+        return redirect(
+            reverse('contests:submission',
+                args=(self.contest.code, self.submission.id)))
+
 
 class ContestAdminHints(UserPassesTestMixin, PostDataView):
     post_template_name = "contests/hints_for_contest_admins.md"

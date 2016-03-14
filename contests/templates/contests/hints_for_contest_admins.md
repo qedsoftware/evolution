@@ -35,7 +35,7 @@ You generally shouldn't interact with the outside world. You should just open th
 
 In particular:
 
-* Do **NOT** open any more files.
+* Do **NOT** open any further files.
 * Do **NOT** write to any files.
 * Do **NOT** touch the network.
 * Do **NOT** create new processes.

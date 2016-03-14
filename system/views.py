@@ -9,9 +9,19 @@ from django.template.loader import render_to_string
 
 from django.utils.safestring import mark_safe
 from django.contrib import messages
+from django.contrib.messages.storage.base import Message
 
 from .models import NewsItem, PostData
 
+# Sometimes it is useful to show some messages only for
+# the original request. Permanent messages are example of that.
+# Especially, when they are specific to some part of the system
+def add_static_message(context, level, msg, extra_tags=""):
+    msg = Message(level, msg, extra_tags)
+    if 'static_messages' in context:
+        context['static_messages'].append(msg)
+    else:
+        context['static_messages'] = [msg]
 
 class AdminDownload(UserPassesTestMixin, StorageDownloadView):
 

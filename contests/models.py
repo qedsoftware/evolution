@@ -55,6 +55,7 @@ class ContestFactory(object):
     test_end = None
     answer_for_test = None
     published_final_results = None
+    selected_limit = None
 
     # TODO maybe move out of class. It is a proxy between ContestForm and this.
     @classmethod
@@ -73,6 +74,7 @@ class ContestFactory(object):
         factory.test_begin = data.get('test_begin')
         factory.test_end = data.get('test_end')
         factory.published_final_results = data.get('published_final_results')
+        factory.selected_limit = data.get('selected_limit')
         return factory
 
     @transaction.atomic
@@ -145,6 +147,8 @@ class ContestFactory(object):
                 self.published_final_results
         if self.bigger_better is not None:
             contest.bigger_better = self.bigger_better
+        if self.selected_limit is not None:
+            contest.test_stage.selected_limit = self.selected_limit
         contest.verification_stage.grader.save_answer(
             self.answer_for_verification)
         contest.verification_stage.grader.save()
@@ -166,6 +170,9 @@ class ContestStage(models.Model):
     def is_open(self):
         now = timezone.now()
         return self.begin <= now <= self.end
+
+    def __str__(self):
+        return '<ContestStage %s>' % self.id
 
 class Team(models.Model):
     name = models.CharField(max_length=100)
@@ -266,8 +273,9 @@ class ContestSubmission(models.Model):
         elif source == False:
             self.source.delete()
 
-    def __repr__(self):
-        return "ContestSubmission<%s>" % self.id
+    def __str__(self):
+        return "<ContestSubmission %s>" % self.id
+
 
 class SubmissionData(object):
     output = None
@@ -291,22 +299,65 @@ def submit(team, stage, submission_data):
     cs.save()
     return cs
 
+class SelectionError(Exception):
+    pass
+
 @transaction.atomic
-def can_select_submission(submission):
+def _precheck_select_submission(submission, with_lock=False):
+    """
+    Checks if the submission can be selected.
+    Raises SelectionError if not.
+    """
+    if submission.selected:
+        raise SelectionError("Submission is already selected.")
     if submission.team is None:
-        return None
-    selected_count = Submission.objects.filter(selected=True,
-        team=submission.team).select_for_update().count()
-    return selected_count < submission.stage.selected_limit
+        raise SelectionError("Technical submission can't be selected.")
+    if not submission.stage.is_open():
+        raise SelectionError("Can't change selection in inactive contest.")
+    sub_of_team_and_stage = ContestSubmission.objects.filter(
+        team=submission.team,
+        stage=submission.stage)
+    if with_lock:
+        # lock all the team's submissions in stage, (list to force evaluation)
+        list(
+            sub_of_team_and_stage.select_for_update().values('id', 'selected')
+        )
+    selected_count = sub_of_team_and_stage.filter(selected=True).count()
+    limit = submission.stage.selected_limit
+    if limit >= 0 and selected_count >= limit:
+        raise SelectionError("Selected submissions limit reached.")
+
+def can_select_submission(submission):
+    try:
+        _precheck_select_submission(submission)
+    except SelectionError:
+        return False
+    return True
 
 @transaction.atomic
 def select_submission(submission):
-    # TODO check for race condition
-    if can_select_submission(submission):
-        submission.selected = True
-        submission.save()
-    else:
-        raise PermissionDenied('Cannot select that submission')
+    _precheck_select_submission(submission, with_lock=True)
+    submission.selected = True
+    submission.save()
+
+def _precheck_unselect_submission(submission):
+    if not submission.selected:
+        raise SelectionError("Submission is already not selected.")
+    if not submission.stage.is_open():
+        raise SelectionError("Can't change selection in inactive contest.")
+
+def can_unselect_submission(submission):
+    try:
+        _precheck_unselect_submission(submission)
+    except SelectionError:
+        return False
+    return True
+
+@transaction.atomic
+def unselect_submission(submission):
+    _precheck_unselect_submission(submission)
+    submission.selected = False
+    submission.save()
 
 def rejudge_submission(contest_submission):
     request_submission_grading(contest_submission.submission)

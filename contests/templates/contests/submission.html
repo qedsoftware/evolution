@@ -2,7 +2,7 @@
 
 {% load standard %}
 
-{% block contest_title %} Submission {% endblock %}
+{% block contest_title %} Submission {{ contest_submission.id }} (<em>{{stage_name}}</em>) {% endblock %}
 
 {% block content %}
 {% if contest_context.is_contest_admin %}
@@ -48,8 +48,21 @@
             Not Selected
         {% endif %}
     </div>
-    <div class="selection-change">Remaining selections: 7 <a href="#">unselect</a></div>
-    <div class="helptext">Only selected submissions will count in the leaderboard.</div>
+    {% if selection_change_active %}
+        <div class="selection-change">
+            {% if contest_submission.selected %}
+                {% url 'contests:unselect_submission' contest.code contest_submission.id as unselect_url %}
+                {% action_form 'unselect-action' 'unselect' unselect_url %}
+            {% else %}
+                {% url 'contests:select_submission' contest.code contest_submission.id as select_url %}
+                {% action_form 'select-action' 'select this submission' select_url %}
+            {% endif %}
+            <div class="selection-remaining">
+                [remaining selections: 3]
+            </div>
+        </div>
+    {% endif %}
+    <div class="helptext">Only selected submissions will count in the leaderboard for this stage.</div>
 </div>
 {% endif %}
 

@@ -58,10 +58,11 @@ class ContestForm(forms.Form):
     test_begin = forms.DateTimeField(required=False)
     test_end = forms.DateTimeField(required=False)
     published_final_results = forms.BooleanField(required=False)
-    test_selected_limit = forms.IntegerField(required=False,
+    selected_limit = forms.IntegerField(required=False,
         help_text="Number of submissions users can choose to count in the "
-            "leaderboard in the test stage. Avoid changing this value once the"
-            "test stage starts — contestants will need to adjust.")
+            "leaderboard in the test stage. Avoid changing this value once "
+            "the test stage starts — contestants will need to adjust. "
+            "<strong>Negative for unlimited selections.</strong>")
 
 class SubmitForm(forms.Form):
     stage = forms.ChoiceField(choices=()) # we'll fill choices in __init__
