@@ -3,6 +3,8 @@ import os
 import tempfile
 import json
 import subprocess
+import logging
+import itertools
 from decimal import Decimal
 
 from django.db import models, transaction
@@ -11,6 +13,7 @@ from django.db.models.functions import Now
 from django.conf import settings
 from django.utils import timezone
 
+logger = logging.getLogger(__name__)
 
 class ScoringScript(models.Model):
     source = models.FileField(null=True, blank=True)
@@ -27,20 +30,28 @@ class ScoringScript(models.Model):
         elif source == False:
             self.source.delete()
 
+    def __str__(self):
+        return '<ScoringScript %s>' % self.id
+
 
 DEFAULT_TIME_LIMIT = 1000
+DEFAULT_MEMORY_LIMIT = 128 * 2**20; # 128 MiB
+
 
 class DataGrader(models.Model):
     scoring_script = models.ForeignKey('ScoringScript',
         on_delete=models.PROTECT)
     answer = models.FileField(null = True, blank=True)
     time_limit_ms = models.IntegerField(default=DEFAULT_TIME_LIMIT)
+    memory_limit_bytes = models.IntegerField(default=DEFAULT_MEMORY_LIMIT)
 
     @classmethod
-    def create(cls, scoring_script, answer, time_limit_ms=DEFAULT_TIME_LIMIT):
+    def create(cls, scoring_script, answer, time_limit_ms=DEFAULT_TIME_LIMIT,
+               memory_limit_bytes=DEFAULT_MEMORY_LIMIT):
         grader = cls()
         grader.scoring_script = scoring_script
         grader.time_limit_ms = time_limit_ms
+        grader.memory_limit_bytes = memory_limit_bytes
         grader.save_answer(answer)
         return grader
 
@@ -50,20 +61,29 @@ class DataGrader(models.Model):
         elif answer == False:
             self.answer.delete()
 
+    def __str__(self):
+        return '<DataGrader %s>' % self.id
 
-def create_simple_grader(script_file, answer_file,
-                         time_limit_ms=DEFAULT_TIME_LIMIT):
+
+def create_simple_grader(script_file, answer_file):
     script = ScoringScript.create(script_file)
-    grader = DataGrader.create(script, answer_file, time_limit_ms)
+    grader = DataGrader.create(script, answer_file)
     return grader
 
-def create_simple_grader_str(script_source, answer_data,
-                             time_limit_ms=DEFAULT_TIME_LIMIT):
+def create_simple_grader_str(script_source, answer_data):
     return create_simple_grader(ContentFile(script_source),
-        ContentFile(answer_data), time_limit_ms=time_limit_ms)
+        ContentFile(answer_data))
 
 def score_field():
     return models.DecimalField(max_digits=30, decimal_places=6, null=True)
+
+SCORING_STATUS_CHOICES = (
+    ('waiting', 'Waiting for score'),
+    ('error', 'Grading Error'),
+    ('accepted', 'Accepted'),
+    ('rejected', 'Rejected')
+)
+
 
 class Submission(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
@@ -74,6 +94,9 @@ class Submission(models.Model):
     needs_grading = models.BooleanField(default=False)
     needs_grading_at = models.DateTimeField(null=True)
     score = score_field()
+    scoring_status = models.CharField(max_length=20, default='waiting',
+        choices=SCORING_STATUS_CHOICES)
+    scoring_msg = models.TextField(blank=True, default="")
 
     @classmethod
     def create(cls, grader, output):
@@ -83,6 +106,9 @@ class Submission(models.Model):
         submission.save()
         return submission
 
+    def __str__(self):
+        return '<Submission %s>' % self.id
+
 
 class GradingAttempt(models.Model):
     submission = models.ForeignKey('Submission', on_delete=models.PROTECT)
@@ -91,9 +117,17 @@ class GradingAttempt(models.Model):
     started = models.BooleanField(default=False)
     finished = models.BooleanField(default=False)
     succed = models.BooleanField(default=False)
-    score = score_field()
     aborted = models.BooleanField(default=False)
     log = models.FileField()
+
+    score = score_field()
+    scoring_status = models.CharField(max_length=20, default='waiting',
+        choices=SCORING_STATUS_CHOICES)
+    scoring_msg = models.TextField(blank=True, default="")
+
+    def __str__(self):
+        return '<GradingAttempt %s>' % self.id
+
 
 def request_submission_grading(submission):
     submission.needs_grading = True
@@ -149,7 +183,8 @@ def _prepare_scoring_dir(attempt):
         'user_output': output_path,
         'answer': answer_path,
         'scoring_log': log_file_path,
-        'time_limit_ms': attempt.submission.grader.time_limit_ms
+        'time_limit_ms': attempt.submission.grader.time_limit_ms,
+        'memory_limit_bytes': attempt.submission.grader.memory_limit_bytes
     }
     config_path = os.path.join(scoring_dir, 'config.json')
     with open(config_path, 'w') as config_file:
@@ -162,15 +197,59 @@ def _run_scoring_popen(attempt, scoring_dir):
         stderr=subprocess.PIPE)
 
 @transaction.atomic
-def update_submission_score(attempt):
+def finish_grading(attempt):
     # We dance a little to avoid races.
     # TODO check this more carefully
+    attempt.finished = True
+    attempt.finished_at = timezone.now()
+    attempt.save(update_fields=['succed', 'score', 'scoring_msg',
+        'scoring_status', 'finished', 'finished_at'])
     submission = Submission.objects. \
         filter(current_attempt=attempt).select_for_update()
     if submission.exists():
         submission = submission.get()
         submission.score = attempt.score
-        submission.save()
+        submission.scoring_status = attempt.scoring_status
+        submission.scoring_msg = attempt.scoring_msg
+        submission.save(update_fields=['score', 'scoring_msg',
+            'scoring_status'])
+
+MAX_RUN_SCORING_OUTPUT_SIZE = 1000000
+
+def join_with_terminator(terminator, iterable):
+    """
+    Just like normal str.join, but with terminator instead of separator.
+    So join_with_terminator(';', ['a', 'b', 'c']) will result in 'a;b;c;'
+    """
+    return terminator.join(itertools.chain(iterable, ('',)))
+
+def handle_run_scoring_output(output, attempt):
+    lines = output.splitlines()
+    class BadOutput(Exception):
+        reason = ""
+        def __init__(self, reason):
+            self.reason = reason
+    try:
+        if len(lines) == 0:
+            raise BadOutput('no output')
+        if lines[0] == 'ACCEPTED':
+            if len(lines) < 2:
+                raise BadOutput('Status ACCEPTED, but no score provided')
+            try:
+                attempt.score = Decimal(lines[1])
+            except decimal.InvalidOperation as e:
+                raise BadOutput('bad score value: ' + str(e))
+            attempt.scoring_status = 'accepted'
+            attempt.scoring_msg = join_with_terminator('\n', lines[2:])
+            return
+        elif lines[0] == 'REJECTED':
+            attempt.scoring_status = 'rejected'
+            attempt.scoring_msg = join_with_terminator('\n', lines[1:])
+            return
+        raise BadOutput('unrecognized first line %s' % repr(lines[0]))
+    except BadOutput as e:
+        attempt.scoring_status = 'error'
+        attempt.scoring_msg = 'Bad scoring output (%s):\n' % e.reason + output
 
 def attempt_grading(attempt):
     scoring_dir = _prepare_scoring_dir(attempt)
@@ -179,6 +258,10 @@ def attempt_grading(attempt):
     while not finished:
         attempt.refresh_from_db()
         if attempt.aborted:
+            attempt.scoring_status = "error"
+            attempt.scoring_msg = "aborted"
+            attempt.succed = False
+            finish_grading(attempt)
             return
         try:
             # in theory this can deadlock if process generates ton of output
@@ -189,18 +272,15 @@ def attempt_grading(attempt):
             finished = True
         except TimeoutExpired:
             pass
-    attempt.finished = True
-    attempt.finished_at = timezone.now()
+    output = process.stdout.read(MAX_RUN_SCORING_OUTPUT_SIZE).decode('utf-8', errors='replace')
     if process.returncode == 0:
-        # we got the answer!
-        # TODO handle precision explicitly
-        # TODO parse more carefully (run_scoring should filter it already)
-        output = process.stdout.read().decode('utf-8')
-        attempt.score = Decimal(output)
         attempt.succed = True
+        handle_run_scoring_output(output, attempt)
     else:
-        # TODO logging!
+        logger.info('run_scoring.py failed with code %s', process.returncode)
+        if process.returncode == 1:
+            logger.info('Probably scoring script crashed.')
+        attempt.scoring_msg = output_prefix + output
         attempt.succed = False
-    # We don't want to overwrite abort
-    attempt.save(update_fields=['succed', 'score', 'finished'])
-    update_submission_score(attempt)
+    # We don't want to overwrite aborted etc.
+    finish_grading(attempt)

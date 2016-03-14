@@ -5,35 +5,109 @@
 {% block contest_title %} Submission {% endblock %}
 
 {% block content %}
-{% action_form 'rejudge-single' 'rejudge' rejudge_url %}
-<ul>
-<li>Submitted at: <strong>{{submission.created_at}}</strong></li>
-<li>Score: {{submission.current_attempt.score}}</li>
-<li>Needs grading: {{submission.needs_grading}}</li>
-<li>Grading requested at: {{submission.needs_grading_at}}</li>
 {% if contest_context.is_contest_admin %}
-<li>Current attempt: {{submission.current_attempt.id}}</li>
+    {% action_form 'rejudge-single' 'rejudge' rejudge_url %}
 {% endif %}
 
+{% if result == 'score' %}
+    <div class="submission-result">
+        Score: <strong>17.0000000</strong>
+    </div>
+{% elif result == 'waiting' %}
+    <div class="submission-result">
+        Waiting for score...
+    </div>
+{% elif result == 'rejected' %}
+    <div class="submission-result bad-result">
+        Rejected
+        <div class="helptext">There is something wrong with your submission.</div>
+    </div>
+{% elif result == 'accepted' %}
+    <div class="submission-result good-result">
+        Accepted
+        <div class="helptext">Exact score is not available at this point.</div>
+    </div>
+{% elif result == 'error' %}
+    <div class="submission-result strange-result">
+        Grading Error
+        <div class="helptext">Don't worry. We'll take care of that.</div>
+    </div>
+{% else %}
+    <div class="submission-result strange-result">
+        ???
+        <div class="helptext">???</div>
+    </div>
+{% endif %}
+
+{% if contest_submission.stage.requires_selection %}
+<div class="selection-box">
+    <div class="selection-state">
+        {% if contest_submission.selected %}
+            Selected
+        {% else %}
+            Not Selected
+        {% endif %}
+    </div>
+    <div class="selection-change">Remaining selections: 7 <a href="#">unselect</a></div>
+    <div class="helptext">Only selected submissions will count in the leaderboard.</div>
+</div>
+{% endif %}
+
+<ul class="submission-details">
+    <li>Submitted at: <strong>{{submission.created_at}}</strong></li>
+    <li><a href="{{submission.output}}">Answer</a></li>
+    <li><a href="{{contest_submission.source}}">Source Code</a></li>
 </ul>
 
+{% if result == 'rejected' or result == 'accepted' and submission.scoring_msg %}
+    <div class="submission-scoring-msg">
+        <h2>
+            {% if result == 'rejected' %}
+                Rejection Reason
+            {% else %}
+                Scoring Comment
+            {% endif %}
+        </h2>
+        <pre>
+            {{submission.scoring_msg}}
+        </pre>
+    </div>
+{% endif %}
+
 {% if contest_context.is_contest_admin %}
+    <hr>
+    <h2>Submission Information:</h2>
+    <ul class="submission-details">
+        <li>Score: {{submission.score}}</li>
+        <li>Status: {{submission.scoring_status}}</li>
+        <li>Marked for grading: {{submission.needs_grading}}</li>
+        <li>Grading requested at: {{submission.needs_grading_at}}</li>
+        <li>Current attempt id: {{submission.current_attempt.id}}</li>
+    </ul>
+
+    <div class="submission-scoring-msg">
+        <h2>Scoring Message</h2>
+        <pre>{{submission.scoring_msg}}</pre>
+    </div>
+
     <h2>Grading history</h2>
-    <ul>
     {% for attempt in grading_history %}
-        <li>
-            <ul>
-                <li>Attempt Id: {{attempt.id}}</li>
+        <div class="submission-grading-attempt">
+            <h3>Attempt Id: <strong>{{attempt.id}}</strong></h3>
+            <ul class="submission-details">
                 <li>Started at: {{attempt.created_at}}</li>
                 <li>Finished at: {{attempt.finished_at}}</li>
                 <li>Finished: {{attempt.finished}}</li>
                 <li>Succed: {{attempt.succed}}</li>
                 <li>Score: {{attempt.score}}</li>
                 <li>Aborted: {{attempt.aborted}}</li>
-                <li>Log: {{attempt.log}}</li>{# TODO ADD ACTUAL LINK #}
+                <li>Log: {% if attempt.log %}<a href={{attempt.log.url}}>{{attempt.log}} {% else %} nonexistent {% endif %}</a></li>
             </ul>
-        </li>
+                <div class="submission-scoring-msg">
+                    <h4>Scoring Message</h4>
+                    <pre>{{submission.scoring_msg}}</pre>
+                </div>
+        </div>
     {% endfor %}
-    </ul>
 {% endif %}
 {% endblock content %}

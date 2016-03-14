@@ -1,13 +1,16 @@
 from django.shortcuts import render
-
+from django.views.generic import View
+from django.views.generic.base import ContextMixin
 from django.views.generic.list import ListView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.core.exceptions import ImproperlyConfigured
 from django_downloadview import StorageDownloadView
+from django.template.loader import render_to_string
 
 from django.utils.safestring import mark_safe
 from django.contrib import messages
 
-from .models import NewsItem
+from .models import NewsItem, PostData
 
 
 class AdminDownload(UserPassesTestMixin, StorageDownloadView):
@@ -26,6 +29,38 @@ class NewsList(ListView):
 
 def user_settings(request):
     return render(request, 'system/user_settings.html', {})
+
+class PostDataView(ContextMixin, View):
+    """
+    Generic View that allows "static posts".
+
+    It renders the template in the specified language then builds html using
+    the same mechanism as Posts. Result is added to the context as `text`.
+    Then it renders external template, with the resulting context.
+
+    Currently it goes through building html on every request, if this becomes
+    a performance issue, we may want to cache that.
+    """
+
+    post_template_name = None
+    source_lang = None
+    external_template_name = "system/title_and_text.html"
+
+    def get(self, request, *args, **kwargs):
+        if not self.post_template_name:
+            raise ImproperlyConfigured(
+                "You need to specify post_template_name")
+        if not self.source_lang:
+            raise ImproperlyConfigured("You need to specify source_lang")
+
+        context = self.get_context_data(**kwargs)
+        source = render_to_string(self.post_template_name, context=context,
+            request=request)
+        post = PostData.from_source(source, self.source_lang)
+        post.build_html()
+        context['text'] = post.html
+        return render(request, self.external_template_name, context)
+
 
 def messages_test_view(request):
     messages.set_level(request, messages.DEBUG)
@@ -53,3 +88,5 @@ def messages_test_view(request):
         'content_title': 'Message Test',
         'text': "Nothing to do here"
     })
+
+

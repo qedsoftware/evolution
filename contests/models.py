@@ -257,7 +257,14 @@ class ContestSubmission(models.Model):
     submission = models.OneToOneField('base.Submission')
     team = models.ForeignKey('Team', blank=True, null=True)
     comment = models.CharField(max_length=255, blank=True, default="")
+    source = models.FileField(null=True, blank=True)
     selected = models.BooleanField(default=False)
+
+    def save_source(self, source):
+        if source:
+            self.source.save('submission_source', source)
+        elif source == False:
+            self.source.delete()
 
     def __repr__(self):
         return "ContestSubmission<%s>" % self.id
@@ -279,9 +286,12 @@ def submit(team, stage, submission_data):
     submission.save()
     cs.submission = submission
     cs.team = team
+    cs.save_source(submission_data.source)
+    cs.comment = submission_data.comment
     cs.save()
     return cs
 
+@transaction.atomic
 def can_select_submission(submission):
     if submission.team is None:
         return None
@@ -328,7 +338,7 @@ def teams_with_member_list(contest):
             team.member_list = team_members[team.id]
         else:
             team.member_list = []
-    return teams
+    return sorted(teams, key=lambda team: team.name)
 
 class LeadboardEntry:
     position = None
@@ -337,7 +347,7 @@ class LeadboardEntry:
     score = None
 
     def __repr__(self):
-        "<LeadboardEntry %s %s %s %s>" % (
+        return "<LeadboardEntry %s %s %s %s>" % (
             repr(self.position),
             repr(self.team),
             repr(self.submission),
@@ -385,8 +395,11 @@ def build_leaderboard(contest, stage):
     # sort them
     # alphabetic order resolves draws (but position nr will be the same)
     entries = sorted(entries, key=lambda entry: entry.team.name)
-    entries = sorted(entries, key=lambda entry: cmp_tuple(entry.submission),
-        reverse=True)
+    entries = sorted(
+        entries,
+        key=lambda entry: cmp_tuple(entry.score),
+        reverse=True
+    )
 
     # find teams positions
     last = entries[0]

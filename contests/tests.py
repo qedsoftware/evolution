@@ -12,6 +12,7 @@ from .views import ContestContext
 from system.models import PostData
 
 future_time = timezone.now() + timedelta(weeks=1)
+past_time = timezone.now() - timedelta(weeks=1)
 
 class ContestFactoryTest(TestCase):
 
@@ -284,7 +285,10 @@ class SubmitTest(WebTest):
         self.contest = ContestFactory.from_dict({
             'name': 'Contest',
             'code': 'contest',
-            'verification_end': future_time
+            'verification_begin': past_time,
+            'verification_end': future_time,
+            'test_begin': past_time,
+            'test_end': past_time
         }).create()
         self.team = Team(contest=self.contest, name='Team')
         self.team.save()

@@ -3,6 +3,15 @@
 html {
   height: 100%; }
 
+.unselectable, .action-button, .action-form input[type=submit], .standard-form input[type=submit], .logout-button, .left-user form input[type=submit], .left-pane h2, .left-pane .logo img, .menu-item, .submission-table tr {
+  -webkit-user-select: none;
+  /* Chrome/Safari */
+  -moz-user-select: none;
+  /* Firefox */
+  -ms-user-select: none;
+  /* IE10+ */
+  user-select: none; }
+
 body {
   font-family: "Roboto", sans-serif;
   margin: 0;
@@ -275,7 +284,7 @@ a.action-button:hover, a.logout-button:hover {
 
 .result-table {
   margin: 20px;
-  width: 100%;
+  width: 640px;
   border-collapse: collapse; }
   .result-table th, .result-table td {
     border: 1px dotted #aaa; }
@@ -315,15 +324,71 @@ table {
 .submission-table {
   width: 100%; }
   .submission-table tr {
-    cursor: pointer;
-    -webkit-user-select: none;
-    /* Chrome/Safari */
-    -moz-user-select: none;
-    /* Firefox */
-    -ms-user-select: none;
-    /* IE10+ */
-    user-select: none; }
+    cursor: pointer; }
   .submission-table tr.submission_row:hover {
-    background-color: #bcd6ff; }
+    background-color: #cdf; }
+
+.result-part {
+  text-align: center; }
+
+.submission-result {
+  width: 320px;
+  text-align: center;
+  font-size: 30px;
+  margin: auto;
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid black; }
+
+.submission-result.good-result {
+  background-color: #dfd; }
+  .submission-result.good-result .helptext {
+    color: black; }
+
+.submission-result.bad-result {
+  background-color: #faa; }
+  .submission-result.bad-result .helptext {
+    color: black; }
+
+.submission-result.strange-result {
+  background-color: #FFFF7F; }
+  .submission-result.strange-result .helptext {
+    color: black; }
+
+.submission-details {
+  list-style-type: none;
+  padding: 0px; }
+
+.submission-scoring-msg pre {
+  padding: 6px;
+  border: 1px dotted #888; }
+
+.submission-grading-attempt {
+  padding: 20px;
+  margin: 10px;
+  border: 1px dashed #888; }
+  .submission-grading-attempt h3 {
+    margin: 0px;
+    margin-bottom: 3px; }
+  .submission-grading-attempt h4 {
+    margin: 0px;
+    margin-top: 14px; }
+
+.selection-box {
+  text-align: center;
+  font-size: 12px;
+  padding: 10px; }
+
+.selection-state {
+  text-transform: uppercase;
+  font-size: 22px; }
+
+.teams-list > ol > li {
+  margin-bottom: 8px; }
+
+.teams-member-list {
+  list-style-type: none;
+  font-size: 12px;
+  padding-left: 0px; }
 
 /*# sourceMappingURL=style.css.map */

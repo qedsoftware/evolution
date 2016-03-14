@@ -5,10 +5,11 @@ import time
 import subprocess
 
 from django.conf import settings
+from django.utils import timezone
 
 from django.core.management.base import BaseCommand, CommandError
 
-from base.models import GradingAttempt, attempt_grading
+from base.models import GradingAttempt, finish_grading
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +36,16 @@ class Command(BaseCommand):
         logger.info('grading_attempt started')
         completed = subprocess.run(settings.ATTEMPT_GRADING_COMMAND +
             [str(attempt_id)])
+        try:
+            attempt.refresh_from_db()
+            if not attempt.finished:
+                attempt.succed = False
+                attempt.score = None
+                attempt.scoring_status = 'error'
+                attempt.scoring_msg = "Dirty grading failure."
+                finish_grading(attempt)
+        except Exception as e:
+            logger.exception('Exception in grading attempt cleanup')
         logger.info('grading_attempt finished (status_code = %s)' %
             completed.returncode)
 

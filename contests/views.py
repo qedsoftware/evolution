@@ -14,14 +14,14 @@ from django.db import transaction
 from django.contrib import messages
 from django.utils.safestring import mark_safe
 
-from system.views import title
+from system.views import title, PostDataView
 
 from .models import Contest, ContestFactory, ContestSubmission, \
     SubmissionData, submit, ContestStage, rejudge_submission, \
     rejudge_contest, Team, TeamMember, join_team as join_team_action, \
     leave_team as leave_team_action, can_join_team, in_team, \
     is_contest_admin, teams_with_member_list, build_leaderboard, user_team, \
-    can_create_team
+    can_create_team, StageIsClosed
 
 from .forms import ContestForm, ContestCreateForm, SubmitForm
 
@@ -41,6 +41,7 @@ class ContestContext:
     can_see_test_leaderboard = None
     user_team = None
     is_observing = None
+    stage_names = None
 
     repr_attributes = [
         'user',
@@ -74,6 +75,14 @@ class ContestContext:
             self.can_see_stage_leaderboard(contest.test_stage)
         self.is_observing = self.user and \
             contest.observing.filter(id=self.user.id).exists()
+        self.stage_names = {
+            contest.verification_stage.id: 'verification',
+            contest.test_stage.id: 'final'
+        }
+        self.stages = [contest.verification_stage, contest.test_stage]
+
+    def can_submit_in_stage(self, stage):
+        return self.can_submit and (self.is_contest_admin or stage.is_open())
 
     def can_see_submission(self, submission):
         return is_contest_admin(self.user, self.contest) or \
@@ -81,6 +90,18 @@ class ContestContext:
 
     def can_see_stage_leaderboard(self, stage):
         return self.is_contest_admin or stage.published_results
+
+    def visible_submission_result(self, submission):
+        status = submission.submission.scoring_status
+        if status is None:
+            return 'waiting'
+        if status == 'accepted':
+            if self.is_contest_admin or submission.stage.published_results:
+                return 'score'
+            else:
+                return 'accepted'
+        else:
+            return status
 
     def __repr__(self):
         result = ['<ContestContext:']
@@ -107,6 +128,12 @@ class ContestMixin(object):
             select_related for contest
     """
 
+    base_contest_related = [
+        'test_stage',
+        'verification_stage',
+        'test_stage__contest',
+        'verification_stage__contest'
+    ]
     contest_related = []
 
     _contest = None
@@ -128,13 +155,13 @@ class ContestMixin(object):
     def contest(self):
         if not self._contest:
             contest_qs = Contest.objects.filter(code=self.contest_code)
-            for related in self.contest_related:
+            for related in self.base_contest_related + self.contest_related:
                 contest_qs = contest_qs.select_related(related)
             self._contest = contest_qs.get()
         return self._contest
 
     def get_context_data(self, **kwargs):
-        context = super(ContestMixin, self).get_context_data()
+        context = super(ContestMixin, self).get_context_data(**kwargs)
         context['contest'] = self.contest
         context['contest_context'] = self.contest_context
         context['title'] = contest_title(self.contest, self.title)
@@ -175,7 +202,7 @@ class ContestCreate(LoginRequiredMixin, FormView):
     contest = None
 
     def get_context_data(self, **kwargs):
-        context = super(ContestCreate, self).get_context_data()
+        context = super(ContestCreate, self).get_context_data(**kwargs)
         context['title'] = 'New Contest'
         return context
 
@@ -233,7 +260,7 @@ class ContestUpdate(UserPassesTestMixin, ContestMixin, FormView):
         return initial
 
     def get_context_data(self, **kwargs):
-        context = super(ContestUpdate, self).get_context_data()
+        context = super(ContestUpdate, self).get_context_data(**kwargs)
         contest = Contest.objects.get(code=self.get_code())
         context['contest'] = contest
         context['contest_context'] = ContestContext(self.request, contest)
@@ -267,22 +294,22 @@ class ContestUpdate(UserPassesTestMixin, ContestMixin, FormView):
 
 
 class Description(LoginRequiredMixin, ContestMixin, TemplateView):
-    template_name = "system/title_and_text.html"
+    template_name = "contests/title_and_text.html"
     title = "Description"
 
     def get_context_data(self, **kwargs):
-        context = super(Description, self).get_context_data()
+        context = super(Description, self).get_context_data(**kwargs)
         context['content_title'] = 'Description'
         context['text'] = self.contest.description.html
         return context
 
 
 class Rules(LoginRequiredMixin, ContestMixin, TemplateView):
-    template_name = "system/title_and_text.html"
+    template_name = "contests/title_and_text.html"
     title = "Rules"
 
     def get_context_data(self, **kwargs):
-        context = super(Rules, self).get_context_data()
+        context = super(Rules, self).get_context_data(**kwargs)
         context['content_title'] = 'Rules'
         context['text'] = self.contest.rules.html
         return context
@@ -299,25 +326,45 @@ class Submit(UserPassesTestMixin, ContestMixin, FormView):
         return self.contest_context.can_submit
 
     def get_success_url(self):
-        return reverse('contests:submissions',
+        return reverse('contests:my_submissions',
             args=[self.contest.code])
 
     def get_stage(self, form):
-        stage_name = form.cleaned_data['stage']
-        if stage_name == 'verification':
-            return self.contest.verification_stage
-        elif stage_name == 'test':
-            return self.contest.test_stage
+        stage_id = form.cleaned_data['stage']
+        stage = ContestStage.objects.get(id=stage_id)
+        if stage.contest != self.contest:
+            raise PermissionDenied()
+        return stage
+
+    def stage_choices(self):
+        choices = []
+        for stage in self.contest_context.stages:
+            if self.contest_context.can_submit_in_stage(stage):
+                choices.append(
+                    (stage.id, self.contest_context.stage_names[stage.id])
+                )
+        return choices
+
+
+    def get_form_kwargs(self):
+        kwargs = super(Submit, self).get_form_kwargs()
+        kwargs['stages_available'] = self.stage_choices()
+        return kwargs
 
     def form_valid(self, form):
         data = SubmissionData()
         data.output = self.request.FILES['output_file']
+        data.source = self.request.FILES['source_code']
+        data.comment = form.cleaned_data['comment']
         stage = self.get_stage(form)
         # TODO move to model
         team = self.contest_context.user_team
         if team is None and not self.contest_context.is_contest_admin:
             raise PermissionDenied()
-        submit(team, stage, data)
+        try:
+            submit(team, stage, data)
+        except StageIsClosed:
+            raise PermissionDenied() # TODO be nicer
         return super(Submit, self).form_valid(form)
 
 
@@ -332,7 +379,8 @@ class Submissions(UserPassesTestMixin, ContestMixin, ListView):
 
     def get_queryset(self):
         return ContestSubmission.objects. \
-            filter(stage__contest=self.contest)
+            filter(stage__contest=self.contest). \
+            order_by('-submission__created_at')
 
 
 def ensure_submission_contest_match(submission, contest):
@@ -368,11 +416,12 @@ class SubmissionView(UserPassesTestMixin, ContestMixin, TemplateView):
             '?next=' + self.request.path
 
     def get_context_data(self, **kwargs):
-        context = super(SubmissionView, self).get_context_data()
+        context = super(SubmissionView, self).get_context_data(**kwargs)
         cs = self.contest_submission
         submission = self.contest_submission.submission
         grading_history = GradingAttempt.objects. \
             filter(submission=submission).order_by('-created_at').all()
+        context['result'] = self.contest_context.visible_submission_result(cs)
         context['contest_submission'] = cs
         context['submission'] = submission
         context['grading_history'] = grading_history
@@ -417,7 +466,7 @@ class RejudgeView(UserPassesTestMixin, ContestMixin, ContextMixin, View):
             return redirect(reverse('contests:submission',
                 args=[self.contest.code, submission_id]))
         else:
-            context = self.get_context_data()
+            context = self.get_context_data(**kwargs)
             return render(request, self.template_name, context)
 
     def post(self, request, *args, **kwargs):
@@ -446,7 +495,7 @@ class Teams(LoginRequiredMixin, ContestMixin, TemplateView):
     title = "Teams"
 
     def get_context_data(self, **kwargs):
-        context = super(Teams, self).get_context_data()
+        context = super(Teams, self).get_context_data(**kwargs)
         context['teams'] = teams_with_member_list(self.contest)
         return context
 
@@ -454,25 +503,33 @@ class Teams(LoginRequiredMixin, ContestMixin, TemplateView):
 class Leaderboard(UserPassesTestMixin, ContestMixin, TemplateView):
     template_name = 'contests/leaderboard.html'
 
-    _stage = None
-
-    title = "Leaderboard"
-
-    @property
-    def stage(self):
-        if not self._stage:
-            self._stage = ContestStage.objects.get(id=self.kwargs['stage_id'])
-        return self._stage
-
     def test_func(self):
         return self.contest_context.can_see_stage_leaderboard(self.stage)
 
     def get_context_data(self, **kwargs):
-        context = super(Leaderboard, self).get_context_data()
+        context = super(Leaderboard, self).get_context_data(**kwargs)
         if self.stage.contest != self.contest:
             raise SuspiciousOperation("Stage doesn't match contest")
         context['leaderboard'] = build_leaderboard(self.contest, self.stage)
         return context
+
+class PublicLeaderboard(Leaderboard):
+    template_name = 'contests/public_leaderboard.html'
+
+    title = "Public Leaderboard"
+
+    @property
+    def stage(self):
+        return self.contest.verification_stage
+
+class TestLeaderboard(Leaderboard):
+    template_name = 'contests/test_leaderboard.html'
+
+    title = "Final Leaderboard"
+
+    @property
+    def stage(self):
+        return self.contest.test_stage
 
 
 class TeamCreate(UserPassesTestMixin, ContestMixin, CreateView):
@@ -515,7 +572,7 @@ class JoinTeam(UserPassesTestMixin, ContestMixin, ContextMixin, View):
         return can_join_team(self.request.user, self.team)
 
     def post(self, request, *args, **kwargs):
-        context = self.get_context_data()
+        context = self.get_context_data(**kwargs)
         join_team_action(request.user, self.team)
         return redirect(
             reverse('contests:team', args=(self.contest.code, self.team.id)))
@@ -534,7 +591,7 @@ class LeaveTeam(UserPassesTestMixin, ContestMixin, ContextMixin, View):
         return self.contest_context.user_team == self.team
 
     def post(self, request, *args, **kwargs):
-        context = self.get_context_data()
+        context = self.get_context_data(**kwargs)
         leave_team_action(request.user, self.team)
         return redirect(
             reverse('contests:team', args=(self.contest.code, self.team.id)))
@@ -556,7 +613,7 @@ class TeamView(LoginRequiredMixin, ContestMixin, TemplateView):
         return 'Team ' + self.team.name
 
     def get_context_data(self, **kwargs):
-        context = super(TeamView, self).get_context_data()
+        context = super(TeamView, self).get_context_data(**kwargs)
         members = TeamMember.objects.select_related('user'). \
             filter(team=self.team).all()
         context['team'] = self.team
@@ -569,7 +626,7 @@ class TeamView(LoginRequiredMixin, ContestMixin, TemplateView):
 class StartObserving(LoginRequiredMixin, ContestMixin, ContextMixin, View):
 
     def post(self, request, *args, **kwargs):
-        context = self.get_context_data()
+        context = self.get_context_data(**kwargs)
         messages.add_message(request, messages.SUCCESS,
             mark_safe('You started observing contest <strong>%s</strong>.' %
                 self.contest.name))
@@ -581,7 +638,7 @@ class StartObserving(LoginRequiredMixin, ContestMixin, ContextMixin, View):
 class StopObserving(LoginRequiredMixin, ContestMixin, ContextMixin, View):
 
     def post(self, request, *args, **kwargs):
-        context = self.get_context_data()
+        context = self.get_context_data(**kwargs)
         self.contest.observing.remove(request.user)
         messages.add_message(request, messages.SUCCESS,
             mark_safe(
@@ -589,3 +646,17 @@ class StopObserving(LoginRequiredMixin, ContestMixin, ContextMixin, View):
                     self.contest.name))
         return redirect(
             reverse('contests:description', args=(self.contest.code,)))
+
+class ContestAdminHints(UserPassesTestMixin, PostDataView):
+    post_template_name = "contests/hints_for_contest_admins.md"
+    source_lang = 'markdown'
+    content_title = "Hints for Contest Admins"
+
+    def test_func(self):
+        return self.request.user.is_superuser
+
+    def get_context_data(self, **kwargs):
+        context = super(ContestAdminHints, self).get_context_data(**kwargs)
+        context['content_title'] = self.content_title
+        return context
+

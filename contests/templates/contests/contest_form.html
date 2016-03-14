@@ -14,6 +14,8 @@
 	{% action_form 'observe' 'start observing' observe_url %}
 {% endif %}
 
+<p> See also: <a href="{% url 'contests:admin_hints' %}">Hints for Contest Admins</a> </p>
+
 <form class="standard-form" action="{{ request.get_full_path }}" enctype="multipart/form-data" method="post">
     {% csrf_token %}
     <ul>

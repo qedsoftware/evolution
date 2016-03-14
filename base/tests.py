@@ -13,8 +13,9 @@ from base.models import _mkdir_scoring, _prepare_scoring_dir, \
 
 
 script_always_42 = """
-print(42)
+print("ACCEPTED\\n42")
 """
+
 
 data_2_and_2 = "2\n2\n"
 data_3_and_3 = "3\n3\n"
@@ -71,6 +72,80 @@ class SubmissionTest(TestCase):
         self.assertTrue(attempt.succed)
         self.assertEqual(attempt.score, 42)
 
+output_accepted_42 = \
+"""\
+ACCEPTED
+42
+"""
+
+output_accepted_42_with_msg = \
+"""\
+ACCEPTED
+42
+bla bla bla
+blah blah blah
+"""
+
+output_rejected = \
+"""\
+REJECTED
+Line 42: Expected 42, but found 24
+"""
+
+output_error_accepted_no_score = \
+"""\
+ACCEPTED
+"""
+
+output_error_empty = ""
+
+output_error_gibberish = "blah blah blah"
+
+class ScoringOutputTest(TestCase):
+    class MockAttempt(object):
+        score = None
+
+    def setUp(self):
+        self.attempt = self.MockAttempt()
+
+    def test42(self):
+        handle_run_scoring_output(output_accepted_42, self.attempt)
+        self.assertEqual(self.attempt.scoring_status, 'accepted')
+        self.assertEqual(self.attempt.scoring_msg, '')
+        self.assertEqual(self.attempt.score, 42)
+
+    def test42_with_msg(self):
+        handle_run_scoring_output(output_accepted_42_with_msg, self.attempt)
+        self.assertEqual(self.attempt.scoring_status, 'accepted')
+        self.assertEqual(self.attempt.scoring_msg,
+            'bla bla bla\nblah blah blah\n')
+        self.assertEqual(self.attempt.score, 42)
+
+    def test_rejected(self):
+        handle_run_scoring_output(output_rejected, self.attempt)
+        self.assertEqual(self.attempt.scoring_status, 'rejected')
+        self.assertEqual(self.attempt.scoring_msg,
+            'Line 42: Expected 42, but found 24\n')
+        self.assertIsNone(self.attempt.score)
+
+    def test_accepted_no_score(self):
+        handle_run_scoring_output(output_error_accepted_no_score, self.attempt)
+        self.assertEqual(self.attempt.scoring_status, 'error')
+        self.assertIsNotNone(self.attempt.scoring_msg)
+        self.assertIsNone(self.attempt.score)
+
+    def test_empty(self):
+        handle_run_scoring_output(output_error_empty, self.attempt)
+        self.assertEqual(self.attempt.scoring_status, 'error')
+        self.assertIsNotNone(self.attempt.scoring_msg)
+        self.assertIsNone(self.attempt.score)
+
+    def test_gibberish(self):
+        handle_run_scoring_output(output_error_gibberish, self.attempt)
+        self.assertEqual(self.attempt.scoring_status, 'error')
+        self.assertIsNotNone(self.attempt.scoring_msg)
+        self.assertIsNone(self.attempt.score)
+
 class ScoringTest(TestCase):
     def setUp(self):
         self.grader = create_simple_grader_str(script_always_42,
@@ -109,6 +184,7 @@ class ScoringTest(TestCase):
     def test_attempt_grading(self):
         attempt_grading(self.attempt)
         self.attempt.refresh_from_db()
+        self.assertEqual(self.attempt.scoring_status, 'accepted')
         self.assertEqual(self.attempt.score, 42)
         self.assertEqual(self.attempt.finished, True)
         self.assertEqual(self.attempt.aborted, False)
@@ -119,6 +195,9 @@ class ScoringTest(TestCase):
         attempt_grading(self.attempt)
         self.attempt.refresh_from_db()
         self.assertIsNone(self.attempt.score)
-        self.assertEqual(self.attempt.finished, False)
+        self.assertEqual(self.attempt.succed, False)
+        self.assertEqual(self.attempt.finished, True)
         self.assertEqual(self.attempt.aborted, True)
+        self.assertEqual(self.attempt.scoring_status, 'error')
+        self.assertEqual(self.attempt.scoring_msg, 'aborted')
 

@@ -62,6 +62,12 @@ MARKDOWN_ALLOWED_TAGS = [
     'td',
     'tbody',
     'tfoot',
+    'h1',
+    'h2',
+    'h3',
+    'h4',
+    'h5',
+    'h6'
     #'blockquote', # TODO support in css
     # definition lists - TODO support them in css
     #'dl',

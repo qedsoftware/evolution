@@ -58,8 +58,18 @@ class ContestForm(forms.Form):
     test_begin = forms.DateTimeField(required=False)
     test_end = forms.DateTimeField(required=False)
     published_final_results = forms.BooleanField(required=False)
+    test_selected_limit = forms.IntegerField(required=False,
+        help_text="Number of submissions users can choose to count in the "
+            "leaderboard in the test stage. Avoid changing this value once the"
+            "test stage starts — contestants will need to adjust.")
 
 class SubmitForm(forms.Form):
-    stage = forms.ChoiceField(choices=(('verification', 'Verification'),
-        ('test', 'Test')))
+    stage = forms.ChoiceField(choices=()) # we'll fill choices in __init__
     output_file = forms.FileField()
+    source_code = forms.FileField()
+    comment = forms.CharField(required=False)
+
+    def __init__(self, *args, **kwargs):
+        stages_available = kwargs.pop('stages_available')
+        self.base_fields['stage'].choices = stages_available
+        super(SubmitForm, self).__init__(*args, **kwargs)
