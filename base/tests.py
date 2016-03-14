@@ -16,6 +16,13 @@ script_always_42 = """
 print("ACCEPTED\\n42")
 """
 
+script_crash = """
+0/0
+"""
+
+script_bad_format = """
+print("blah blah blah ")
+"""
 
 data_2_and_2 = "2\n2\n"
 data_3_and_3 = "3\n3\n"
@@ -187,6 +194,7 @@ class ScoringTest(TestCase):
         self.assertEqual(self.attempt.scoring_status, 'accepted')
         self.assertEqual(self.attempt.score, 42)
         self.assertEqual(self.attempt.finished, True)
+        self.assertEqual(self.attempt.succed, True)
         self.assertEqual(self.attempt.aborted, False)
 
     def test_attempt_aborted(self):
@@ -201,3 +209,36 @@ class ScoringTest(TestCase):
         self.assertEqual(self.attempt.scoring_status, 'error')
         self.assertEqual(self.attempt.scoring_msg, 'aborted')
 
+def test_grading(test, script, answer, output):
+    grader = create_simple_grader_str(script, answer)
+    grader.save()
+    submission = Submission.create(grader, ContentFile(output))
+    request_submission_grading(submission)
+    submission.save()
+    _, attempt = choose_for_grading()
+    test.assertIsNotNone(attempt)
+    attempt_grading(attempt)
+    attempt.refresh_from_db()
+    return attempt
+
+
+class ScoringFailureTest(TestCase):
+
+    def test_crash(self):
+        attempt = test_grading(self, script_crash, data_2_and_2, data_2_and_2)
+        self.assertEqual(attempt.scoring_status, 'error')
+        self.assertIsNone(attempt.score)
+        self.assertEqual(attempt.finished, True)
+        self.assertEqual(attempt.aborted, False)
+        self.assertEqual(attempt.succed, False)
+        self.assertTrue("script exited with code" in attempt.scoring_msg)
+
+    def test_bad_format(self):
+        attempt = test_grading(self, script_bad_format, data_2_and_2,
+            data_2_and_2)
+        self.assertEqual(attempt.scoring_status, 'error')
+        self.assertIsNone(attempt.score)
+        self.assertEqual(attempt.finished, True)
+        self.assertEqual(attempt.aborted, False)
+        self.assertEqual(attempt.succed, True)
+        self.assertTrue("blah blah blah" in attempt.scoring_msg)
