@@ -416,10 +416,10 @@ class MySubmissions(UserPassesTestMixin, ContestMixin, ListView):
             order_by('-submission__created_at')
 
 
-
 def ensure_submission_contest_match(submission, contest):
     if submission.stage.contest != contest:
         raise PermissionDenied()
+
 
 class SubmissionMixin(ContestMixin):
     _submission = None
@@ -446,8 +446,7 @@ class SubmissionMixin(ContestMixin):
         return self.submission.stage.requires_selection and \
             self.submission.stage.is_open() and \
             self.submission.team is not None and \
-            contest_context.user_team == self.submission.team
-
+            self.contest_context.user_team == self.submission.team
 
     def get_context_data(self, **kwargs):
         context = super(SubmissionMixin, self).get_context_data(**kwargs)
@@ -455,6 +454,7 @@ class SubmissionMixin(ContestMixin):
         context['submission'] = self.submission.submission
         context['selection_change_active'] = self.selection_change_active
         return context
+
 
 class SubmissionView(UserPassesTestMixin, SubmissionMixin, TemplateView):
 
