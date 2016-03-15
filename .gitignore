@@ -3,7 +3,7 @@
 *~
 .DS_Store
 /static/
-/grading_debug_log
+/*.log
 /media
 *.egg-info/*
 */.sass-cache/*

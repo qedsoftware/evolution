@@ -53,6 +53,8 @@ def run(params):
     try:
         with open(params.scoring_log, 'w') as log_file:
             def preexec():
+                # TODO investigate what happens when this limit is really low
+                # Note: this limit is broken on Mac, check it on Linux
                 resource.setrlimit(resource.RLIMIT_AS,
                     (params.memory_limit_bytes, params.memory_limit_bytes))
             completed = subprocess.run(args, timeout=params.time_limit_ms,

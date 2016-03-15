@@ -410,9 +410,11 @@ class MySubmissions(UserPassesTestMixin, ContestMixin, ListView):
             self.contest_context.user_team is not None
 
     def get_queryset(self):
+        # Filtering by team is not enough for technical (team=None) submissions
         return ContestSubmission.objects. \
             select_related('submission'). \
             filter(team=self.contest_context.user_team). \
+            filter(stage__contest=self.contest). \
             order_by('-submission__created_at')
 
 
