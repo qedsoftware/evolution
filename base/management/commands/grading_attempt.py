@@ -25,6 +25,7 @@ class Command(BaseCommand):
         signal.signal(signal.SIGINT, exit_on_signal)
         signal.signal(signal.SIGTERM, exit_on_signal)
         attempt_id = options['attempt_id']
+        logger.debug('grading_attempt command with attempt %s', attempt_id)
         try:
             attempt = GradingAttempt.objects.get(id=attempt_id)
         except GradingAttempt.DoesNotExist:

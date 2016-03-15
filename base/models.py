@@ -224,6 +224,7 @@ def join_with_terminator(terminator, iterable):
     return terminator.join(itertools.chain(iterable, ('',)))
 
 def handle_run_scoring_output(output, attempt):
+    logger.debug('run_scoring.py output handling...')
     lines = output.splitlines()
     class BadOutput(Exception):
         reason = ""
@@ -232,7 +233,9 @@ def handle_run_scoring_output(output, attempt):
     try:
         if len(lines) == 0:
             raise BadOutput('no output')
+        logger.debug('output not empty')
         if lines[0] == 'ACCEPTED':
+            logger.debug('first line: ACCEPTED')
             if len(lines) < 2:
                 raise BadOutput('Status ACCEPTED, but no score provided')
             try:
@@ -243,15 +246,18 @@ def handle_run_scoring_output(output, attempt):
             attempt.scoring_msg = join_with_terminator('\n', lines[2:])
             return
         elif lines[0] == 'REJECTED':
+            logger.debug('first line: REJECTED')
             attempt.scoring_status = 'rejected'
             attempt.scoring_msg = join_with_terminator('\n', lines[1:])
             return
+        logger.debug('unrecognized first line')
         raise BadOutput('unrecognized first line %s' % repr(lines[0]))
     except BadOutput as e:
         attempt.scoring_status = 'error'
         attempt.scoring_msg = 'Bad scoring output (%s):\n' % e.reason + output
 
 def attempt_grading(attempt):
+    logger.debug('attempt_grading called with attempt %s', attempt.id)
     scoring_dir = _prepare_scoring_dir(attempt)
     process = _run_scoring_popen(attempt, scoring_dir)
     finished = False
@@ -273,7 +279,9 @@ def attempt_grading(attempt):
         except TimeoutExpired:
             pass
     output = process.stdout.read(MAX_RUN_SCORING_OUTPUT_SIZE).decode('utf-8', errors='replace')
+    logger.debug('run_scoring.py finished')
     if process.returncode == 0:
+        logger.debug('run_scoring finished successfully (code 0)')
         attempt.succed = True
         handle_run_scoring_output(output, attempt)
     else:

@@ -71,24 +71,53 @@ USE_TZ = True
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
+    'formatters': {
+        'standard': {
+	    'format': '%(levelname)s %(asctime)s %(module)s %(message)s'
+	}
+     },
     'handlers': {
-        'grading_file': {
+        'grading_overseer_file': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
-            'filename': os.path.join(BASE_DIR, 'grading_debug_log'),
+            'filename': os.path.join(BASE_DIR, 'grading_overseer_debug.log'),
+	    'formatter': 'standard'
+        },
+	'grading_file': {
+	    'level': 'DEBUG',
+	    'class': 'logging.FileHandler',
+	    'filename': os.path.join(BASE_DIR, 'grading_debug.log'),
+	    'formatter': 'standard'
+	},
+        'web_log': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'web.log'),
+	    'formatter': 'standard'
         },
         'console': {
             'class': 'logging.StreamHandler',
+	    'formatter': 'standard'
         },
     },
     'loggers': {
-        'base.management.commands.grading': {
+        'django': {
+            'handlers': ['web_log', 'console'],
+            'level': 'INFO',
+            'propagate': True,
+        },
+        'base.models': {
             'handlers': ['console', 'grading_file'],
+            'level': 'DEBUG',
+            'propagate': True,
+         },
+        'base.management.commands.grading': {
+            'handlers': ['console', 'grading_overseer_file'],
             'level': 'DEBUG',
             'propagate': True,
         },
         'base.management.commands.grading_attempt_safe': {
-            'handlers': ['console', 'grading_file'],
+            'handlers': ['console', 'grading_overseer_file'],
             'level': 'DEBUG',
             'propagate': True,
         },
