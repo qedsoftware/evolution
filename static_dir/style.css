@@ -100,8 +100,20 @@ pre {
   height: 30px;
   width: 130px; }
 
-a.action-button:hover, a.logout-button:hover {
-  text-decoration: none; }
+.action-button:hover, .action-form input[type=submit]:hover, .standard-form input[type=submit]:hover, .logout-button:hover, .left-user form input[type=submit]:hover {
+  text-decoration: none;
+  background-color: #f2f2ff; }
+
+.action-button:focus, .action-form input[type=submit]:focus, .standard-form input[type=submit]:focus, .logout-button:focus, .left-user form input[type=submit]:focus {
+  outline: none;
+  text-decoration: none;
+  /* it looks ugly when it stays after clicking
+   * but there is no focus indication now
+   * background-color: $link-background-color; */ }
+
+.action-button:active, .action-form input[type=submit]:active, .standard-form input[type=submit]:active, .logout-button:active, .left-user form input[type=submit]:active {
+  text-decoration: none;
+  background-color: #ddf; }
 
 .left-pane {
   height: 100%;
@@ -328,7 +340,9 @@ table {
   .submission-table tr {
     cursor: pointer; }
   .submission-table tr.submission_row:hover {
-    background-color: #cdf; }
+    background-color: #f2f2ff; }
+  .submission-table tr.submission_row:active {
+    background-color: #ddf; }
 
 .result-part {
   text-align: center; }

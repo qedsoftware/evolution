@@ -9,6 +9,10 @@ $success-background-color: #dfd;
 $attention-background-color: #FFFF7F;
 $error-background-color: #faa;
 
+$link-color: #2277DD;
+$link-background-color: #f2f2ff;
+$link-darker-background-color: #ddf;
+
 html {
     height: 100%
 }
@@ -36,7 +40,7 @@ body {
 }
 
 a {
-    color: #2277DD;
+    color: $link-color;
     text-decoration: none;
 }
 
@@ -135,8 +139,22 @@ pre {
     width: 130px;
 }
 
-a.action-button:hover {
+.action-button:hover {
     text-decoration: none;
+    background-color: $link-background-color;
+}
+
+.action-button:focus {
+    outline: none;
+    text-decoration: none;
+    /* it looks ugly when it stays after clicking
+     * but there is no focus indication now
+     * background-color: $link-background-color; */
+}
+
+.action-button:active {
+    text-decoration: none;
+    background-color: $link-darker-background-color;
 }
 
 .left-pane {
@@ -460,7 +478,10 @@ table {
         @extend .unselectable;
     }
     tr.submission_row:hover {
-        background-color: #cdf;
+        background-color: $link-background-color;
+    }
+    tr.submission_row:active {
+        background-color: $link-darker-background-color;
     }
 }
 

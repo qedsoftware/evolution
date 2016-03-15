@@ -709,13 +709,14 @@ class SelectSubmission(UserPassesTestMixin, SubmissionMixin, ContextMixin,
         context = self.get_context_data(**kwargs)
         try:
             select_submission(self.submission)
-            messages.add_message(request, messages.SUCCESS,
-                mark_safe("Submission <strong>%s</strong> selected." %
-                    self.submission.id))
+            # it seems to much, they will notice
+            # messages.add_message(request, messages.SUCCESS,
+            #    mark_safe("Submission <strong>%s</strong> selected." %
+            #        self.submission.id))
         except SelectionError as e:
             messages.error(request, mark_safe(
-                "<p>You failed to unselect submission <strong>%s</strong>.</p>"
-                "<p>%s</p>" % (self.submission.id, str(e))))
+               "<p>You failed to select submission <strong>%s</strong>.</p>"
+               "<p>%s</p>" % (self.submission.id, str(e))))
         return redirect(
             reverse('contests:submission',
                 args=(self.contest.code, self.submission.id)))
@@ -730,9 +731,6 @@ class UnselectSubmission(UserPassesTestMixin, SubmissionMixin, ContextMixin,
         context = self.get_context_data(**kwargs)
         try:
             unselect_submission(self.submission)
-            messages.add_message(request, messages.SUCCESS,
-                mark_safe("Submission <strong>%s</strong> unselected." %
-                    self.submission.id))
         except SelectionError as e:
             messages.error(request, mark_safe(
                 "<p>You failed to unselect submission <strong>%s</strong>.</p>"
