@@ -285,11 +285,14 @@ def attempt_grading(attempt):
         attempt.succed = True
         handle_run_scoring_output(output, attempt)
     else:
-        logger.info('run_scoring.py failed with code %s', process.returncode)
+        logger.info("run_scoring.py failed with code %s", process.returncode)
+        output_prefix = "run_scoring.py failed with code %s" % \
+            process.returncode
         if process.returncode == 1:
             logger.info('Probably scoring script crashed.')
+            output_prefix += '\nProbably scoring script crashed.'
         attempt.scoring_status = 'error'
-        attempt.scoring_msg = output
+        attempt.scoring_msg = '\n'.join([output_prefix, output])
         attempt.succed = False
     # We don't want to overwrite aborted etc.
     finish_grading(attempt)
