@@ -156,7 +156,7 @@ GRADING_CHECK_STATUS_INTERVAL_SECONDS=1
 
 LOGIN_REDIRECT_URL = '/'
 LOGIN_URL = '/login/'
-LOGO_LINK_URL = 'http://qed.ai/'
+LOGO_LINK_URL = '/'
 
 # Downloads
 

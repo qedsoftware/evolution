@@ -13,6 +13,7 @@ from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.db import transaction
 from django.contrib import messages
 from django.utils.safestring import mark_safe
+from django_downloadview import BaseDownloadView
 
 from system.views import title, PostDataView, add_static_message
 
@@ -22,7 +23,7 @@ from .models import Contest, ContestFactory, ContestSubmission, \
     leave_team as leave_team_action, can_join_team, in_team, \
     is_contest_admin, teams_with_member_list, build_leaderboard, user_team, \
     can_create_team, StageIsClosed, SelectionError, select_submission, \
-    unselect_submission
+    unselect_submission, remaining_selections
 
 from .forms import ContestForm, ContestCreateForm, SubmitForm
 
@@ -485,7 +486,27 @@ class SubmissionView(UserPassesTestMixin, SubmissionMixin, TemplateView):
         context['rejudge_url'] = self.rejudge_url()
         context['stage_name'] = \
             self.contest_context.stage_names[self.submission.stage.id]
+        context['remaining_selections'] = \
+            remaining_selections(self.submission.team, self.submission.stage)
         return context
+
+
+class DownloadSubmissionAnswer(UserPassesTestMixin, SubmissionMixin,
+                               BaseDownloadView):
+    def test_func(self):
+        return self.contest_context.can_see_submission(self.submission)
+
+    def get_file(self):
+        return self.submission.submission.output
+
+
+class DownloadSubmissionSource(UserPassesTestMixin, SubmissionMixin,
+                               BaseDownloadView):
+    def test_func(self):
+        return self.contest_context.can_see_submission(self.submission)
+
+    def get_file(self):
+        return self.submission.source
 
 
 class ContestRejudgeView(UserPassesTestMixin, ContestMixin, TemplateView):

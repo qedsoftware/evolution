@@ -366,6 +366,16 @@ def rejudge_submission(contest_submission):
 def rejudge_contest(contest):
     request_qs_grading(Submission.objects.filter(contestsubmission__stage__contest=contest))
 
+def remaining_selections(team, stage):
+    limit = stage.selected_limit
+    if limit < 0:
+        return None
+    count = ContestSubmission.objects.filter(
+        team=team,
+        stage=stage,
+        selected=True).count()
+    return limit - count
+
 def teams_with_member_list(contest):
     # Below we want to get the memebers of each team, sorted by full name.
     # We also want only one db query.

@@ -1,4 +1,5 @@
 $link-color: #2277DD;
+$ok-color: #00BB00;
 $error-color: #B30000;
 $hint-color: #888;
 
@@ -77,6 +78,7 @@ pre {
             margin: 5px 0px;
         }
     }
+
     .message-box.debug {
         background-color: $debug-background-color;
         i.message-icon:after {
@@ -160,8 +162,9 @@ a.action-button:hover {
     height:100%;
     width:150px;
     float: left;
-    padding:10px;
-    padding-right: 30px;
+    padding:20px;
+    padding-left: 20px;
+    padding-right: 50px;
     margin-top: 0px;
 }
 
@@ -180,13 +183,14 @@ a.action-button:hover {
 .page-content {
     float: left;
     width: 700px;
-    padding: 10px;
+    padding: 20px;
     h1 {
         font-size: 35px;
         text-align: center;
     }
     h2 {
         font-size: 19px;
+        margin-top: 25px;
         margin-bottom: 3px;
     }
     .news-item p {
@@ -542,6 +546,16 @@ table {
 .selection-state {
     text-transform: uppercase;
     font-size: 22px;
+    i.material-icons {
+        position: relative;
+        top: 3px;
+    }
+    .selected-icon {
+        color: $ok-color;
+    }
+    .not-selected-icon {
+        color: $error-color;
+    }
 }
 
 .teams-list > ol > li {

@@ -43,9 +43,11 @@
 <div class="selection-box">
     <div class="selection-state">
         {% if contest_submission.selected %}
-            Selected
+            <i class="material-icons selected-icon">grade</i> Selected <i class="material-icons selected-icon">grade</i>
         {% else %}
+            <i class="material-icons not-selected-icon">clear</i>
             Not Selected
+            <i class="material-icons not-selected-icon">clear</i>
         {% endif %}
     </div>
     {% if selection_change_active %}
@@ -58,7 +60,12 @@
                 {% action_form 'select-action' 'select this submission' select_url %}
             {% endif %}
             <div class="selection-remaining">
-                [remaining selections: 3]
+                remaining selections:
+                    {% if remaining_selections != None %}
+                        {{remaining_selections}}
+                    {% else %}
+                        ∞ {# infinity symbol #}
+                    {% endif %}
             </div>
         </div>
     {% endif %}
@@ -68,8 +75,8 @@
 
 <ul class="submission-details">
     <li>Submitted at: <strong>{{submission.created_at}}</strong></li>
-    <li><a href="{{submission.output}}">Answer</a></li>
-    <li><a href="{{contest_submission.source}}">Source Code</a></li>
+    <li><a href="{% url 'contests:submission_answer' contest.code submission.id %}">Answer</a></li>
+    <li><a href="{% url 'contests:submission_source' contest.code submission.id %}">Source Code</a></li>
 </ul>
 
 {% if result == 'rejected' or result == 'accepted' and submission.scoring_msg %}
