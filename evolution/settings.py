@@ -78,6 +78,7 @@ USE_TZ = True
 MAIN_URL = '/'
 LOGIN_REDIRECT_URL = '/'
 LOGIN_URL = '/accounts/login/'
+SIGNUP_URL = '/accounts/signup'
 LOGO_LINK_URL = '/'
 
 # Logging

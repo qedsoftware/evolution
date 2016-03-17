@@ -75,6 +75,27 @@ class PostDataView(ContextMixin, View):
         return render(request, self.external_template_name, context)
 
 
+class InviteView(UserPassesTestMixin, FormView):
+    form_class = InviteForm
+    template_name = "system/invite.html"
+
+    def test_func(self):
+        return self.request.user.is_superuser
+
+    def form_valid(self, form):
+        form.instance.invited_by = self.request.user
+        form.instance.prepare()
+        invitation = form.save()
+        invitation.send_email()
+        messages.add_message(self.request, messages.SUCCESS,
+            mark_safe("Invitation sent to <strong>%s</strong>" % \
+                invitation.invited_email))
+        return super(InviteView, self).form_valid(form)
+
+    def get_success_url(self):
+        return reverse('invite')
+
+
 def messages_test_view(request):
     messages.set_level(request, messages.DEBUG)
     messages.add_message(request, messages.SUCCESS,
@@ -101,22 +122,3 @@ def messages_test_view(request):
         'content_title': 'Message Test',
         'text': "Nothing to do here"
     })
-
-
-class InviteView(UserPassesTestMixin, FormView):
-    form_class = InviteForm
-    template_name = "system/invite.html"
-
-    def test_func(self):
-        return self.request.user.is_superuser
-
-    def form_valid(self, form):
-        form.instance.invited_by = self.request.user
-        form.instance.prepare()
-        invitation = form.save()
-        invitation.send_email()
-        return super(InviteView, self).form_valid(form)
-
-    def get_success_url(self):
-        return reverse('invite')
-

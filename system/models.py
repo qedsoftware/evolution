@@ -8,6 +8,11 @@ from django.db import models, transaction
 from django.contrib.auth.models import User
 from django.utils import timezone
 from django.conf import settings
+from django.core.mail import EmailMessage
+from django.contrib.sites.models import Site
+from django.core.exceptions import ValidationError
+from allauth.account.models import EmailAddress
+from allauth.utils import build_absolute_uri
 
 SOURCE_LANGUAGES = (
     ('html', 'HTML'),
@@ -138,11 +143,26 @@ def validate_x(string):
         raise ValidationError('%s is not \'x\'' % string)
 
 
+def validate_email_not_used(email):
+    existing_email = EmailAddress.objects.filter(email=email). \
+        first()
+    if existing_email:
+        existing_user = existing_email.user
+        raise ValidationError("Email already associated with user: %s (%s)." % \
+            (existing_user.get_full_name(), existing_user.username))
+
+
 class Invitation(models.Model):
-    invited_email = models.EmailField()
+    invited_email = models.EmailField(validators=[validate_email_not_used])
     invited_by = models.ForeignKey('auth.User', null=True)
     secret_code = models.CharField(max_length=100, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    accepted = models.BooleanField(default=False)
+
+    def is_expired(self):
+        earliest_acceptable = timezone.now() - \
+            timedelta(days=settings.INVITATION_EXPIRY)
+        return self.created_at < earliest_acceptable
 
     def prepare(self):
         self.secret_code = User.objects.make_random_password(length=16)
@@ -150,7 +170,31 @@ class Invitation(models.Model):
             days=settings.INVITATION_EXPIRY)
 
     def send_email(self):
-        pass
+        site = Site.objects.get_current()
+        subject = '[%s] Invitation' % site.name
+        to = self.invited_email
+        full_signup_url = build_absolute_uri(None, settings.SIGNUP_URL)
+        # TODO, move to a template or something
+        body_template = """\
+Hello,
+
+You have been invited to use {site_name}. We hope you'll like it.
+
+Invited email: {invited_email}
+Secret code: {secret_code}
+Sign up url: {full_signup_url}
+
+Enjoy,
+{site_name} Team
+"""
+        body = body_template.format(
+            site_name=site.name,
+            invited_email=self.invited_email,
+            secret_code=self.secret_code,
+            full_signup_url=full_signup_url
+        )
+        email = EmailMessage(subject, body, to=[to])
+        email.send()
 
 
 class SystemSettings(models.Model):

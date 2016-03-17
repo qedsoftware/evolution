@@ -4,8 +4,6 @@
 
 {% block content %}
 
-<p>Already have an account? Then please <a href="{{ login_url }}">sign in</a>.</p>
-
 <form class="signup standard-form" id="signup_form" method="post" action="{% url 'account_signup' %}">
   {% csrf_token %}
   {% if redirect_field_value %}
