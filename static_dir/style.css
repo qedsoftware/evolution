@@ -3,7 +3,7 @@
 html {
   height: 100%; }
 
-.unselectable, .action-button, .action-form input[type=submit], .standard-form input[type=submit], .logout-button, .left-user form input[type=submit], .left-pane h2, .left-pane .logo img, .menu-item, .submission-table tr {
+.unselectable, .action-button, button, .action-form input[type=submit], .standard-form input[type=submit], .logout-button, .left-user form input[type=submit], .left-pane h2, .left-pane .logo img, .menu-item, .submission-table tr {
   -webkit-user-select: none;
   /* Chrome/Safari */
   -moz-user-select: none;
@@ -89,7 +89,7 @@ pre {
     height: 100%;
     display: inline-block; }
 
-.action-button, .action-form input[type=submit], .standard-form input[type=submit], .logout-button, .left-user form input[type=submit] {
+.action-button, button, .action-form input[type=submit], .standard-form input[type=submit], .logout-button, .left-user form input[type=submit] {
   display: table-cell;
   border: 1px solid #2277DD;
   color: #2277DD;
@@ -100,18 +100,18 @@ pre {
   height: 30px;
   width: 130px; }
 
-.action-button:hover, .action-form input[type=submit]:hover, .standard-form input[type=submit]:hover, .logout-button:hover, .left-user form input[type=submit]:hover {
+.action-button:hover, button:hover, .action-form input[type=submit]:hover, .standard-form input[type=submit]:hover, .logout-button:hover, .left-user form input[type=submit]:hover {
   text-decoration: none;
   background-color: #f2f2ff; }
 
-.action-button:focus, .action-form input[type=submit]:focus, .standard-form input[type=submit]:focus, .logout-button:focus, .left-user form input[type=submit]:focus {
+.action-button:focus, button:focus, .action-form input[type=submit]:focus, .standard-form input[type=submit]:focus, .logout-button:focus, .left-user form input[type=submit]:focus {
   outline: none;
   text-decoration: none;
   /* it looks ugly when it stays after clicking
    * but there is no focus indication now
    * background-color: $link-background-color; */ }
 
-.action-button:active, .action-form input[type=submit]:active, .standard-form input[type=submit]:active, .logout-button:active, .left-user form input[type=submit]:active {
+.action-button:active, button:active, .action-form input[type=submit]:active, .standard-form input[type=submit]:active, .logout-button:active, .left-user form input[type=submit]:active {
   text-decoration: none;
   background-color: #ddf; }
 
@@ -185,6 +185,9 @@ pre {
   color: #888;
   font-size: 10px; }
 
+fieldset {
+  border: none; }
+
 .standard-form ul {
   width: 700px;
   list-style-type: none;
@@ -223,6 +226,10 @@ pre {
   width: 400px;
   padding: 5px 8px; }
 .standard-form input[type=submit] {
+  width: 400px;
+  height: 30px;
+  margin-left: 126px; }
+.standard-form button {
   width: 400px;
   height: 30px;
   margin-left: 126px; }
@@ -421,5 +428,17 @@ table {
   list-style-type: none;
   font-size: 12px;
   padding-left: 0px; }
+
+.email_list .ctrlHolder {
+  padding: 10px 0px; }
+.email_list button {
+  width: 180px; }
+.email_list .unverified {
+  color: #B30000; }
+.email_list .verified {
+  color: #008800; }
+.email_list .primary {
+  font-weight: bold;
+  padding: 1px; }
 
 /*# sourceMappingURL=style.css.map */

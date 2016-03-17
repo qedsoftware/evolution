@@ -240,14 +240,15 @@ class ContestCreateAndSetupTest(WebTest):
         self.assertContains(page, 'New Contest')
         self.assertContains(page, 'Create')
         name = 'contest name'
-        page.form['name'] = name
-        page.form['code'] = 'contest-code'
-        page = page.form.submit().follow()
+        form = page.forms['create-contest-form']
+        form['name'] = name
+        form['code'] = 'contest-code'
+        page = form.submit().follow()
         contest = Contest.objects.get()
         self.assertEqual(contest.code, 'contest-code')
         self.assertEqual(contest.name, name)
         page.mustcontain('created contest', 'Contest Settings', name)
-        form = page.forms[1] # TODO, give it proper id
+        form = page.forms['contest-settings-form']
         form['bigger_better'] = False
         form['published_final_results'] = True
         self.assertEqual(contest.bigger_better, True);
@@ -374,7 +375,7 @@ class RejudgeTest(WebTest):
         page = self.app.get(reverse('contests:rejudge',
             args=['contest']), user='admin')
         page.mustcontain('Rejudge All Submissions')
-        page = page.form.submit().follow()
+        page = page.forms['rejudge-all'].submit().follow()
         page.mustcontain('All submissions', 'marked for rejudging')
 
     def test_rejudge_user(self):

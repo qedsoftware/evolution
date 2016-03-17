@@ -1,0 +1,19 @@
+{% extends "system/layout.html" %}
+
+{% block title %} Sign Up {% endblock %}
+
+{% block content %}
+
+<p>Already have an account? Then please <a href="{{ login_url }}">sign in</a>.</p>
+
+<form class="signup standard-form" id="signup_form" method="post" action="{% url 'account_signup' %}">
+  {% csrf_token %}
+  {% if redirect_field_value %}
+  <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+  {% endif %}
+  <ul>
+  	{{ form.as_ul }}
+  	<li> <input type="submit" value="Sign Up &raquo;"</input> </li>
+  </ul>
+</form>
+{% endblock %}

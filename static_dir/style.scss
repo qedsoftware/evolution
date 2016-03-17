@@ -1,4 +1,5 @@
 $link-color: #2277DD;
+$success-color: #008800;
 $ok-color: #00BB00;
 $error-color: #B30000;
 $hint-color: #888;
@@ -139,6 +140,10 @@ pre {
     width: 130px;
 }
 
+button {
+    @extend .action-button;
+}
+
 .action-button:hover {
     text-decoration: none;
     background-color: $link-background-color;
@@ -250,6 +255,10 @@ pre {
     font-size: 10px;
 }
 
+fieldset {
+    border: none;
+}
+
 $input-width: 400px;
 .standard-form {
     ul {
@@ -308,6 +317,12 @@ $input-width: 400px;
 
     input[type=submit] {
         @extend .action-button;
+        width: $input-width;
+        height: 30px;
+        margin-left: 126px;
+    }
+
+    button {
         width: $input-width;
         height: 30px;
         margin-left: 126px;
@@ -587,4 +602,23 @@ table {
     list-style-type: none;
     font-size: 12px;
     padding-left: 0px;
+}
+
+.email_list {
+    .ctrlHolder {
+        padding: 10px 0px;
+    }
+    button {
+        width: 180px;
+    }
+    .unverified {
+        color: $error-color;
+    }
+    .verified {
+        color: $success-color;
+    }
+    .primary {
+        font-weight: bold;
+        padding: 1px;
+    }
 }

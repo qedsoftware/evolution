@@ -1,15 +1,18 @@
 from django.shortcuts import render
-from django.views.generic import View
+from django.views.generic import View, FormView
 from django.views.generic.base import ContextMixin
 from django.views.generic.list import ListView
 from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
 from django.core.exceptions import ImproperlyConfigured
 from django_downloadview import StorageDownloadView
 from django.template.loader import render_to_string
+from django.core.urlresolvers import reverse
 
 from django.utils.safestring import mark_safe
 from django.contrib import messages
 from django.contrib.messages.storage.base import Message
+
+from .forms import InviteForm
 
 from .models import NewsItem, PostData
 
@@ -99,4 +102,21 @@ def messages_test_view(request):
         'text': "Nothing to do here"
     })
 
+
+class InviteView(UserPassesTestMixin, FormView):
+    form_class = InviteForm
+    template_name = "system/invite.html"
+
+    def test_func(self):
+        return self.request.user.is_superuser
+
+    def form_valid(self, form):
+        form.instance.invited_by = self.request.user
+        form.instance.prepare()
+        invitation = form.save()
+        invitation.send_email()
+        return super(InviteView, self).form_valid(form)
+
+    def get_success_url(self):
+        return reverse('invite')
 

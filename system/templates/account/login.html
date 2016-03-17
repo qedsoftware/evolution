@@ -4,9 +4,9 @@
 
 {% if form.errors %}
 <p>Your username and password didn't match. Please try again.</p>
-<p><a href="{% url 'password_reset' %}">Forgot password?</a></p>
+<p><a href="{% url 'account_reset_password' %}">Forgot password?</a></p>
 {% else %}
-    {% if next %}
+    {% if redirect_field_value %}
         {% if user.is_authenticated %}
         <p>You don't have access to this page.</p>
         {% else %}

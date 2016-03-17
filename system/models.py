@@ -2,9 +2,12 @@ import html
 import markdown
 import gfm
 import bleach
+from datetime import timedelta
 
 from django.db import models, transaction
 from django.contrib.auth.models import User
+from django.utils import timezone
+from django.conf import settings
 
 SOURCE_LANGUAGES = (
     ('html', 'HTML'),
@@ -133,6 +136,22 @@ class NewsItem(models.Model):
 def validate_x(string):
     if string != 'x':
         raise ValidationError('%s is not \'x\'' % string)
+
+
+class Invitation(models.Model):
+    invited_email = models.EmailField()
+    invited_by = models.ForeignKey('auth.User', null=True)
+    secret_code = models.CharField(max_length=100, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def prepare(self):
+        self.secret_code = User.objects.make_random_password(length=16)
+        self.expires = timezone.now() + timedelta(
+            days=settings.INVITATION_EXPIRY)
+
+    def send_email(self):
+        pass
+
 
 class SystemSettings(models.Model):
     class Meta:

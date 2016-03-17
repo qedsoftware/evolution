@@ -29,6 +29,7 @@ setup(
       'pytz',
       'uwsgi>=2.0.12',
       'psycopg2>=2.6.1',
-      'django-webtest>=1.7.8'
+      'django-webtest>=1.7.8',
+      'django-allauth>=0.25.2',
     ]
 )

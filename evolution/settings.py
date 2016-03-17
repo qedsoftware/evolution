@@ -12,11 +12,18 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites', # required by allauth
     'debug_toolbar',
     'base',
     'system',
-    'contests'
+    'contests',
+    # all auth
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
 )
+
+SITE_ID = 1
 
 MIDDLEWARE_CLASSES = (
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -65,6 +72,13 @@ USE_I18N = True
 USE_L10N = True
 
 USE_TZ = True
+
+# Site
+
+MAIN_URL = '/'
+LOGIN_REDIRECT_URL = '/'
+LOGIN_URL = '/accounts/login/'
+LOGO_LINK_URL = '/'
 
 # Logging
 
@@ -129,6 +143,29 @@ LOGGING = {
     },
 }
 
+# Authentication etc.
+
+AUTHENTICATION_BACKENDS = (
+    # Needed to login by username in Django admin, regardless of `allauth`
+    'django.contrib.auth.backends.ModelBackend',
+
+    # `allauth` specific authentication methods, such as login by e-mail
+    'allauth.account.auth_backends.AuthenticationBackend',
+)
+
+# We redirect to login with a proper message, when permissions are insufficient
+ACCOUNT_AUTHENTICATED_LOGIN_REDIRECTS = False
+ACCOUNT_AUTHENTICATION_METHOD = "username_email"
+ACCOUNT_EMAIL_CONFIRMATION_ANONYMOUS_REDIRECT_URL = MAIN_URL
+ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 3
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_EMAIL_VERIFICATION = "mandatory"
+
+ACCOUNT_SIGNUP_FORM_CLASS = 'system.forms.SignupForm'
+
+INVITATION_EXPIRY = 3 #days
+
+
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.8/howto/static-files/
 
@@ -151,12 +188,6 @@ SCORING_TMP = '/tmp/evolution_scoring'
 
 GRADING_POLL_FOR_JOB_INTERVAL_SECONDS=1
 GRADING_CHECK_STATUS_INTERVAL_SECONDS=1
-
-# Site
-
-LOGIN_REDIRECT_URL = '/'
-LOGIN_URL = '/login/'
-LOGO_LINK_URL = '/'
 
 # Downloads
 
