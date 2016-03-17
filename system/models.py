@@ -2,6 +2,7 @@ import html
 import markdown
 import gfm
 import bleach
+import reprlib
 from datetime import timedelta
 
 from django.db import models, transaction
@@ -44,6 +45,9 @@ class Post(models.Model):
         post.from_data(data)
         post.save()
         return post
+
+    def __str__(self):
+        return str(self.id) + ' (' + self.source_lang + ') ' + reprlib.repr(self.source)
 
 MARKDOWN_ALLOWED_TAGS = [
     'a',
@@ -137,6 +141,9 @@ class NewsItem(models.Model):
     created = models.DateTimeField()
     title = models.CharField(max_length=200)
     content = models.OneToOneField('Post')
+
+    def __str__(self):
+        return str(self.id) + ': ' + reprlib.repr(self.title)
 
 def validate_x(string):
     if string != 'x':

@@ -1,22 +1,50 @@
 from django.contrib import admin
 
-from contests.models import Contest, Team, TeamMember, ContestStage
+from contests.models import Contest, Team, TeamMember, ContestStage, \
+    ContestSubmission
 
 class ContestAdmin(admin.ModelAdmin):
-    pass
+    list_display = ['id', 'name', 'code', 'bigger_better', 'description']
+    search_fields = ['name', 'code']
+    list_filter = ['bigger_better']
+    list_display_links = ['id', 'name', 'code']
+
+
 admin.site.register(Contest, ContestAdmin)
 
+
 class ContestStageAdmin(admin.ModelAdmin):
-    pass
+    list_display = ['id', 'contest', 'begin', 'end', 'published_results',
+        'requires_selection', 'selected_limit']
+    search_fields = ['contest__name', 'contest__code']
+    list_filter = ['published_results', 'requires_selection', 'selected_limit']
+
 admin.site.register(ContestStage, ContestStageAdmin)
 
+
+class ContestSubmissionAdmin(admin.ModelAdmin):
+    list_display = ['id', 'created_at', 'stage', 'contest', 'team', 'selected']
+    search_fields = ['team__name']
+    list_filter = ['selected']
+
+admin.site.register(ContestSubmission, ContestSubmissionAdmin)
+
+
 class TeamAdmin(admin.ModelAdmin):
-    pass
+    list_display = ['id', 'name', 'contest']
+    search_fields = ['name']
+    list_filter = ['contest']
+    list_display_links = ['id', 'name']
+
+
 admin.site.register(Team, TeamAdmin)
 
-class TeamMemberAdmin(admin.ModelAdmin):
-    pass
-admin.site.register(TeamMember, TeamMemberAdmin)
 
+class TeamMemberAdmin(admin.ModelAdmin):
+    list_display = ['id', 'team', 'user', 'contest']
+    search_fields = ['user__username', 'user__first_name', 'user__last_name',
+        'team__name']
+    list_filter = ['contest']
+admin.site.register(TeamMember, TeamMemberAdmin)
 
 

@@ -193,7 +193,7 @@ class TeamMember(models.Model):
     # user can be only in one team per contest
     unique_together = ('user', 'contest')
 
-    def __repr__(self):
+    def __str__(self):
         return "TeamMember<%s in \"%s\" contest: \"%s\">" % \
             (self.user.username, self.team.name, self.contest.code)
 
@@ -272,6 +272,12 @@ class ContestSubmission(models.Model):
             self.source.save('submission_source', source)
         elif source == False:
             self.source.delete()
+
+    def contest(self):
+        return self.stage.contest
+
+    def created_at(self):
+        return self.submission.created_at
 
     def __str__(self):
         return "<ContestSubmission %s>" % self.id
