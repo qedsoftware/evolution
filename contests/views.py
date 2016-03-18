@@ -28,6 +28,7 @@ from .models import Contest, ContestFactory, ContestSubmission, \
 from .forms import ContestForm, ContestCreateForm, SubmitForm
 
 from base.models import GradingAttempt
+from system.utils import calculate_once
 
 
 class ContestContext:
@@ -146,29 +147,22 @@ class ContestMixin(object):
     ]
     contest_related = []
 
-    _contest = None
-    _contest_context = None
-
     title = None
 
     @property
     def contest_code(self):
         return self.kwargs['contests_code']
 
-    @property
+    @calculate_once
     def contest_context(self):
-        if not self._contest_context:
-            self._contest_context = ContestContext(self.request, self.contest)
-        return self._contest_context
+        return ContestContext(self.request, self.contest)
 
-    @property
+    @calculate_once
     def contest(self):
-        if not self._contest:
-            contest_qs = Contest.objects.filter(code=self.contest_code)
-            for related in self.base_contest_related + self.contest_related:
-                contest_qs = contest_qs.select_related(related)
-            self._contest = contest_qs.get()
-        return self._contest
+        contest_qs = Contest.objects.filter(code=self.contest_code)
+        for related in self.base_contest_related + self.contest_related:
+            contest_qs = contest_qs.select_related(related)
+        return contest_qs.get()
 
     @property
     def contest_url(self):
@@ -352,6 +346,7 @@ class Submit(UserPassesTestMixin, ContestMixin, FormView):
             raise PermissionDenied()
         return stage
 
+    @calculate_once
     def stage_choices(self):
         choices = []
         for stage in self.contest_context.stages:
@@ -361,11 +356,18 @@ class Submit(UserPassesTestMixin, ContestMixin, FormView):
                 )
         return choices
 
-
     def get_form_kwargs(self):
         kwargs = super(Submit, self).get_form_kwargs()
-        kwargs['stages_available'] = self.stage_choices()
+        choices = self.stage_choices
+        kwargs['stages_available'] = choices
         return kwargs
+
+    def get_context_data(self, **kwargs):
+        context = super(Submit, self).get_context_data(**kwargs)
+        if not self.stage_choices:
+            add_static_message(context, messages.WARNING,
+                "Currently no stage is open for submissions.")
+        return context
 
     def form_valid(self, form):
         data = SubmissionData()
@@ -425,18 +427,14 @@ def ensure_submission_contest_match(submission, contest):
 
 
 class SubmissionMixin(ContestMixin):
-    _submission = None
-
-    @property
+    @calculate_once
     def submission(self):
-        if not self._submission:
-            self._submission = ContestSubmission.objects. \
-                select_related('submission'). \
-                select_related('stage'). \
-                get(id=self.kwargs['submission_id'])
-            ensure_submission_contest_match(self._submission,
-                self.contest)
-        return self._submission
+        submission = ContestSubmission.objects. \
+            select_related('submission'). \
+            select_related('stage'). \
+            get(id=self.kwargs['submission_id'])
+        ensure_submission_contest_match(submission, self.contest)
+        return submission
 
     @property
     def selection_change_active(self):

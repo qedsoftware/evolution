@@ -2,6 +2,8 @@ from django.test import TestCase, Client
 
 from .models import PostData, Post, SystemSettings
 
+from .utils import calculate_once
+
 class SimpleSanityCheck(TestCase):
     def test(self):
         client = Client()
@@ -101,3 +103,21 @@ class SystemSettingsTest(TestCase):
         response = client.get('/')
         self.assertContains(response, '__global_message__')
         self.assertContains(response, '__footer__')
+
+class CalculateOnceTest(TestCase):
+
+    foo_call_count = 0
+
+    @calculate_once
+    def foo(self):
+        self.foo_call_count = self.foo_call_count + 1
+        return list(range(5))
+
+    def test(self):
+        self.assertEqual(self.foo_call_count, 0)
+        self.assertEqual(self.foo, [0, 1, 2, 3, 4])
+        self.assertEqual(self.foo_call_count, 1)
+        self.assertEqual(self.foo, [0, 1, 2, 3, 4])
+        self.assertEqual(self.foo_call_count, 1)
+        self.assertEqual(self.foo, [0, 1, 2, 3, 4])
+        self.assertEqual(self.foo_call_count, 1)
