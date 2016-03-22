@@ -44,12 +44,13 @@ class SignupForm(forms.Form):
     def clean(self):
         cleaned_data = super(SignupForm, self).clean()
         secret = cleaned_data.get('secret_code').strip()
-        cleaned_data['secret_code'] = secret # stripped
+        cleaned_data['secret_code'] = secret  # stripped
         invitation = Invitation.objects.filter(secret_code=secret).first()
         if not invitation:
             self.add_error('secret_code', 'Wrong Secret Code')
         if invitation.accepted:
             self.add_error('secret_code', 'Secret Code already used')
         if invitation.is_expired():
-            self.add_error('secret_code', 'Invitation expired, maybe request a new one.')
+            self.add_error('secret_code',
+                'Invitation expired, maybe request a new one.')
         return cleaned_data

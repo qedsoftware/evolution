@@ -1,10 +1,8 @@
 from django.shortcuts import render, redirect
 from django.core.urlresolvers import reverse
-from django.views.generic import View
 from django.views.generic.base import ContextMixin, TemplateView, \
-    RedirectView, View
+    View
 from django.views.generic.list import ListView
-from django.views.generic import DetailView
 from django.views.generic.edit import FormView, CreateView
 from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.core.exceptions import PermissionDenied, SuspiciousOperation
@@ -14,8 +12,6 @@ from django.db import transaction
 from django.contrib import messages
 from django.utils.safestring import mark_safe
 from django_downloadview import BaseDownloadView
-
-from system.views import title, PostDataView, add_static_message
 
 from .models import Contest, ContestFactory, ContestSubmission, \
     SubmissionData, submit, ContestStage, rejudge_submission, \
@@ -28,6 +24,7 @@ from .models import Contest, ContestFactory, ContestSubmission, \
 from .forms import ContestForm, ContestCreateForm, SubmitForm
 
 from base.models import GradingAttempt
+from system.views import PostDataView, add_static_message
 from system.utils import calculate_once
 
 
@@ -64,7 +61,7 @@ class ContestContext:
     def __init__(self, request, contest):
         self.contest = contest
         self.user = request.user
-        # we want it to be a model - so we can query easier
+        # we want user to be a model - so we can query easier
         if not self.user.is_authenticated():
             self.user = None
         self.user_team = user_team(self.user, contest)
@@ -126,7 +123,8 @@ def add_contest_messages(context, contest_context):
             "To participate in the contest, join a team"
             " or create your own.")
 
-def contest_title(contest, text = None):
+
+def contest_title(contest, text=None):
     return ' - '.join(filter(None, [contest.name, text]))
 
 
@@ -189,7 +187,7 @@ def list(request):
 
     page = request.GET.get('page')
     try:
-        contests= paginator.page(page)
+        contests = paginator.page(page)
     except PageNotAnInteger:
         # If page is not an integer, deliver first page.
         contests = paginator.page(1)
@@ -382,7 +380,7 @@ class Submit(UserPassesTestMixin, ContestMixin, FormView):
         try:
             submit(team, stage, data)
         except StageIsClosed:
-            raise PermissionDenied() # TODO be nicer
+            raise PermissionDenied()  # TODO be nicer
         return super(Submit, self).form_valid(form)
 
 
@@ -519,8 +517,8 @@ class ContestRejudgeView(UserPassesTestMixin, ContestMixin, TemplateView):
 
     def post(self, request, *args, **kwargs):
         rejudge_contest(self.contest)
-        messages.add_message(self.request, messages.SUCCESS, mark_safe(
-                self.rejudge_all_msg % self.contest.name))
+        messages.add_message(self.request, messages.SUCCESS,
+            mark_safe(self.rejudge_all_msg % self.contest.name))
         return redirect(request.GET.get('next', default=self.contest_url))
 
 
@@ -584,7 +582,7 @@ class Teams(LoginRequiredMixin, ContestMixin, TemplateView):
 
 
 class TeamCreate(UserPassesTestMixin, ContestMixin, CreateView):
-    template_name='contests/new_team.html'
+    template_name = 'contests/new_team.html'
     model = Team
     fields = ['name']
     title = 'New Team'
@@ -611,38 +609,30 @@ class TeamCreate(UserPassesTestMixin, ContestMixin, CreateView):
 
 
 class JoinTeam(UserPassesTestMixin, ContestMixin, ContextMixin, View):
-    _team = None
 
-    @property
+    @calculate_once
     def team(self):
-        if not self._team:
-            self._team = Team.objects.get(id=self.kwargs['team_id'])
-        return self._team
+        return Team.objects.get(id=self.kwargs['team_id'])
 
     def test_func(self):
         return can_join_team(self.request.user, self.team)
 
     def post(self, request, *args, **kwargs):
-        context = self.get_context_data(**kwargs)
         join_team_action(request.user, self.team)
         return redirect(
             reverse('contests:team', args=(self.contest.code, self.team.id)))
 
 
 class LeaveTeam(UserPassesTestMixin, ContestMixin, ContextMixin, View):
-    _team = None
 
-    @property
+    @calculate_once
     def team(self):
-        if not self._team:
-            self._team = Team.objects.get(id=self.kwargs['team_id'])
-        return self._team
+        return Team.objects.get(id=self.kwargs['team_id'])
 
     def test_func(self):
         return self.contest_context.user_team == self.team
 
     def post(self, request, *args, **kwargs):
-        context = self.get_context_data(**kwargs)
         leave_team_action(request.user, self.team)
         return redirect(
             reverse('contests:team', args=(self.contest.code, self.team.id)))
@@ -651,13 +641,9 @@ class LeaveTeam(UserPassesTestMixin, ContestMixin, ContextMixin, View):
 class TeamView(LoginRequiredMixin, ContestMixin, TemplateView):
     template_name = 'contests/team.html'
 
-    _team = None
-
-    @property
+    @calculate_once
     def team(self):
-        if not self._team:
-            return Team.objects.get(id=self.kwargs['team_id'])
-        return self._team
+        return Team.objects.get(id=self.kwargs['team_id'])
 
     @property
     def title(self):
@@ -677,7 +663,6 @@ class TeamView(LoginRequiredMixin, ContestMixin, TemplateView):
 class StartObserving(LoginRequiredMixin, ContestMixin, ContextMixin, View):
 
     def post(self, request, *args, **kwargs):
-        context = self.get_context_data(**kwargs)
         self.contest.observing.add(request.user)
         messages.add_message(request, messages.SUCCESS,
             mark_safe('You started observing contest <strong>%s</strong>.' %
@@ -688,12 +673,10 @@ class StartObserving(LoginRequiredMixin, ContestMixin, ContextMixin, View):
 class StopObserving(LoginRequiredMixin, ContestMixin, ContextMixin, View):
 
     def post(self, request, *args, **kwargs):
-        context = self.get_context_data(**kwargs)
         self.contest.observing.remove(request.user)
         messages.add_message(request, messages.SUCCESS,
-            mark_safe(
-                'You are no longer observing contest <strong>%s</strong>.' %
-                    self.contest.name))
+            mark_safe('You are no longer observing contest'
+                      ' <strong>%s</strong>.' % self.contest.name))
         return redirect(self.contest_url)
 
 
@@ -704,7 +687,6 @@ class SelectSubmission(UserPassesTestMixin, SubmissionMixin, ContextMixin,
         return self.contest_context.user_team == self.submission.team
 
     def post(self, request, *args, **kwargs):
-        context = self.get_context_data(**kwargs)
         try:
             select_submission(self.submission)
             # it seems to much, they will notice
@@ -712,12 +694,14 @@ class SelectSubmission(UserPassesTestMixin, SubmissionMixin, ContextMixin,
             #    mark_safe("Submission <strong>%s</strong> selected." %
             #        self.submission.id))
         except SelectionError as e:
-            messages.error(request, mark_safe(
-               "<p>You failed to select submission <strong>%s</strong>.</p>"
-               "<p>%s</p>" % (self.submission.id, str(e))))
+            messages.error(request,
+               mark_safe("<p>You failed to select submission"
+                         " <strong>%s</strong>.</p>"
+                         "<p>%s</p>" % (self.submission.id, str(e))))
         return redirect(
             reverse('contests:submission',
                 args=(self.contest.code, self.submission.id)))
+
 
 class UnselectSubmission(UserPassesTestMixin, SubmissionMixin, ContextMixin,
                          View):
@@ -726,13 +710,13 @@ class UnselectSubmission(UserPassesTestMixin, SubmissionMixin, ContextMixin,
         return self.contest_context.user_team == self.submission.team
 
     def post(self, request, *args, **kwargs):
-        context = self.get_context_data(**kwargs)
         try:
             unselect_submission(self.submission)
         except SelectionError as e:
-            messages.error(request, mark_safe(
-                "<p>You failed to unselect submission <strong>%s</strong>.</p>"
-                "<p>%s</p>" % (submission.id, str(e))))
+            messages.error(request,
+                mark_safe("<p>You failed to unselect submission"
+                          " <strong>%s</strong>.</p>"
+                          "<p>%s</p>" % (self.submission.id, str(e))))
         return redirect(
             reverse('contests:submission',
                 args=(self.contest.code, self.submission.id)))
@@ -750,4 +734,3 @@ class ContestAdminHints(UserPassesTestMixin, PostDataView):
         context = super(ContestAdminHints, self).get_context_data(**kwargs)
         context['content_title'] = self.content_title
         return context
-

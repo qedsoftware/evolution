@@ -5,8 +5,6 @@ from . import views
 
 import contests.urls
 
-from django.contrib.auth import views as auth_views
-
 urlpatterns = [
     url(r'^$', views.NewsList.as_view(), name="news"),
     url(r'^user-settings/$', views.user_settings, name='user_settings'),

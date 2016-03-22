@@ -4,10 +4,12 @@ from .models import PostData, Post, SystemSettings
 
 from .utils import calculate_once
 
+
 class SimpleSanityCheck(TestCase):
     def test(self):
         client = Client()
         client.get('/')
+
 
 class PostDataTest(TestCase):
     def test_init(self):
@@ -71,6 +73,7 @@ for i in [1, 2, 3]:
         self.assertFalse('&lt' in markdown.html)
         self.assertFalse('&gt' in markdown.html)
 
+
 class PostTest(TestCase):
     def test_from_data(self):
         post = Post()
@@ -86,6 +89,7 @@ class PostTest(TestCase):
         self.assertEqual(pd.source, 'a')
         self.assertEqual(pd.source_lang, 'b')
         self.assertEqual(pd.html, 'c')
+
 
 class SystemSettingsTest(TestCase):
     def setUp(self):
@@ -103,6 +107,7 @@ class SystemSettingsTest(TestCase):
         response = client.get('/')
         self.assertContains(response, '__global_message__')
         self.assertContains(response, '__footer__')
+
 
 class CalculateOnceTest(TestCase):
 

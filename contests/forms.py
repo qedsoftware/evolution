@@ -1,8 +1,8 @@
 from django import forms
 from django.core import validators
 
-from .models import Contest
 from system.models import PostData
+
 
 class PostField(forms.Field):
     widget = forms.Textarea
@@ -17,23 +17,42 @@ class PostField(forms.Field):
         post_data.build_html()
         return post_data
 
+
 class ClearableFileInput(forms.ClearableFileInput):
     template_with_initial = (
         '<div class="upload-input-ctrl">'
-        '<div class="upload-input-part"><span class=pseudo-label>%(initial_text)s:</span> <a href="%(initial_url)s">%(initial)s</a> </div>'
+        '<div class="upload-input-part">'
+        '<span class=pseudo-label>%(initial_text)s:</span>'
+        '<a href="%(initial_url)s">%(initial)s</a>'
+        '</div>'
         '<div class="upload-input-part">%(clear_template)s</div>'
-        '<div class="upload-input-part"><span class=pseudo-label>%(input_text)s:</span> %(input)s</div>'
+        '<div class="upload-input-part">'
+        '<span class=pseudo-label>%(input_text)s:</span>'
+        '%(input)s'
+        '</div>'
         '</div>'
     )
-    template_with_clear = '<label for="%(clear_checkbox_id)s">%(clear_checkbox_label)s:</label> %(clear)s'
+    template_with_clear = (
+        '<label for="%(clear_checkbox_id)s">'
+        '%(clear_checkbox_label)s:'
+        '</label> %(clear)s'
+    )
 
-CONTEST_CODE_HELP_TEXT = "A short, unique name for a contest. It is used for urls and identifying contests. <strong>Choose it carefully and avoid changing it.</strong> It can contain lowercase letters, numbers, hyphens and underscores."
+
+CONTEST_CODE_HELP_TEXT = (
+    "A short, unique name for a contest."
+    "It is used for urls and identifying contests."
+    "<strong>Choose it carefully and avoid changing it.</strong>"
+    "It can contain lowercase letters, numbers, hyphens and underscores."
+)
+
 
 class ContestCreateForm(forms.Form):
     error_css_class = 'input-error'
 
     name = forms.CharField(max_length=100)
     code = forms.SlugField(help_text=CONTEST_CODE_HELP_TEXT)
+
 
 class ContestForm(forms.Form):
     error_css_class = 'input-error'
@@ -48,7 +67,7 @@ class ContestForm(forms.Form):
     bigger_better = forms.BooleanField(
         label="The bigger the better",
         help_text="Are the bigger scores better (uncheck if smaller scores "
-            "are better).", required=False)
+                  "are better).", required=False)
     answer_for_verification = forms.FileField(required=False,
         widget=ClearableFileInput())
     verification_begin = forms.DateTimeField(required=False)
@@ -64,8 +83,9 @@ class ContestForm(forms.Form):
             "the test stage starts — contestants will need to adjust. "
             "<strong>Negative for unlimited selections.</strong>")
 
+
 class SubmitForm(forms.Form):
-    stage = forms.ChoiceField(choices=()) # we'll fill choices in __init__
+    stage = forms.ChoiceField(choices=())  # we'll fill choices in __init__
     output_file = forms.FileField()
     source_code = forms.FileField()
     comment = forms.CharField(required=False)

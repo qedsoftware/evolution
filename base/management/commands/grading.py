@@ -5,16 +5,18 @@ import time
 
 from django.conf import settings
 
-from django.core.management.base import BaseCommand, CommandError
+from django.core.management.base import BaseCommand
 from django.core.management import call_command
 
-from base.models import choose_for_grading, attempt_grading
+from base.models import choose_for_grading
 
 logger = logging.getLogger(__name__)
+
 
 def exit_on_signal(signum, frame):
     logger.info('Grading terminated by signal %s', signum)
     sys.exit(1)
+
 
 class Command(BaseCommand):
     help = 'Runs grading'

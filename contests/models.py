@@ -1,14 +1,12 @@
-import datetime
-
 from django.db import models
 from django.db import transaction
 from django.utils import timezone
 
-
-from system.models import PostData, Post
+from system.models import Post
 
 from base.models import ScoringScript, DataGrader, Submission, \
     request_submission_grading, request_qs_grading
+
 
 class Contest(models.Model):
     name = models.CharField(max_length=100)
@@ -30,8 +28,10 @@ class Contest(models.Model):
     def __str__(self):
         return self.code
 
+
 def is_contest_admin(user, contest):
     return user is not None and user.is_superuser
+
 
 class ContestFactory(object):
     """
@@ -41,7 +41,7 @@ class ContestFactory(object):
     May seem repetitive, but it is crucial to keep views clean and helps with
     tests.
     """
-    #TODO "automate" some trivial parts
+    # TODO "automate" some trivial parts
     name = None
     code = None
     description = None
@@ -79,7 +79,7 @@ class ContestFactory(object):
 
     @transaction.atomic
     def create(self):
-        #Builds the contest structure then updates with data
+        # Builds the contest structure then updates with data
         description = Post()
         description.save()
         rules = Post()
@@ -158,6 +158,7 @@ class ContestFactory(object):
         contest.test_stage.save()
         contest.save()
 
+
 class ContestStage(models.Model):
     contest = models.ForeignKey('Contest', related_name='+')
     grader = models.ForeignKey('base.DataGrader', related_name='+')
@@ -174,6 +175,7 @@ class ContestStage(models.Model):
     def __str__(self):
         return '<ContestStage %s>' % self.id
 
+
 class Team(models.Model):
     name = models.CharField(max_length=100)
     contest = models.ForeignKey('Contest')
@@ -184,6 +186,7 @@ class Team(models.Model):
 
     def __str__(self):
         return self.name
+
 
 class TeamMember(models.Model):
     team = models.ForeignKey('Team', related_name='members')
@@ -197,14 +200,12 @@ class TeamMember(models.Model):
         return "TeamMember<%s in \"%s\" contest: \"%s\">" % \
             (self.user.username, self.team.name, self.contest.code)
 
+
 def user_team(user, contest):
     if not user:
         return None
     if not user.is_authenticated():
         return None
-    # admin should have team anyway
-    #if is_contest_admin(user, contest):
-    #    return None
 
     # Could it be simpler? I want to keep it ORM, but in SQL it is just:
     # SELECT team_id, etc FROM teams, teammembers WHERE user=:user AND
@@ -215,28 +216,33 @@ def user_team(user, contest):
         return membership.get().team
     return None
 
+
 class CannotJoin(Exception):
     pass
+
 
 @transaction.atomic
 def join_team(user, team):
     if not can_join_team(user, team):
-        raise AlreadyInTeam()
+        raise CannotJoin()
     membership = TeamMember()
     membership.user = user
     membership.team = team
     membership.contest = team.contest
     membership.save()
 
+
 def in_team(user, team):
     if not user or not user.is_authenticated():
         return False
     return TeamMember.objects.filter(team=team, user=user).exists()
 
+
 def leave_team(user, team):
     if not user or not user.is_authenticated:
         return
     TeamMember.objects.filter(team=team, user=user).delete()
+
 
 @transaction.atomic
 def can_join_team(user, team):
@@ -249,6 +255,7 @@ def can_join_team(user, team):
         select_for_update().exists()
     return not has_team
 
+
 @transaction.atomic
 def can_create_team(user, contest):
     if not user:
@@ -258,6 +265,7 @@ def can_create_team(user, contest):
     has_team = TeamMember.objects.filter(contest=contest, user=user). \
         select_for_update().exists()
     return not has_team
+
 
 class ContestSubmission(models.Model):
     stage = models.ForeignKey('ContestStage', related_name='+')
@@ -270,7 +278,7 @@ class ContestSubmission(models.Model):
     def save_source(self, source):
         if source:
             self.source.save('submission_source', source)
-        elif source == False:
+        elif source is False:
             self.source.delete()
 
     def contest(self):
@@ -286,8 +294,10 @@ class ContestSubmission(models.Model):
 class SubmissionData(object):
     output = None
 
+
 class StageIsClosed(Exception):
     pass
+
 
 @transaction.atomic
 def submit(team, stage, submission_data):
@@ -305,8 +315,10 @@ def submit(team, stage, submission_data):
     cs.save()
     return cs
 
+
 class SelectionError(Exception):
     pass
+
 
 @transaction.atomic
 def _precheck_select_submission(submission, with_lock=False):
@@ -333,6 +345,7 @@ def _precheck_select_submission(submission, with_lock=False):
     if limit >= 0 and selected_count >= limit:
         raise SelectionError("Selected submissions limit reached.")
 
+
 def can_select_submission(submission):
     try:
         _precheck_select_submission(submission)
@@ -340,17 +353,20 @@ def can_select_submission(submission):
         return False
     return True
 
+
 @transaction.atomic
 def select_submission(submission):
     _precheck_select_submission(submission, with_lock=True)
     submission.selected = True
     submission.save()
 
+
 def _precheck_unselect_submission(submission):
     if not submission.selected:
         raise SelectionError("Submission is already not selected.")
     if not submission.stage.is_open():
         raise SelectionError("Can't change selection in inactive contest.")
+
 
 def can_unselect_submission(submission):
     try:
@@ -359,18 +375,23 @@ def can_unselect_submission(submission):
         return False
     return True
 
+
 @transaction.atomic
 def unselect_submission(submission):
     _precheck_unselect_submission(submission)
     submission.selected = False
     submission.save()
 
+
 def rejudge_submission(contest_submission):
     request_submission_grading(contest_submission.submission)
     contest_submission.submission.save()
 
+
 def rejudge_contest(contest):
-    request_qs_grading(Submission.objects.filter(contestsubmission__stage__contest=contest))
+    request_qs_grading(Submission.objects.filter(
+        contestsubmission__stage__contest=contest))
+
 
 def remaining_selections(team, stage):
     limit = stage.selected_limit
@@ -381,6 +402,7 @@ def remaining_selections(team, stage):
         stage=stage,
         selected=True).count()
     return limit - count
+
 
 def teams_with_member_list(contest):
     # Below we want to get the memebers of each team, sorted by full name.
@@ -406,6 +428,7 @@ def teams_with_member_list(contest):
         else:
             team.member_list = []
     return sorted(teams, key=lambda team: team.name)
+
 
 class LeadboardEntry:
     position = None

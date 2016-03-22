@@ -1,6 +1,4 @@
-import shutil
 from pathlib import Path
-
 
 from django.test import TestCase
 from django.core.files.base import ContentFile
@@ -108,6 +106,7 @@ output_error_empty = ""
 
 output_error_gibberish = "blah blah blah"
 
+
 class ScoringOutputTest(TestCase):
     class MockAttempt(object):
         score = None
@@ -153,12 +152,14 @@ class ScoringOutputTest(TestCase):
         self.assertIsNotNone(self.attempt.scoring_msg)
         self.assertIsNone(self.attempt.score)
 
+
 class ScoringTest(TestCase):
     def setUp(self):
         self.grader = create_simple_grader_str(script_always_42,
             data_2_and_2)
         self.grader.save()
-        self.submission = Submission.create(self.grader, ContentFile(data_2_and_2))
+        self.submission = Submission.create(self.grader,
+            ContentFile(data_2_and_2))
         request_submission_grading(self.submission)
         self.submission.save()
         _, self.attempt = choose_for_grading()
@@ -181,6 +182,7 @@ class ScoringTest(TestCase):
 
     def test_prepare_scoring_dir(self):
         scoring_dir = _prepare_scoring_dir(self.attempt)
+        self.assertIsNotNone(scoring_dir)
         # TODO more checks
 
     def test_run_scoring(self):
@@ -208,6 +210,7 @@ class ScoringTest(TestCase):
         self.assertEqual(self.attempt.aborted, True)
         self.assertEqual(self.attempt.scoring_status, 'error')
         self.assertEqual(self.attempt.scoring_msg, 'aborted')
+
 
 def test_grading(test, script, answer, output):
     grader = create_simple_grader_str(script, answer)

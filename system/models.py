@@ -1,6 +1,5 @@
 import html
 import markdown
-import gfm
 import bleach
 import reprlib
 from datetime import timedelta
@@ -20,6 +19,7 @@ SOURCE_LANGUAGES = (
     ('plaintext', 'Plain Text'),
     ('markdown', 'Github-flavored Markdown')
 )
+
 
 class Post(models.Model):
     source_lang = models.CharField(max_length=20, default='markdown',
@@ -47,7 +47,9 @@ class Post(models.Model):
         return post
 
     def __str__(self):
-        return str(self.id) + ' (' + self.source_lang + ') ' + reprlib.repr(self.source)
+        return str(self.id) + ' (' + self.source_lang + ') ' + \
+            reprlib.repr(self.source)
+
 
 MARKDOWN_ALLOWED_TAGS = [
     'a',
@@ -80,17 +82,24 @@ MARKDOWN_ALLOWED_TAGS = [
     'h4',
     'h5',
     'h6'
-    #'blockquote', # TODO support in css
-    # definition lists - TODO support them in css
-    #'dl',
-    #'dt',
-    #'dd'
+    # 'blockquote', # TODO support in css
+    #  definition lists - TODO support them in css
+    # 'dl',
+    # 'dt',
+    # 'dd'
 ]
 
-ALLOWED_CSS_CLASSES = ['highlight', 'bp', 'c', 'c1', 'cm', 'cp', 'cs', 'err', 'gd', 'ge', 'gh', 'gi', 'go', 'gp', 'gr', 'gs', 'gt', 'gu', 'hll', 'il', 'k', 'kc', 'kd', 'kn', 'kp', 'kr', 'kt', 'm', 'mf', 'mh', 'mi', 'mo', 'na', 'nb', 'nc', 'nd', 'ne', 'nf', 'ni', 'nl', 'nn', 'no', 'nt', 'nv', 'o', 'ow', 's', 's1', 's2', 'sb', 'sc', 'sd', 'se', 'sh', 'si', 'sr', 'ss', 'sx', 'vc', 'vg', 'vi', 'w']
+ALLOWED_CSS_CLASSES = ['highlight', 'bp', 'c', 'c1', 'cm', 'cp', 'cs', 'err',
+     'gd', 'ge', 'gh', 'gi', 'go', 'gp', 'gr', 'gs', 'gt', 'gu', 'hll', 'il',
+      'k', 'kc', 'kd', 'kn', 'kp', 'kr', 'kt', 'm', 'mf', 'mh', 'mi', 'mo',
+      'na', 'nb', 'nc', 'nd', 'ne', 'nf', 'ni', 'nl', 'nn', 'no', 'nt', 'nv',
+      'o', 'ow', 's', 's1', 's2', 'sb', 'sc', 'sd', 'se', 'sh', 'si', 'sr',
+      'ss', 'sx', 'vc', 'vg', 'vi', 'w']
+
 
 def safe_class(name, value):
     return name == "class" and value in ALLOWED_CSS_CLASSES
+
 
 MARKDOWN_ALLOWED_ATTRIBUTES = {
     'abbr': ['title'],
@@ -105,17 +114,20 @@ MARKDOWN_ALLOWED_ATTRIBUTES = {
     'tfoot': ['align']
 }
 
+
 def markdown_to_html(source):
     markdown_html = markdown.markdown(source, extensions=['mdx_gfm'])
     return bleach.clean(markdown_html,
         tags=MARKDOWN_ALLOWED_TAGS,
         attributes=MARKDOWN_ALLOWED_ATTRIBUTES)
 
+
 post_source_processors = {
     'html': lambda source: source,  # identity
     'plaintext': html.escape,
     'markdown': markdown_to_html
 }
+
 
 class PostData(object):
     source_lang = None
@@ -137,6 +149,7 @@ class PostData(object):
     def build_html(self):
         self.html = post_source_processors[self.source_lang](self.source)
 
+
 class NewsItem(models.Model):
     created = models.DateTimeField()
     title = models.CharField(max_length=200)
@@ -144,6 +157,7 @@ class NewsItem(models.Model):
 
     def __str__(self):
         return str(self.id) + ': ' + reprlib.repr(self.title)
+
 
 def validate_x(string):
     if string != 'x':
@@ -155,7 +169,8 @@ def validate_email_not_used(email):
         first()
     if existing_email:
         existing_user = existing_email.user
-        raise ValidationError("Email already associated with user: %s (%s)." % \
+        raise ValidationError(
+            "Email already associated with user: %s (%s)." %
             (existing_user.get_full_name(), existing_user.username))
 
 

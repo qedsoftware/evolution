@@ -4,6 +4,7 @@ import tempfile
 from django.conf import settings
 from django.test.runner import DiscoverRunner
 
+
 # Based on:
 # https://www.caktusgroup.com/blog/2013/06/26/media-root-and-django-tests/
 class TempMediaMixin(object):
@@ -19,7 +20,8 @@ class TempMediaMixin(object):
         self._temp_scoring = tempfile.mkdtemp()
         settings.MEDIA_ROOT = self._temp_media
         settings.SCORING_TMP = self._temp_scoring
-        settings.DEFAULT_FILE_STORAGE = 'django.core.files.storage.FileSystemStorage'
+        settings.DEFAULT_FILE_STORAGE = \
+            'django.core.files.storage.FileSystemStorage'
 
     def teardown_test_environment(self):
         "Delete temp storage."

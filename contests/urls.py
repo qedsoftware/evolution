@@ -16,13 +16,17 @@ urlpatterns = [
         views.Submissions.as_view(), name='submissions'),
     url(r'^contest/(?P<contests_code>[-\w]+)/my_submissions/$',
         views.MySubmissions.as_view(), name='my_submissions'),
-    url(r'^contest/(?P<contests_code>[-\w]+)/submission/(?P<submission_id>[0-9]+)/$',
+    url(r'^contest/(?P<contests_code>[-\w]+)/'
+        r'submission/(?P<submission_id>[0-9]+)/$',
         views.SubmissionView.as_view(), name='submission'),
-    url(r'^contest/(?P<contests_code>[-\w]+)/submission/(?P<submission_id>[0-9]+)/answer/$',
+    url(r'^contest/(?P<contests_code>[-\w]+)/'
+        r'submission/(?P<submission_id>[0-9]+)/answer/$',
         views.DownloadSubmissionAnswer.as_view(), name='submission_answer'),
-    url(r'^contest/(?P<contests_code>[-\w]+)/submission/(?P<submission_id>[0-9]+)/source/$',
+    url(r'^contest/(?P<contests_code>[-\w]+)/'
+        r'submission/(?P<submission_id>[0-9]+)/source/$',
         views.DownloadSubmissionSource.as_view(), name='submission_source'),
-    url(r'^contest/(?P<contests_code>[-\w]+)/rejudge/(?P<submission_id>[0-9]+)/$',
+    url(r'^contest/(?P<contests_code>[-\w]+)/'
+        r'rejudge/(?P<submission_id>[0-9]+)/$',
         views.SubmissionRejudgeView.as_view(), name='rejudge'),
     url(r'^contest/(?P<contests_code>[-\w]+)/rejudge/$',
         views.ContestRejudgeView.as_view(), name='rejudge'),
@@ -46,9 +50,11 @@ urlpatterns = [
         views.StartObserving.as_view(), name='observe'),
     url(r'^contest/(?P<contests_code>[-\w]+)/unobserve/$',
         views.StopObserving.as_view(), name='unobserve'),
-    url(r'^contest/(?P<contests_code>[-\w]+)/submission/(?P<submission_id>[0-9]+)/select/$',
+    url(r'^contest/(?P<contests_code>[-\w]+)/'
+        r'submission/(?P<submission_id>[0-9]+)/select/$',
         views.SelectSubmission.as_view(), name='select_submission'),
-    url(r'^contest/(?P<contests_code>[-\w]+)/submission/(?P<submission_id>[0-9]+)/unselect/$',
+    url(r'^contest/(?P<contests_code>[-\w]+)/'
+        r'submission/(?P<submission_id>[0-9]+)/unselect/$',
         views.UnselectSubmission.as_view(), name='unselect_submission'),
     url(r'^contests/admin_hints/$', views.ContestAdminHints.as_view(),
         name='admin_hints'),

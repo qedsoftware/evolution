@@ -12,7 +12,7 @@ INSTALLED_APPS = (
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'django.contrib.sites', # required by allauth
+    'django.contrib.sites',  # required by allauth
     'debug_toolbar',
     'base',
     'system',
@@ -34,7 +34,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'django.middleware.security.SecurityMiddleware',
-    #'django_downloadview.SmartDownloadMiddleware'
+    # 'django_downloadview.SmartDownloadMiddleware'
 )
 
 ROOT_URLCONF = 'evolution.urls'
@@ -88,31 +88,31 @@ LOGGING = {
     'disable_existing_loggers': False,
     'formatters': {
         'standard': {
-	    'format': '%(levelname)s %(asctime)s %(module)s %(message)s'
-	}
-     },
+            'format': '%(levelname)s %(asctime)s %(module)s %(message)s'
+        }
+    },
     'handlers': {
         'grading_overseer_file': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
             'filename': os.path.join(BASE_DIR, 'grading_overseer_debug.log'),
-	    'formatter': 'standard'
+        'formatter': 'standard'
         },
-	'grading_file': {
-	    'level': 'DEBUG',
-	    'class': 'logging.FileHandler',
-	    'filename': os.path.join(BASE_DIR, 'grading_debug.log'),
-	    'formatter': 'standard'
-	},
+        'grading_file': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'grading_debug.log'),
+            'formatter': 'standard'
+        },
         'web_log': {
             'level': 'DEBUG',
             'class': 'logging.FileHandler',
             'filename': os.path.join(BASE_DIR, 'web.log'),
-	    'formatter': 'standard'
+            'formatter': 'standard'
         },
         'console': {
             'class': 'logging.StreamHandler',
-	    'formatter': 'standard'
+            'formatter': 'standard'
         },
     },
     'loggers': {
@@ -125,7 +125,7 @@ LOGGING = {
             'handlers': ['console', 'grading_file'],
             'level': 'DEBUG',
             'propagate': True,
-         },
+        },
         'base.management.commands.grading': {
             'handlers': ['console', 'grading_overseer_file'],
             'level': 'DEBUG',
@@ -164,7 +164,7 @@ ACCOUNT_EMAIL_VERIFICATION = "mandatory"
 
 ACCOUNT_SIGNUP_FORM_CLASS = 'system.forms.SignupForm'
 
-INVITATION_EXPIRY = 3 #days
+INVITATION_EXPIRY = 3  # days
 
 
 # Static files (CSS, JavaScript, Images)
@@ -181,20 +181,20 @@ STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static_dir')]
 
 # Grading
 
-ATTEMPT_GRADING_COMMAND = [ os.path.join(BASE_DIR, './manage.py'),
-    'grading_attempt' ]
+ATTEMPT_GRADING_COMMAND = [os.path.join(BASE_DIR, './manage.py'),
+                           'grading_attempt']
 RUNNER_PATH = os.path.join(BASE_DIR, 'run_scoring.py')
 
 SCORING_TMP = '/tmp/evolution_scoring'
 
-GRADING_POLL_FOR_JOB_INTERVAL_SECONDS=1
-GRADING_CHECK_STATUS_INTERVAL_SECONDS=1
+GRADING_POLL_FOR_JOB_INTERVAL_SECONDS = 1
+GRADING_CHECK_STATUS_INTERVAL_SECONDS = 1
 
 # Downloads
 
 DOWNLOADVIEW_BACKEND = 'django_downloadview.nginx.XAccelRedirectMiddleware'
 
-#DOWNLOADVIEW_BACKEND = 'django_downloadview.nginx.XAccelRedirectMiddleware'
+# DOWNLOADVIEW_BACKEND = 'django_downloadview.nginx.XAccelRedirectMiddleware'
 
 # Django Testing
 

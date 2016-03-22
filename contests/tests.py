@@ -14,6 +14,7 @@ from system.models import PostData
 future_time = timezone.now() + timedelta(weeks=1)
 past_time = timezone.now() - timedelta(weeks=1)
 
+
 class ContestFactoryTest(TestCase):
 
     def example_contest(self):
@@ -72,6 +73,7 @@ def new_user(username, admin=False):
     user.save()
     return user
 
+
 class ContestContextTest(TestCase):
     def setUp(self):
         self.request_factory = RequestFactory()
@@ -114,6 +116,7 @@ class ContestContextTest(TestCase):
             contest=self.another_contest)
         self.assertEqual(context.user_team, self.another_team)
 
+
 class Teams(WebTest):
     def setUp(self):
         standard_base(self)
@@ -122,6 +125,7 @@ class Teams(WebTest):
         page = self.app.get(reverse('contests:teams',
             args=['contest']), user='user')
         page.mustcontain('Teams', 'new team')
+
 
 class TeamViewTests(TestCase):
     def setUp(self):
@@ -164,16 +168,18 @@ class TeamViewTests(TestCase):
         self.assertEqual(team_1.member_list, [])
         self.assertContains(response, 'No members')
 
+
 def submit_with_score(team, stage, score):
     cs = ContestSubmission()
     cs.stage = stage
     submission = Submission.create(stage.grader, ContentFile('mock_file'))
     submission.score = score
-    submission.save();
+    submission.save()
     cs.submission = submission
     cs.team = team
     cs.save()
     return cs
+
 
 class LeaderboardTest(TestCase):
     def setUp(self):
@@ -186,9 +192,9 @@ class LeaderboardTest(TestCase):
         self.team_b.save()
         self.team_a = Team(contest=self.contest, name='A')
         self.team_a.save()
-        self.team_d= Team(contest=self.contest, name='D')
+        self.team_d = Team(contest=self.contest, name='D')
         self.team_d.save()
-        self.team_c= Team(contest=self.contest, name='C')
+        self.team_c = Team(contest=self.contest, name='C')
         self.team_c.save()
         self.empty_contest = ContestFactory.from_dict({
             'name': 'Empty',
@@ -217,8 +223,10 @@ class LeaderboardTest(TestCase):
         data = SubmissionData()
         data.output = ''
         submit_with_score(None, self.empty_contest.verification_stage, 42)
-        entries = build_leaderboard(self.empty_contest, self.empty_contest.verification_stage)
+        entries = build_leaderboard(self.empty_contest,
+            self.empty_contest.verification_stage)
         self.assertEqual(entries, [])
+
 
 class EmptyContestListTest(TestCase):
     def setUp(self):
@@ -229,6 +237,7 @@ class EmptyContestListTest(TestCase):
         client.force_login(self.user)
         response = client.get(reverse('contests:list'))
         self.assertContains(response, 'Contests')
+
 
 class ContestCreateAndSetupTest(WebTest):
     def setUp(self):
@@ -251,16 +260,17 @@ class ContestCreateAndSetupTest(WebTest):
         form = page.forms['contest-settings-form']
         form['bigger_better'] = False
         form['published_final_results'] = True
-        self.assertEqual(contest.bigger_better, True);
+        self.assertEqual(contest.bigger_better, True)
         self.assertEqual(contest.verification_stage.published_results, True)
         self.assertEqual(contest.test_stage.published_results, False)
         page = form.submit().follow()
         page.mustcontain('Successfully updated')
         contest = Contest.objects.get()
         self.assertEqual(contest.code, 'contest-code')
-        self.assertEqual(contest.bigger_better, False);
+        self.assertEqual(contest.bigger_better, False)
         self.assertEqual(contest.verification_stage.published_results, True)
         self.assertEqual(contest.test_stage.published_results, True)
+
 
 class RulesAndDescriptionTest(WebTest):
     def setUp(self):
@@ -289,6 +299,7 @@ class RulesAndDescriptionTest(WebTest):
 
 ACCESS_DENIED = "You don't have access"
 
+
 class SubmitTest(WebTest):
     def setUp(self):
         self.user = new_user('user')
@@ -315,6 +326,7 @@ class SubmitTest(WebTest):
             args=[self.contest.code]), user='user')
         page.mustcontain('Send Submission')
 
+
 class MySubmissionsTest(WebTest):
     def setUp(self):
         self.user = new_user('user')
@@ -337,10 +349,12 @@ class MySubmissionsTest(WebTest):
             args=['contest']), user='user')
         page.mustcontain('My Submissions')
 
+
 def unauthorized_get(app, url, user):
     page = app.get(url, user=user.username)
     page = page.follow()
     page.mustcontain(ACCESS_DENIED)
+
 
 def standard_base(test_obj):
     test_obj.user = new_user('user')
@@ -349,6 +363,7 @@ def standard_base(test_obj):
         'name': 'Contest',
         'code': 'contest',
     }).create()
+
 
 class SubmissionsTest(WebTest):
     def setUp(self):
@@ -366,6 +381,7 @@ class SubmissionsTest(WebTest):
         page = self.app.get(reverse('contests:submissions',
             args=['contest']), user='admin')
         page.mustcontain('Submissions')
+
 
 class RejudgeTest(WebTest):
     def setUp(self):

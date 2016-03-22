@@ -1,11 +1,9 @@
 import logging
 import signal
 import sys
-import time
 import subprocess
 
 from django.conf import settings
-from django.utils import timezone
 
 from django.core.management.base import BaseCommand, CommandError
 
@@ -13,9 +11,11 @@ from base.models import GradingAttempt, finish_grading
 
 logger = logging.getLogger(__name__)
 
+
 def exit_on_signal(signum, frame):
     logger.info('grading_attempt_safe terminated by signal %s', signum)
     sys.exit(1)
+
 
 class Command(BaseCommand):
     help = 'Runs grading of single attempt, allows aborting of tasks, ' \
@@ -44,8 +44,7 @@ class Command(BaseCommand):
                 attempt.scoring_status = 'error'
                 attempt.scoring_msg = "Dirty grading failure."
                 finish_grading(attempt)
-        except Exception as e:
+        except Exception:
             logger.exception('Exception in grading attempt cleanup')
         logger.info('grading_attempt finished (status_code = %s)' %
             completed.returncode)
-

@@ -2,7 +2,7 @@ from django.shortcuts import render
 from django.views.generic import View, FormView
 from django.views.generic.base import ContextMixin
 from django.views.generic.list import ListView
-from django.contrib.auth.mixins import LoginRequiredMixin, UserPassesTestMixin
+from django.contrib.auth.mixins import UserPassesTestMixin
 from django.core.exceptions import ImproperlyConfigured
 from django_downloadview import StorageDownloadView
 from django.template.loader import render_to_string
@@ -16,6 +16,7 @@ from .forms import InviteForm
 
 from .models import NewsItem, PostData
 
+
 # Sometimes it is useful to show some messages only for
 # the original request. Permanent messages are example of that.
 # Especially, when they are specific to some part of the system
@@ -26,13 +27,16 @@ def add_static_message(context, level, msg, extra_tags=""):
     else:
         context['static_messages'] = [msg]
 
+
 class AdminDownload(UserPassesTestMixin, StorageDownloadView):
 
     def test_func(self):
         return self.request.user.is_superuser
 
-def title(text = None):
+
+def title(text=None):
     return ' - '.join(filter(None, ["Evolution", text]))
+
 
 class NewsList(ListView):
     context_object_name = 'news'
@@ -40,8 +44,10 @@ class NewsList(ListView):
     paginate_by = 10
     queryset = NewsItem.objects.select_related('content').all()
 
+
 def user_settings(request):
     return render(request, 'system/user_settings.html', {})
+
 
 class PostDataView(ContextMixin, View):
     """
@@ -88,7 +94,7 @@ class InviteView(UserPassesTestMixin, FormView):
         invitation = form.save()
         invitation.send_email()
         messages.add_message(self.request, messages.SUCCESS,
-            mark_safe("Invitation sent to <strong>%s</strong>" % \
+            mark_safe("Invitation sent to <strong>%s</strong>" %
                 invitation.invited_email))
         return super(InviteView, self).form_valid(form)
 
@@ -102,7 +108,8 @@ def messages_test_view(request):
         mark_safe('Success. You are no longer observing contest '
             '<strong>Data Science Cup</strong>.'))
     messages.add_message(request, messages.SUCCESS,
-        mark_safe('<p>Success</p><p>You have changed the contests. Lorem ipsum dolor sit'
+        mark_safe('<p>Success</p><p>You have changed the contests. '
+            'Lorem ipsum dolor sit'
             'amet augue at tortor. Praesent et magnis dis parturient montes,'
             'nascetur rig di amet.</p>'
             '<p>Lorem ipsum Fugiat culpa mollit Duis enim dolor proident et'

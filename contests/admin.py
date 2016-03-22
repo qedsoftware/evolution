@@ -3,6 +3,7 @@ from django.contrib import admin
 from contests.models import Contest, Team, TeamMember, ContestStage, \
     ContestSubmission
 
+
 class ContestAdmin(admin.ModelAdmin):
     list_display = ['id', 'name', 'code', 'bigger_better', 'description']
     search_fields = ['name', 'code']
@@ -46,5 +47,3 @@ class TeamMemberAdmin(admin.ModelAdmin):
         'team__name']
     list_filter = ['contest']
 admin.site.register(TeamMember, TeamMemberAdmin)
-
-

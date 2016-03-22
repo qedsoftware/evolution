@@ -5,7 +5,7 @@ import json
 import subprocess
 import logging
 import itertools
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 
 from django.db import models, transaction
 from django.core.files.base import ContentFile
@@ -14,6 +14,7 @@ from django.conf import settings
 from django.utils import timezone
 
 logger = logging.getLogger(__name__)
+
 
 class ScoringScript(models.Model):
     source = models.FileField(null=True, blank=True)
@@ -27,7 +28,7 @@ class ScoringScript(models.Model):
     def save_source(self, source):
         if source:
             self.source.save('script.py', source)
-        elif source == False:
+        elif source is False:
             self.source.delete()
 
     def __str__(self):
@@ -35,13 +36,13 @@ class ScoringScript(models.Model):
 
 
 DEFAULT_TIME_LIMIT = 1000
-DEFAULT_MEMORY_LIMIT = 128 * 2**20; # 128 MiB
+DEFAULT_MEMORY_LIMIT = 128 * 2**20  # 128 MiB
 
 
 class DataGrader(models.Model):
     scoring_script = models.ForeignKey('ScoringScript',
         on_delete=models.PROTECT)
-    answer = models.FileField(null = True, blank=True)
+    answer = models.FileField(null=True, blank=True)
     time_limit_ms = models.IntegerField(default=DEFAULT_TIME_LIMIT)
     memory_limit_bytes = models.IntegerField(default=DEFAULT_MEMORY_LIMIT)
 
@@ -58,7 +59,7 @@ class DataGrader(models.Model):
     def save_answer(self, answer):
         if answer:
             self.answer.save('grader_answer', answer)
-        elif answer == False:
+        elif answer is False:
             self.answer.delete()
 
     def __str__(self):
@@ -70,12 +71,15 @@ def create_simple_grader(script_file, answer_file):
     grader = DataGrader.create(script, answer_file)
     return grader
 
+
 def create_simple_grader_str(script_source, answer_data):
     return create_simple_grader(ContentFile(script_source),
         ContentFile(answer_data))
 
+
 def score_field():
     return models.DecimalField(max_digits=30, decimal_places=6, null=True)
+
 
 SCORING_STATUS_CHOICES = (
     ('waiting', 'Waiting for score'),
@@ -133,8 +137,10 @@ def request_submission_grading(submission):
     submission.needs_grading = True
     submission.needs_grading_at = Now()
 
+
 def request_qs_grading(submissions):
     submissions.update(needs_grading=True, needs_grading_at=Now())
+
 
 @transaction.atomic
 def choose_for_grading():
@@ -150,6 +156,7 @@ def choose_for_grading():
     submission.save()
     return (submission, attempt)
 
+
 def dummy_grade(attempt):
     attempt.score = 42
     attempt.finished = True
@@ -157,12 +164,15 @@ def dummy_grade(attempt):
     attempt.submission.save()
     attempt.save()
 
+
 def _mkdir_scoring():
     os.makedirs(settings.SCORING_TMP, exist_ok=True)
     return tempfile.mkdtemp(prefix='scoring_', dir=settings.SCORING_TMP)
 
+
 def _file_path(field_file):
     return field_file.path
+
 
 def _prepare_scoring_dir(attempt):
     scoring_dir = _mkdir_scoring()
@@ -191,10 +201,12 @@ def _prepare_scoring_dir(attempt):
         json.dump(config, config_file)
     return scoring_dir
 
+
 def _run_scoring_popen(attempt, scoring_dir):
     args = [settings.RUNNER_PATH, scoring_dir]
     return subprocess.Popen(args, stdout=subprocess.PIPE,
         stderr=subprocess.PIPE)
+
 
 @transaction.atomic
 def finish_grading(attempt):
@@ -214,7 +226,9 @@ def finish_grading(attempt):
         submission.save(update_fields=['score', 'scoring_msg',
             'scoring_status'])
 
+
 MAX_RUN_SCORING_OUTPUT_SIZE = 1000000
+
 
 def join_with_terminator(terminator, iterable):
     """
@@ -223,13 +237,17 @@ def join_with_terminator(terminator, iterable):
     """
     return terminator.join(itertools.chain(iterable, ('',)))
 
+
 def handle_run_scoring_output(output, attempt):
     logger.debug('run_scoring.py output handling...')
     lines = output.splitlines()
+
     class BadOutput(Exception):
         reason = ""
+
         def __init__(self, reason):
             self.reason = reason
+
     try:
         if len(lines) == 0:
             raise BadOutput('no output')
@@ -240,7 +258,7 @@ def handle_run_scoring_output(output, attempt):
                 raise BadOutput('Status ACCEPTED, but no score provided')
             try:
                 attempt.score = Decimal(lines[1])
-            except decimal.InvalidOperation as e:
+            except InvalidOperation as e:
                 raise BadOutput('bad score value: ' + str(e))
             attempt.scoring_status = 'accepted'
             attempt.scoring_msg = join_with_terminator('\n', lines[2:])
@@ -255,6 +273,7 @@ def handle_run_scoring_output(output, attempt):
     except BadOutput as e:
         attempt.scoring_status = 'error'
         attempt.scoring_msg = 'Bad scoring output (%s):\n' % e.reason + output
+
 
 def attempt_grading(attempt):
     logger.debug('attempt_grading called with attempt %s', attempt.id)
@@ -276,9 +295,10 @@ def attempt_grading(attempt):
             process.wait(
                 timeout=settings.GRADING_CHECK_STATUS_INTERVAL_SECONDS)
             finished = True
-        except TimeoutExpired:
+        except subprocess.TimeoutExpired:
             pass
-    output = process.stdout.read(MAX_RUN_SCORING_OUTPUT_SIZE).decode('utf-8', errors='replace')
+    output = process.stdout.read(MAX_RUN_SCORING_OUTPUT_SIZE). \
+        decode('utf-8', errors='replace')
     logger.debug('run_scoring.py finished')
     if process.returncode == 0:
         logger.debug('run_scoring finished successfully (code 0)')

@@ -1,19 +1,19 @@
 import logging
 import signal
 import sys
-import time
-
-from django.conf import settings
 
 from django.core.management.base import BaseCommand, CommandError
 
 from base.models import GradingAttempt, attempt_grading
 
+
 logger = logging.getLogger(__name__)
+
 
 def exit_on_signal(signum, frame):
     logger.info('Grading terminated by signal %s', signum)
     sys.exit(1)
+
 
 class Command(BaseCommand):
     help = 'Grades single attempt (internal)'
@@ -32,4 +32,3 @@ class Command(BaseCommand):
             raise CommandError("GradingAttempt %s does not exist" %
                 attempt_id)
         attempt_grading(attempt)
-
