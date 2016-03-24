@@ -43,7 +43,11 @@ class SignupForm(forms.Form):
 
     def clean(self):
         cleaned_data = super(SignupForm, self).clean()
-        secret = cleaned_data.get('secret_code').strip()
+        secret = cleaned_data.get('secret_code')
+        if not secret:
+            # the field is already required
+            return cleaned_data
+        secret = secret.strip()
         cleaned_data['secret_code'] = secret  # stripped
         invitation = Invitation.objects.filter(secret_code=secret).first()
         if not invitation:

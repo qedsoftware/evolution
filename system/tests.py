@@ -1,7 +1,8 @@
 from django.test import TestCase, Client
 
-from .models import PostData, Post, SystemSettings
+from django_webtest import WebTest
 
+from .models import PostData, Post, SystemSettings
 from .utils import calculate_once
 
 
@@ -126,3 +127,10 @@ class CalculateOnceTest(TestCase):
         self.assertEqual(self.foo_call_count, 1)
         self.assertEqual(self.foo, [0, 1, 2, 3, 4])
         self.assertEqual(self.foo_call_count, 1)
+
+
+class EmptySignupTest(WebTest):
+    def test(self):
+        page = self.app.get('/accounts/signup/')
+        form = page.forms['signup_form']
+        form.submit()
