@@ -1,9 +1,9 @@
 ## Writing Scoring Scripts
 
-Of course the contestants' solutions won't score themselves - we need to define a way of determining how good a submission is. To do that we have to write a *scoring script*.
+Of course the contestants' solutions won't score themselves - we need to define a way of determining how good a submission is.
+To do that we have to write a *scoring script*.
 
-Scoring script is just a simple, single-file python3 script that takes the submitted solution and the answer file and outputs the score of submission.
-It just has to follow a few simple conventions.
+Scoring script is just a simple, single-file python3 script that takes the submitted solution and the answer file and outputs the score for the submission. It just has to follow a few simple conventions.
 
 ### Security Warning
 
@@ -23,7 +23,7 @@ It doesn't look at the submission at all - it just gives score 42 to everything.
 
 ### Conventions summary
 
-* The first commandline argument is a contestant solution.
+* The first commandline argument is a contestant's solution.
 * The second commandline argument is the answer file.
 * In the first line of input write `ACCEPTED` if the contestant's solution makes sense or `REJECTED` if it doesn't.
 * If you ACCEPTED the solution write the score in the second line and an optional comment afterwards. This comment will be visible when the user can see their core.

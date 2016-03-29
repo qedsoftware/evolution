@@ -1,6 +1,10 @@
+from datetime import timedelta
+
 from django.db import models
 from django.db import transaction
 from django.utils import timezone
+from django.contrib.auth.models import User
+from django.conf import settings
 
 from system.models import Post
 
@@ -188,6 +192,26 @@ class Team(models.Model):
         return self.name
 
 
+class TeamInvitation(models.Model):
+    team = models.ForeignKey('Team')
+    invited_by = models.ForeignKey('auth.User', null=True)
+    secret_code = models.CharField(max_length=100, unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    accepted = models.BooleanField(default=False)
+
+    def is_expired(self):
+        latest_acceptable = self.created_at + \
+            timedelta(days=settings.TEAM_INVITATION_EXPIRY)
+        return timezone.now() > latest_acceptable
+
+    def prepare(self):
+        self.secret_code = User.objects.make_random_password(length=32)
+
+    def accept(user):
+        self.accepted = True
+        join_team(user, self.team)
+
+
 class TeamMember(models.Model):
     team = models.ForeignKey('Team', related_name='members')
     user = models.ForeignKey('auth.User', related_name='memberships')
@@ -222,9 +246,33 @@ class CannotJoin(Exception):
 
 
 @transaction.atomic
+def get_and_check_invitation(user, contest, team, secret_code):
+    if team.contest != contest:
+        raise CannotJoin("Team doesn't belong to this contest.")
+    try:
+        invitation = TeamInvitation.objects.get(secret_code=secret_code)
+    except TeamInvitation.DoesNotExist:
+        raise CannotJoin("Invalid Secret Code")
+    if invitation.team != team:
+        raise CannotJoin("This invitation doesn't belong to this team!")
+    if invitation.is_expired():
+        raise CannotJoin("This invitation is expired.")
+    if not can_join_team_in_contest(user, contest):
+        # TODO let the user know why exactly, like they already have team
+        raise CannotJoin("Cannot join a team in this contest.")
+    return invitation
+
+
+@transaction.atomic
+def accept_invitation(user, contest, team, secret_code):
+    invitation = get_and_check_invitation(user, contest, team, secret_code)
+    invitation.accept()
+
+
+@transaction.atomic
 def join_team(user, team):
-    if not can_join_team(user, team):
-        raise CannotJoin()
+    if not can_join_team_in_contest(user, team.contest):
+        raise CannotJoin("Cannot join a team in this contest.")
     membership = TeamMember()
     membership.user = user
     membership.team = team
@@ -245,13 +293,13 @@ def leave_team(user, team):
 
 
 @transaction.atomic
-def can_join_team(user, team):
+def can_join_team_in_contest(user, contest):
     if not user:
         return False
-    is_admin = is_contest_admin(user, team.contest)
+    is_admin = is_contest_admin(user, contest)
     if not user.is_authenticated() or is_admin:
         return False
-    has_team = TeamMember.objects.filter(contest=team.contest, user=user). \
+    has_team = TeamMember.objects.filter(contest=contest, user=user). \
         select_for_update().exists()
     return not has_team
 
@@ -502,3 +550,102 @@ def build_leaderboard(contest, stage):
         else:
             entry.position = cur_position
     return entries
+
+class ContestContext(object):
+    """
+    Contest and related data in the context of one user.
+
+    It helps keeping the business logic out of the view layer.
+
+    There is also a performance benefit:
+    it lets us avoid doing the same query over and over.
+
+    Design info:
+    It is a bad idea to add any method that changes state here.
+    It should stay just a read-only "view" of the contest.
+    Split it to multiple classes if it grows too much.
+    """
+    user = None
+    contest = None
+    is_contest_admin = None
+    can_submit = None
+    can_create_team = None
+    can_see_team_submissions = None
+    can_see_all_submissions = None
+    can_see_verification_leaderboard = None
+    can_see_test_leaderboard = None
+    user_team = None
+    is_observing = None
+    stage_names = None
+
+    repr_attributes = [
+        'user',
+        'user_team',
+        'contest',
+        'is_contest_admin',
+        'can_submit',
+        'can_create_team',
+        'can_see_team_submissions',
+        'can_see_all_submissions',
+        'can_see_verification_leaderboard',
+        'can_see_test_leaderboard',
+        'is_observing',
+        'stage_names'
+    ]
+
+    def __init__(self, user, contest):
+        self.contest = contest
+        self.user = user
+        # we want user to be a model - so we can query easier
+        if not self.user.is_authenticated():
+            self.user = None
+        self.user_team = user_team(self.user, contest)
+        self.is_contest_admin = is_contest_admin(self.user, contest)
+        self.can_create_team = can_create_team(self.user, contest)
+        self.can_see_team_submissions = self.user_team is not None
+        self.can_see_all_submissions = self.is_contest_admin
+        self.can_submit = self.user_team is not None or self.is_contest_admin
+        self.can_see_verification_leaderboard = \
+            self.can_see_stage_leaderboard(contest.verification_stage)
+        self.can_see_test_leaderboard = \
+            self.can_see_stage_leaderboard(contest.test_stage)
+        self.is_observing = self.user and \
+            contest.observing.filter(id=self.user.id).exists()
+        self.stage_names = {
+            contest.verification_stage.id: 'Verification',
+            contest.test_stage.id: 'Final'
+        }
+        self.stages = [contest.verification_stage, contest.test_stage]
+
+    def can_submit_in_stage(self, stage):
+        return self.can_submit and (self.is_contest_admin or stage.is_open())
+
+    def can_see_submission(self, submission):
+        return is_contest_admin(self.user, self.contest) or \
+            (submission.team is not None and submission.team == self.user_team)
+
+    def can_see_stage_leaderboard(self, stage):
+        return self.is_contest_admin or stage.published_results
+
+    def visible_submission_result(self, submission):
+        status = submission.submission.scoring_status
+        if status is None:
+            return 'waiting'
+        if status == 'accepted':
+            if self.is_contest_admin or submission.stage.published_results:
+                return 'score'
+            else:
+                return 'accepted'
+        else:
+            return status
+
+    def __repr__(self):
+        result = ['<ContestContext:']
+        first = True
+        for attr in self.repr_attributes:
+            if not first:
+                result.append(', ')
+            first = False
+            result.append(attr + ': ' + repr(getattr(self, attr, '?')))
+        result.append('>')
+        return ''.join(result)

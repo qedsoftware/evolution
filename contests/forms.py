@@ -40,10 +40,12 @@ class ClearableFileInput(forms.ClearableFileInput):
 
 
 CONTEST_CODE_HELP_TEXT = (
-    "A short, unique name for a contest."
-    "It is used for urls and identifying contests."
-    "<strong>Choose it carefully and avoid changing it.</strong>"
-    "It can contain lowercase letters, numbers, hyphens and underscores."
+    "A short, unique name for a contest. "
+    "It is used for urls and identifying contests. "
+    "<strong>Choose it carefully and avoid changing it.</strong> "
+    "It can contain lowercase letters, numbers, hyphens and underscores. "
+    "It is recommended to use hyphens to separate words. "
+    "Please, keep it short and descriptive. "
 )
 
 
@@ -87,7 +89,7 @@ class ContestForm(forms.Form):
 class SubmitForm(forms.Form):
     stage = forms.ChoiceField(choices=())  # we'll fill choices in __init__
     output_file = forms.FileField()
-    source_code = forms.FileField()
+    source_code = forms.FileField(help_text="If your submission consists of multiple files, please upload them as a zip archive.")
     comment = forms.CharField(required=False)
 
     def __init__(self, *args, **kwargs):

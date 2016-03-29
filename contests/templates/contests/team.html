@@ -11,7 +11,10 @@
 {% endif %}
 {% if in_team %}
     {% url 'contests:leave_team' contest.code team.id as leave_url %}
-    {% action_form 'leave-team' 'leave' leave_url %}
+    <a class="action-button" href={{leave_url}}>Leave</a>
+    <a class="action-button" href="{% url 'contests:invite_to_team' contest.code team.id %}">
+    	Invite
+    </a>
 {% endif %}
 <h2>Members</h2>
 <ul>

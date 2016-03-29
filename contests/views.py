@@ -12,108 +12,24 @@ from django.db import transaction
 from django.contrib import messages
 from django.utils.safestring import mark_safe
 from django_downloadview import BaseDownloadView
+from django.conf import settings
+
+from allauth.utils import build_absolute_uri
 
 from .models import Contest, ContestFactory, ContestSubmission, \
     SubmissionData, submit, ContestStage, rejudge_submission, \
-    rejudge_contest, Team, TeamMember, join_team as join_team_action, \
-    leave_team as leave_team_action, can_join_team, in_team, \
+    rejudge_contest, Team, TeamMember, get_and_check_invitation, \
+    leave_team as leave_team_action, can_join_team_in_contest, in_team, \
     is_contest_admin, teams_with_member_list, build_leaderboard, user_team, \
     can_create_team, StageIsClosed, SelectionError, select_submission, \
-    unselect_submission, remaining_selections
+    unselect_submission, remaining_selections, TeamInvitation, \
+    accept_invitation, CannotJoin, ContestContext
 
 from .forms import ContestForm, ContestCreateForm, SubmitForm
 
 from base.models import GradingAttempt
 from system.views import PostDataView, add_static_message
 from system.utils import calculate_once
-
-
-class ContestContext:
-    # TODO move to model
-    """ Common data, required by all contest views. """
-    user = None
-    contest = None
-    is_contest_admin = None
-    can_submit = None
-    can_create_team = None
-    can_see_team_submissions = None
-    can_see_all_submissions = None
-    can_see_verification_leaderboard = None
-    can_see_test_leaderboard = None
-    user_team = None
-    is_observing = None
-    stage_names = None
-
-    repr_attributes = [
-        'user',
-        'user_team',
-        'contest',
-        'is_contest_admin',
-        'can_submit',
-        'can_create_team',
-        'can_see_team_submissions',
-        'can_see_all_submissions',
-        'can_see_verification_leaderboard',
-        'can_see_test_leaderboard',
-        'is_observing'
-    ]
-
-    def __init__(self, request, contest):
-        self.contest = contest
-        self.user = request.user
-        # we want user to be a model - so we can query easier
-        if not self.user.is_authenticated():
-            self.user = None
-        self.user_team = user_team(self.user, contest)
-        self.is_contest_admin = is_contest_admin(self.user, contest)
-        self.can_create_team = can_create_team(self.user, contest)
-        self.can_see_team_submissions = self.user_team is not None
-        self.can_see_all_submissions = self.is_contest_admin
-        self.can_submit = self.user_team is not None or self.is_contest_admin
-        self.can_see_verification_leaderboard = \
-            self.can_see_stage_leaderboard(contest.verification_stage)
-        self.can_see_test_leaderboard = \
-            self.can_see_stage_leaderboard(contest.test_stage)
-        self.is_observing = self.user and \
-            contest.observing.filter(id=self.user.id).exists()
-        self.stage_names = {
-            contest.verification_stage.id: 'Verification',
-            contest.test_stage.id: 'Final'
-        }
-        self.stages = [contest.verification_stage, contest.test_stage]
-
-    def can_submit_in_stage(self, stage):
-        return self.can_submit and (self.is_contest_admin or stage.is_open())
-
-    def can_see_submission(self, submission):
-        return is_contest_admin(self.user, self.contest) or \
-            (submission.team is not None and submission.team == self.user_team)
-
-    def can_see_stage_leaderboard(self, stage):
-        return self.is_contest_admin or stage.published_results
-
-    def visible_submission_result(self, submission):
-        status = submission.submission.scoring_status
-        if status is None:
-            return 'waiting'
-        if status == 'accepted':
-            if self.is_contest_admin or submission.stage.published_results:
-                return 'score'
-            else:
-                return 'accepted'
-        else:
-            return status
-
-    def __repr__(self):
-        result = ['<ContestContext:']
-        first = True
-        for attr in self.repr_attributes:
-            if not first:
-                result.append(', ')
-            first = False
-            result.append(attr + ': ' + repr(getattr(self, attr, '?')))
-        result.append('>')
-        return ''.join(result)
 
 
 def add_contest_messages(context, contest_context):
@@ -153,7 +69,7 @@ class ContestMixin(object):
 
     @calculate_once
     def contest_context(self):
-        return ContestContext(self.request, self.contest)
+        return ContestContext(self.request.user, self.contest)
 
     @calculate_once
     def contest(self):
@@ -271,7 +187,6 @@ class ContestUpdate(UserPassesTestMixin, ContestMixin, FormView):
         context = super(ContestUpdate, self).get_context_data(**kwargs)
         contest = Contest.objects.get(code=self.get_code())
         context['contest'] = contest
-        context['contest_context'] = ContestContext(self.request, contest)
         return context
 
     def form_valid(self, form):
@@ -608,29 +523,90 @@ class TeamCreate(UserPassesTestMixin, ContestMixin, CreateView):
             args=[self.contest.code, self.object.id])
 
 
-class JoinTeam(UserPassesTestMixin, ContestMixin, ContextMixin, View):
-
+class TeamMixin(ContestMixin):
     @calculate_once
     def team(self):
-        return Team.objects.get(id=self.kwargs['team_id'])
+        team = Team.objects.get(id=self.kwargs['team_id'])
+        if team.contest != self.contest:
+            raise SuspiciousOperation("Team in another contest")
+        return team
+
+    def get_context_data(self, **kwargs):
+        context = super(TeamMixin, self).get_context_data(**kwargs)
+        context['team'] = self.team
+        return context
+
+
+class JoinTeam(UserPassesTestMixin, TeamMixin, TemplateView):
+    template_name="contests/join_team.html"
 
     def test_func(self):
-        return can_join_team(self.request.user, self.team)
+        return self.request.user.is_authenticated
+
+    @calculate_once
+    def secret_code(self):
+        return self.request.GET['code']
 
     def post(self, request, *args, **kwargs):
-        join_team_action(request.user, self.team)
+        try:
+            accept_invitation(request.user, self.contest, self.team,
+                self.secret_code)
+        except CannotJoin as e:
+            messages.error(request,
+                mark_safe("<p>You failed to join team"
+                          " <strong>%s</strong>.</p>"
+                          "<p>%s</p>" % (self.team.name, str(e))))
         return redirect(
             reverse('contests:team', args=(self.contest.code, self.team.id)))
 
 
-class LeaveTeam(UserPassesTestMixin, ContestMixin, ContextMixin, View):
+class TeamInvitationView(UserPassesTestMixin, TeamMixin, TemplateView):
+    """
+    We generate new invitation on every get request.
 
-    @calculate_once
-    def team(self):
-        return Team.objects.get(id=self.kwargs['team_id'])
+    This is simple, but increases the likelyhood of creating invitation
+    links by mistake. It doesn't seem to be a very big problem.
+    """
+    template_name = 'contests/team_invitation.html'
 
     def test_func(self):
         return self.contest_context.user_team == self.team
+
+    def new_invitation(self):
+        invitation = TeamInvitation()
+        invitation.team = self.team
+        invitation.invited_by = self.request.user
+        invitation.prepare()
+        invitation.save()
+        return invitation
+
+    def invitation_url(self, invitation):
+        action_url = reverse('contests:join_team',
+            args=(self.contest.code, self.team.id))
+        base_url = build_absolute_uri(self.request, action_url)
+        url = base_url + '?code=' + invitation.secret_code
+        return url
+
+    def get_context_data(self, **kwargs):
+        context = super(TeamInvitationView, self).get_context_data(**kwargs)
+        context['team'] = self.team
+        invitation = self.new_invitation()
+        context['invitation_url'] = self.invitation_url(invitation)
+        context['invitation_expiry_hours'] = \
+            settings.TEAM_INVITATION_EXPIRY * 24
+        return context
+
+
+class LeaveTeam(UserPassesTestMixin, TeamMixin, TemplateView):
+    template_name = 'contests/leave_team_confirmation.html'
+
+    def test_func(self):
+        return self.contest_context.user_team == self.team
+
+    def get_context_data(self, **kwargs):
+        context = super(LeaveTeam, self).get_context_data(**kwargs)
+        context['team'] = self.team
+        return context
 
     def post(self, request, *args, **kwargs):
         leave_team_action(request.user, self.team)
@@ -638,12 +614,8 @@ class LeaveTeam(UserPassesTestMixin, ContestMixin, ContextMixin, View):
             reverse('contests:team', args=(self.contest.code, self.team.id)))
 
 
-class TeamView(LoginRequiredMixin, ContestMixin, TemplateView):
+class TeamView(LoginRequiredMixin, TeamMixin, TemplateView):
     template_name = 'contests/team.html'
-
-    @calculate_once
-    def team(self):
-        return Team.objects.get(id=self.kwargs['team_id'])
 
     @property
     def title(self):
@@ -655,7 +627,8 @@ class TeamView(LoginRequiredMixin, ContestMixin, TemplateView):
             filter(team=self.team).all()
         context['team'] = self.team
         context['members'] = members
-        context['can_join'] = can_join_team(self.request.user, self.team)
+        context['can_join'] = can_join_team_in_contest(self.request.user,
+            self.contest)
         context['in_team'] = in_team(self.request.user, self.team)
         return context
 

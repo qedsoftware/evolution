@@ -98,22 +98,16 @@ class ContestContextTest(TestCase):
         request.user = user
         return request
 
-    def user_context(self, user=None, contest=None):
-        request = self.request(user=user)
-        return ContestContext(request, contest)
-
     def simple_test(self):
-        context = self.user_context(user=self.admin_user, contest=self.contest)
+        context = ContestContext(self.admin_user, self.contest)
         self.assertTrue(context.is_contest_admin)
         self.assertIsNone(context.user_team)
 
     def test_team_in_another_contest(self):
         join_team(self.regular_user, self.another_team)
-        context = self.user_context(user=self.regular_user,
-            contest=self.contest)
+        context = ContestContext(self.regular_user, self.contest)
         self.assertIsNone(context.user_team)
-        context = self.user_context(user=self.regular_user,
-            contest=self.another_contest)
+        context = ContestContext(self.regular_user, self.another_contest)
         self.assertEqual(context.user_team, self.another_team)
 
 
@@ -406,3 +400,9 @@ class RejudgeTest(WebTest):
         page = page.forms['rejudge-single'].submit().follow()
         page.mustcontain('Submission', str(submission.id),
             'marked for rejudging')
+
+class TeamInvitationExpiryTest(TestCase):
+    def test(self):
+        invitation = TeamInvitation()
+        invitation.created_at = timezone.now()
+        self.assertFalse(invitation.is_expired())

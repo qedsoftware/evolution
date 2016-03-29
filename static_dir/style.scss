@@ -56,9 +56,9 @@ h1 {
     margin-bottom: 20px;
 }
 
-pre {
+pre, code {
     font-size: 12px;
-    font-family: 'Droid Sans Mono'
+    font-family: 'Droid Sans Mono', monospace;
 }
 
 .messages {
@@ -129,15 +129,18 @@ pre {
 
 .action-button {
     @extend .unselectable;
-    display: table-cell;
     border: 1px solid $link-color;
     color: $link-color;
     background-color: white;
     text-decoration: none;
     text-align: center;
     vertical-align: middle;
+    padding: 4px 0px;
+    display: block;
     height: 30px;
-    width: 130px;
+    width: 140px;
+    box-sizing: border-box;
+    display: inline-block;
 }
 
 button {
@@ -602,6 +605,20 @@ table {
     list-style-type: none;
     font-size: 12px;
     padding-left: 0px;
+}
+
+.link-copy-form {
+    .link-copy-description {
+        display: inline-block;
+        padding: 10px;
+        margin: 0px;
+    }
+    input {
+        width: 550px;
+        border: 1px solid $link-color;
+        padding: 5px;
+        margin: 0px;
+    }
 }
 
 .email_list {

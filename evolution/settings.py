@@ -166,6 +166,7 @@ ACCOUNT_SIGNUP_FORM_CLASS = 'system.forms.SignupForm'
 
 INVITATION_EXPIRY = 3  # days
 
+TEAM_INVITATION_EXPIRY = 1 # days
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/1.8/howto/static-files/

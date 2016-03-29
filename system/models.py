@@ -116,7 +116,7 @@ MARKDOWN_ALLOWED_ATTRIBUTES = {
 
 
 def markdown_to_html(source):
-    markdown_html = markdown.markdown(source, extensions=['mdx_gfm'])
+    markdown_html = markdown.markdown(source, extensions=['mdx_partial_gfm'])
     return bleach.clean(markdown_html,
         tags=MARKDOWN_ALLOWED_TAGS,
         attributes=MARKDOWN_ALLOWED_ATTRIBUTES)
@@ -182,14 +182,12 @@ class Invitation(models.Model):
     accepted = models.BooleanField(default=False)
 
     def is_expired(self):
-        earliest_acceptable = timezone.now() - \
+        latest_acceptable = self.created_at + \
             timedelta(days=settings.INVITATION_EXPIRY)
-        return self.created_at < earliest_acceptable
+        return timezone.now() > latest_acceptable
 
     def prepare(self):
         self.secret_code = User.objects.make_random_password(length=16)
-        self.expires = timezone.now() + timedelta(
-            days=settings.INVITATION_EXPIRY)
 
     def send_email(self):
         site = Site.objects.get_current()

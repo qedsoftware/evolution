@@ -1,0 +1,15 @@
+{% extends "contests/layout.html" %}
+
+{% load standard %}
+
+{% block contest_title %} Invite to <em>{{team.name}}</em> {% endblock %}
+
+{% block content %}
+<form class="link-copy-form" id="team-invitation-link">
+<div class="link-copy-description">Invitation link:</div>
+<input type="text" value="{{invitation_url}}" readonly>
+</form>
+<div class="helptext"><p>Send this link to a person you want to invite to your team (<strong>{{team.name}}</strong>). This link is one-use only, so you have to generate a separate link for every invited person. It expires after {{invitation_expiry_hours}} hours.</p></div>
+
+<a class="action-button" href={{request.url}}>Generate another!</a>
+{% endblock content %}

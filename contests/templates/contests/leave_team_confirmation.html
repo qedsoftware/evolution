@@ -1,0 +1,11 @@
+{% extends "contests/layout.html" %}
+
+{% load standard %}
+
+{% block contest_title %} Leave <em>{{team.name}}</em> {% endblock %}
+
+{% block content %}
+<p>Are you sure you want to leave the team <strong>{{team.name}}</strong>?</p>
+
+{% action_form 'leave_team' 'leave' request.url %}
+{% endblock content %}

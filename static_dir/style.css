@@ -37,9 +37,9 @@ h1 {
   margin: 0;
   margin-bottom: 20px; }
 
-pre {
+pre, code {
   font-size: 12px;
-  font-family: "Droid Sans Mono"; }
+  font-family: 'Droid Sans Mono', monospace; }
 
 .messages {
   padding: 0px;
@@ -90,15 +90,18 @@ pre {
     display: inline-block; }
 
 .action-button, button, .action-form input[type=submit], .standard-form input[type=submit], .logout-button, .left-user form input[type=submit] {
-  display: table-cell;
   border: 1px solid #2277DD;
   color: #2277DD;
   background-color: white;
   text-decoration: none;
   text-align: center;
   vertical-align: middle;
+  padding: 4px 0px;
+  display: block;
   height: 30px;
-  width: 130px; }
+  width: 140px;
+  box-sizing: border-box;
+  display: inline-block; }
 
 .action-button:hover, button:hover, .action-form input[type=submit]:hover, .standard-form input[type=submit]:hover, .logout-button:hover, .left-user form input[type=submit]:hover {
   text-decoration: none;
@@ -428,6 +431,16 @@ table {
   list-style-type: none;
   font-size: 12px;
   padding-left: 0px; }
+
+.link-copy-form .link-copy-description {
+  display: inline-block;
+  padding: 10px;
+  margin: 0px; }
+.link-copy-form input {
+  width: 550px;
+  border: 1px solid #2277DD;
+  padding: 5px;
+  margin: 0px; }
 
 .email_list .ctrlHolder {
   padding: 10px 0px; }

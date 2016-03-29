@@ -40,6 +40,9 @@ urlpatterns = [
         views.TeamView.as_view(), name='team'),
     url(r'^contest/(?P<contests_code>[-\w]+)/team/(?P<team_id>[0-9]+)/join/$',
         views.JoinTeam.as_view(), name='join_team'),
+    url(r'^contest/(?P<contests_code>[-\w]+)/'
+        r'team/(?P<team_id>[0-9]+)/invite/$',
+        views.TeamInvitationView.as_view(), name='invite_to_team'),
     url(r'^contest/(?P<contests_code>[-\w]+)/team/(?P<team_id>[0-9]+)/leave/$',
         views.LeaveTeam.as_view(), name='leave_team'),
     url(r'^contest/(?P<contests_code>[-\w]+)/public_leaderboard/$',

@@ -1,0 +1,11 @@
+{% extends "contests/layout.html" %}
+
+{% load standard %}
+
+{% block contest_title %} Join <em>{{team.name}}</em> {% endblock %}
+
+{% block content %}
+<p>Do you want to join the team <strong>{{team.name}}</strong>?</p>
+
+{% action_form 'join_team' 'join' request.url %}
+{% endblock content %}
