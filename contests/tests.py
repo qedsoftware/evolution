@@ -163,12 +163,13 @@ class TeamViewTests(TestCase):
         self.assertContains(response, 'No members')
 
 
-def submit_with_score(team, stage, score):
+def submit_with_score(team, stage, score, selected=False):
     cs = ContestSubmission()
     cs.stage = stage
     submission = Submission.create(stage.grader, ContentFile('mock_file'))
     submission.score = score
     submission.save()
+    cs.selected = selected
     cs.submission = submission
     cs.team = team
     cs.save()
@@ -190,17 +191,34 @@ class LeaderboardTest(TestCase):
         self.team_d.save()
         self.team_c = Team(contest=self.contest, name='C')
         self.team_c.save()
+        self.teams = [self.team_d, self.team_c, self.team_b, self.team_a]
         self.empty_contest = ContestFactory.from_dict({
             'name': 'Empty',
             'code': 'empty'
         }).create()
 
     def test_no_submissions(self):
+        # all the submissions are trivial
         entries = build_leaderboard(self.contest, self.contest.test_stage)
         for entry in entries:
             self.assertEqual(entry.position, 1)
             self.assertIsNone(entry.score)
             self.assertIsNone(entry.submission)
+            self.assertIsNotNone(entry.team)
+            self.assertEqual(entry.team.member_list, [])
+        self.assertEqual(entries, [])
+
+    def test_alphabetic_order(self):
+        for team in self.teams:
+            cs = submit_with_score(team, self.contest.test_stage, 42,
+                                   selected=True)
+            self.assertEqual(cs.team, team)
+            self.assertEqual(cs.submission.score, 42)
+        entries = build_leaderboard(self.contest, self.contest.test_stage)
+        for entry in entries:
+            self.assertEqual(entry.position, 1)
+            self.assertEqual(entry.score, 42)
+            self.assertIsNotNone(entry.submission)
             self.assertIsNotNone(entry.team)
             self.assertEqual(entry.team.member_list, [])
         self.assertEqual([e.team.name for e in entries], ['A', 'B', 'C', 'D'])
@@ -401,8 +419,53 @@ class RejudgeTest(WebTest):
         page.mustcontain('Submission', str(submission.id),
             'marked for rejudging')
 
+
 class TeamInvitationExpiryTest(TestCase):
     def test(self):
         invitation = TeamInvitation()
         invitation.created_at = timezone.now()
         self.assertFalse(invitation.is_expired())
+
+
+class TeamInvitationTest(WebTest):
+    def setUp(self):
+        standard_base(self)
+        self.team = Team(contest=self.contest, name='Team')
+        self.team.save()
+        join_team(self.user, self.team)
+        self.user2 = new_user('another_user')
+        self.user3 = new_user('yet_another_user')
+
+    def accept_invitation_page(self, invitation_url, user=None):
+        return self.app.get(invitation_url, user=user). \
+            forms['join_team'].submit().follow()
+
+    def test_invite(self):
+        page = self.app.get(reverse('contests:invite_to_team',
+            args=['contest', self.team.id]), user=self.user)
+        link_copy_form_html = page.html.find(id='team-invitation-link')
+        invitation_url = link_copy_form_html.input['value']
+        invitation = TeamInvitation.objects.get()
+        self.assertEqual(invitation.invited_by, self.user)
+        self.assertFalse(invitation.accepted)
+        self.assertTrue(invitation.secret_code in invitation_url)
+        # already in this team
+        page = self.accept_invitation_page(invitation_url, user=self.user)
+        page.mustcontain('Cannot join')
+        invitation.refresh_from_db()
+        self.assertFalse(invitation.accepted)
+        self.assertIsNone(invitation.accepted_by)
+
+        # second user steps in
+        page = self.accept_invitation_page(invitation_url, user=self.user2)
+        invitation.refresh_from_db()
+        self.assertEqual(invitation.accepted_by, self.user2)
+        self.assertTrue(invitation.accepted)
+        self.assertTrue(in_team(self.user2, self.team))
+
+        # third user tries to use this inviation again
+        page = self.accept_invitation_page(invitation_url, user=self.user3)
+        page.mustcontain('already', 'used')
+        self.assertFalse(in_team(self.user3, self.team))
+        invitation.refresh_from_db()
+        self.assertEqual(invitation.accepted_by, self.user2)

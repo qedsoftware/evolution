@@ -16,14 +16,20 @@ from django.conf import settings
 
 from allauth.utils import build_absolute_uri
 
+# contest stuff
 from .models import Contest, ContestFactory, ContestSubmission, \
-    SubmissionData, submit, ContestStage, rejudge_submission, \
-    rejudge_contest, Team, TeamMember, get_and_check_invitation, \
-    leave_team as leave_team_action, can_join_team_in_contest, in_team, \
-    is_contest_admin, teams_with_member_list, build_leaderboard, user_team, \
-    can_create_team, StageIsClosed, SelectionError, select_submission, \
-    unselect_submission, remaining_selections, TeamInvitation, \
-    accept_invitation, CannotJoin, ContestContext
+    ContestStage, rejudge_contest, build_leaderboard, \
+    StageIsClosed, ContestContext
+
+# team stuff
+from .models import Team, TeamMember, TeamInvitation, leave_team, \
+    can_join_team_in_contest, in_team, teams_with_member_list, \
+    accept_invitation, CannotJoin
+
+# submission stuff
+from .models import SubmissionData, submit, rejudge_submission, \
+    SelectionError, select_submission, unselect_submission, \
+    remaining_selections
 
 from .forms import ContestForm, ContestCreateForm, SubmitForm
 
@@ -538,7 +544,7 @@ class TeamMixin(ContestMixin):
 
 
 class JoinTeam(UserPassesTestMixin, TeamMixin, TemplateView):
-    template_name="contests/join_team.html"
+    template_name = "contests/join_team.html"
 
     def test_func(self):
         return self.request.user.is_authenticated
@@ -609,7 +615,7 @@ class LeaveTeam(UserPassesTestMixin, TeamMixin, TemplateView):
         return context
 
     def post(self, request, *args, **kwargs):
-        leave_team_action(request.user, self.team)
+        leave_team(request.user, self.team)
         return redirect(
             reverse('contests:team', args=(self.contest.code, self.team.id)))
 

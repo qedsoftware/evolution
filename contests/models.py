@@ -194,10 +194,11 @@ class Team(models.Model):
 
 class TeamInvitation(models.Model):
     team = models.ForeignKey('Team')
-    invited_by = models.ForeignKey('auth.User', null=True)
+    invited_by = models.ForeignKey('auth.User', null=True, related_name='+')
     secret_code = models.CharField(max_length=100, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
     accepted = models.BooleanField(default=False)
+    accepted_by = models.ForeignKey('auth.User', null=True, related_name='+')
 
     def is_expired(self):
         latest_acceptable = self.created_at + \
@@ -207,8 +208,11 @@ class TeamInvitation(models.Model):
     def prepare(self):
         self.secret_code = User.objects.make_random_password(length=32)
 
-    def accept(user):
+    @transaction.atomic
+    def accept(self, user):
         self.accepted = True
+        self.accepted_by = user
+        self.save()
         join_team(user, self.team)
 
 
@@ -257,6 +261,8 @@ def get_and_check_invitation(user, contest, team, secret_code):
         raise CannotJoin("This invitation doesn't belong to this team!")
     if invitation.is_expired():
         raise CannotJoin("This invitation is expired.")
+    if invitation.accepted:
+        raise CannotJoin("This invitation has already been used.")
     if not can_join_team_in_contest(user, contest):
         # TODO let the user know why exactly, like they already have team
         raise CannotJoin("Cannot join a team in this contest.")
@@ -266,7 +272,7 @@ def get_and_check_invitation(user, contest, team, secret_code):
 @transaction.atomic
 def accept_invitation(user, contest, team, secret_code):
     invitation = get_and_check_invitation(user, contest, team, secret_code)
-    invitation.accept()
+    invitation.accept(user)
 
 
 @transaction.atomic
@@ -493,9 +499,11 @@ class LeadboardEntry:
 
 
 def build_leaderboard(contest, stage):
+    # TODO split into multiple smaller functions, define helpers etc.
+    # maybe in a separate file?
     def cmp_tuple(val):
         """
-            Tuple for comparisons, making None be smaller than anything.
+            Tuple for comparisons, making None smaller than anything.
         """
         if val is None:
             return (False, None)
@@ -524,8 +532,12 @@ def build_leaderboard(contest, stage):
             entry.submission = submission
             entry.score = entry.submission.submission.score
 
+    def good_entry(entry):
+        return entry.score is not None or team.member_list
+
     # get them into list
-    entries = [entry for _, entry in by_team.items()]
+    entries = [entry for _, entry in by_team.items() if good_entry(entry)]
+
     # boundary case
     if not entries:
         return []
@@ -539,7 +551,7 @@ def build_leaderboard(contest, stage):
         reverse=True
     )
 
-    # find teams positions
+    # calculate teams' positions
     last = entries[0]
     entries[0].position = 1
     cur_position = 1
@@ -550,6 +562,7 @@ def build_leaderboard(contest, stage):
         else:
             entry.position = cur_position
     return entries
+
 
 class ContestContext(object):
     """

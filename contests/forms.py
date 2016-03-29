@@ -89,7 +89,8 @@ class ContestForm(forms.Form):
 class SubmitForm(forms.Form):
     stage = forms.ChoiceField(choices=())  # we'll fill choices in __init__
     output_file = forms.FileField()
-    source_code = forms.FileField(help_text="If your submission consists of multiple files, please upload them as a zip archive.")
+    source_code = forms.FileField(help_text="If your submission consists of "
+        "multiple files, please upload them as a zip archive.")
     comment = forms.CharField(required=False)
 
     def __init__(self, *args, **kwargs):
