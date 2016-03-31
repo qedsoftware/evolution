@@ -204,8 +204,6 @@ GRADING_CHECK_STATUS_INTERVAL_SECONDS = 1
 
 DOWNLOADVIEW_BACKEND = 'django_downloadview.nginx.XAccelRedirectMiddleware'
 
-# DOWNLOADVIEW_BACKEND = 'django_downloadview.nginx.XAccelRedirectMiddleware'
-
 # Django Testing
 
 TEST_RUNNER = 'evolution.runner.CustomTestSuiteRunner'
