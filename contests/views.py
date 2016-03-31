@@ -17,9 +17,8 @@ from django.conf import settings
 from allauth.utils import build_absolute_uri
 
 # contest stuff
-from .models import Contest, ContestFactory, ContestSubmission, \
-    ContestStage, rejudge_contest, build_leaderboard, \
-    StageIsClosed, ContestContext
+from .models import Contest, ContestFactory, ContestStage, rejudge_contest, \
+    build_leaderboard, StageIsClosed, ContestContext
 
 # team stuff
 from .models import Team, TeamMember, TeamInvitation, leave_team, \
@@ -27,9 +26,9 @@ from .models import Team, TeamMember, TeamInvitation, leave_team, \
     accept_invitation, CannotJoin
 
 # submission stuff
-from .models import SubmissionData, submit, rejudge_submission, \
+from .models import ContestSubmission, SubmissionData, submit, rejudge_submission, \
     SelectionError, select_submission, unselect_submission, \
-    remaining_selections
+    remaining_selections, ContestSubmissionEvent
 
 from .forms import ContestForm, ContestCreateForm, SubmitForm
 
@@ -288,6 +287,7 @@ class Submit(UserPassesTestMixin, ContestMixin, FormView):
                 "Currently no stage is open for submissions.")
         return context
 
+    @transaction.atomic
     def form_valid(self, form):
         data = SubmissionData()
         data.output = self.request.FILES['output_file']
@@ -299,7 +299,8 @@ class Submit(UserPassesTestMixin, ContestMixin, FormView):
         if team is None and not self.contest_context.is_contest_admin:
             raise PermissionDenied()
         try:
-            submit(team, stage, data)
+            submission = submit(team, stage, data)
+            ContestSubmissionEvent.create(submission, self.request)
         except StageIsClosed:
             raise PermissionDenied()  # TODO be nicer
         return super(Submit, self).form_valid(form)

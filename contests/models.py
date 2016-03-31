@@ -6,7 +6,7 @@ from django.utils import timezone
 from django.contrib.auth.models import User
 from django.conf import settings
 
-from system.models import Post
+from system.models import Post, ClientInfo
 
 from base.models import ScoringScript, DataGrader, Submission, \
     request_submission_grading, request_qs_grading
@@ -345,6 +345,23 @@ class ContestSubmission(models.Model):
         return "<ContestSubmission %s>" % self.id
 
 
+class ContestSubmissionEvent(models.Model):
+    submission = models.OneToOneField('ContestSubmission')
+    client_info = models.OneToOneField('system.ClientInfo')
+
+    @classmethod
+    def create(cls, submission, client_info):
+        event = cls()
+        event.submission = submission
+        event.client_info = client_info
+        event.save()
+        return event
+
+    def __str__(self):
+        return 'ContestSubmissionEvent for %d (%s)' % \
+            (submission.id, str(self.client_info))
+
+
 class SubmissionData(object):
     output = None
 
@@ -354,7 +371,7 @@ class StageIsClosed(Exception):
 
 
 @transaction.atomic
-def submit(team, stage, submission_data):
+def submit(team, stage, submission_data, client_info=None):
     if team and not stage.is_open():
         raise StageIsClosed()
     cs = ContestSubmission()
@@ -367,6 +384,8 @@ def submit(team, stage, submission_data):
     cs.save_source(submission_data.source)
     cs.comment = submission_data.comment
     cs.save()
+    if client_info:
+        ContestSubmissionEvent.create(cs, client_info)
     return cs
 
 

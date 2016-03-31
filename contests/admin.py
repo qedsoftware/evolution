@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 from contests.models import Contest, Team, TeamMember, ContestStage, \
-    ContestSubmission
+    ContestSubmission, ContestSubmissionEvent
 
 
 class ContestAdmin(admin.ModelAdmin):
@@ -46,4 +46,15 @@ class TeamMemberAdmin(admin.ModelAdmin):
     search_fields = ['user__username', 'user__first_name', 'user__last_name',
         'team__name']
     list_filter = ['contest']
+
+
 admin.site.register(TeamMember, TeamMemberAdmin)
+
+
+class ContestSubmissionEventAdmin(admin.ModelAdmin):
+    list_display = ['id', 'submission', 'client_info']
+    search_fields = ['client_info__client_address', 'client_info__user_agent',
+        'client_info__referer']
+
+
+admin.site.register(ContestSubmissionEvent, ContestSubmissionEventAdmin)

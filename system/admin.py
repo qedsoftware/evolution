@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Post, NewsItem, Invitation, SystemSettings
+from .models import Post, NewsItem, Invitation, ClientInfo, SystemSettings
 from .forms import PostForm
 
 
@@ -37,3 +37,10 @@ class SystemSettingsAdmin(admin.ModelAdmin):
 
 
 admin.site.register(SystemSettings, SystemSettingsAdmin)
+
+
+class ClientInfoAdmin(admin.ModelAdmin):
+    list_display = ('id', 'client_address', 'user_agent', 'referer')
+
+
+admin.site.register(ClientInfo, ClientInfoAdmin)

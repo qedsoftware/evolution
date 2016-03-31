@@ -217,6 +217,21 @@ Enjoy,
         email.send()
 
 
+class ClientInfo(models.Model):
+    client_address = models.CharField(max_length=255)
+    user_agent = models.TextField()
+    referer = models.TextField()
+
+    def extract_from(self, request):
+        self.client_address = request.META.get('HTTP_X_FORWARDED_FOR',
+            request.META['REMOTE_ADDR'])
+        self.user_agent = request.META['HTTP_USER_AGENT']
+        self.referer = request.META['HTTP_REFERER']
+
+    def __str__(self):
+        return ' '.join([self.client_address, self.user_agent, self.referer])
+
+
 class SystemSettings(models.Model):
     class Meta:
         verbose_name = "System settings"
