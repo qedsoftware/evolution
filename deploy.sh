@@ -1,22 +1,16 @@
 echo "Deployment script started"
 
-USER=evolution # it may be hardcoded in some places
-
-getent passwd $USER > /dev/null 2>&1
-USER_EXISTS=$?
-
-if [ $USER_EXISTS -eq 0 ]; then
-  echo "The user already exists!"
-else
-  useradd -m $USER
-fi
+USER=vagrant # it may be hardcoded in some places
 
 echo "Installing dependencies:"
 
 export DEBIAN_FRONTEND=noninteractive
 
+# https://github.com/mitchellh/vagrant/issues/6051
+bash <<EOB
 add-apt-repository -y ppa:fkrull/deadsnakes
 apt-get update -y
-apt-get install -y python3.5 python3.5-dev python-pip python3.5-venv
+apt-get install -y python3.5 python3.5-dev python-pip python-virtualenv postgresql libpq-dev
+EOB
 
-#virtualenv -p /usr/bin/python3.5 
+su vagrant -c '/vagrant/setup_virtualenv.sh' -
