@@ -1,0 +1,4 @@
+start on filesystem
+setuid evolution
+console log
+exec /home/evolution/evolution/grading.sh
