@@ -91,8 +91,8 @@ class SubmitForm(forms.Form):
     output_file = forms.FileField()
     source_code = forms.FileField(help_text="If your submission consists of "
         "multiple files, please upload them as a zip archive.")
-    comment = forms.CharField(required=False, help_text=
-        "You can add a comment to your solution, for your convenience only. "
+    comment = forms.CharField(required=False, help_text="You can add "
+        "a comment to your solution, for your convenience only. "
         "For example the version number of your solution.")
 
     def __init__(self, *args, **kwargs):
