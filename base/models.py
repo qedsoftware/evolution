@@ -205,7 +205,7 @@ def _prepare_scoring_dir(attempt):
 def _run_scoring_popen(attempt, scoring_dir):
     args = [settings.RUNNER_PATH, scoring_dir]
     return subprocess.Popen(args, stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE)
+        stderr=subprocess.STDOUT)
 
 
 @transaction.atomic

@@ -6,8 +6,14 @@ import os
 import subprocess
 import json
 import resource
+import sys
 
-# TODO prctl (kill on parent death)
+prctl_enabled = False
+if os.getenv('prctl_disabled', None) != "1":
+    prctl_enabled = True
+    import prctl
+    import signal
+    prctl.set_pdeathsig(signal.SIGKILL)
 
 
 def print_err(*objs):
@@ -65,6 +71,9 @@ def run(params):
                 resource.setrlimit(
                     resource.RLIMIT_AS,
                     (params.memory_limit_bytes, params.memory_limit_bytes))
+                if prctl_enabled:
+                    prctl.set_pdeathsig(signal.SIGKILL)
+
             completed = subprocess.run(args, timeout=params.time_limit_ms,
                 preexec_fn=preexec, stdout=subprocess.PIPE, stderr=log_file)
 
