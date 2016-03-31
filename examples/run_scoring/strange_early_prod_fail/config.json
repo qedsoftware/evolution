@@ -1,0 +1,9 @@
+{
+  "working_directory": "working/",
+  "scoring_script": "scoring.py",
+  "user_output": "user.in",
+  "answer": "answer.in",
+  "scoring_log": "log",
+  "time_limit_ms": 1000,
+  "memory_limit_bytes": 100000000
+}
