@@ -210,14 +210,18 @@ button {
     float: left;
     width: 700px;
     padding: 20px;
+    font-size: 16px;
     h1 {
         font-size: 35px;
         text-align: center;
     }
     h2 {
-        font-size: 19px;
+        font-size: 25px;
         margin-top: 25px;
-        margin-bottom: 3px;
+        margin-bottom: 5px;
+    }
+    h3 {
+        font-size: 19px;
     }
     .news-item p {
         margin-top: 0px;

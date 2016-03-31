@@ -151,14 +151,17 @@ pre, code {
 .page-content {
   float: left;
   width: 700px;
-  padding: 20px; }
+  padding: 20px;
+  font-size: 16px; }
   .page-content h1 {
     font-size: 35px;
     text-align: center; }
   .page-content h2 {
-    font-size: 19px;
+    font-size: 25px;
     margin-top: 25px;
-    margin-bottom: 3px; }
+    margin-bottom: 5px; }
+  .page-content h3 {
+    font-size: 19px; }
   .page-content .news-item p {
     margin-top: 0px; }
 

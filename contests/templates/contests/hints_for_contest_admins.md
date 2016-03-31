@@ -1,3 +1,11 @@
+## Description and rules
+
+You can use [Github-flavored markdown](https://github.com/adam-p/markdown-here/wiki/Markdown-Cheatsheet), the same you could use in the README on github. Of course we don't support issue references and other github-specific things.
+
+Please use *Description* to explain the problem and to provide the links to data.
+
+In *Rules* describe the rules of the contest, what competitors are allowed to do. Aspects like collaboration between teams or restictions on tools should be covered there.
+
 ## Writing Scoring Scripts
 
 Of course the contestants' solutions won't score themselves - we need to define a way of determining how good a submission is.
