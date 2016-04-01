@@ -120,23 +120,25 @@ pre, code {
 
 .left-pane {
   height: 100%;
-  width: 150px;
+  width: 180px;
   float: left;
   padding: 20px;
   padding-left: 20px;
-  padding-right: 50px;
+  padding-right: 30px;
   margin-top: 0px; }
   .left-pane h2 {
     font-size: 18px;
     font-variant: small-caps;
     font-weight: 900;
-    margin-bottom: 2px; }
+    margin-bottom: 2px;
+    margin-top: 10px; }
   .left-pane .logo img {
     width: 150px; }
   .left-pane ul {
     list-style-type: none;
     margin: 0;
-    padding: 0; }
+    padding: 0;
+    margin-bottom: 10px; }
     .left-pane ul li {
       padding-top: 3px; }
 
@@ -270,7 +272,7 @@ fieldset {
     padding: 5px; }
 
 .left-user {
-  padding-top: 20px;
+  padding-top: 5px;
   font-size: 13px; }
 
 .logout-button {
@@ -456,5 +458,25 @@ table {
 .email_list .primary {
   font-weight: bold;
   padding: 1px; }
+
+.contest-status {
+  font-size: 10px;
+  margin: 0px;
+  padding: 0px; }
+  .contest-status ul {
+    list-style-type: none;
+    margin: 0px;
+    padding: 0px; }
+    .contest-status ul li {
+      margin: 0px;
+      padding: 0px; }
+
+.page-status {
+  /*position: absolute;
+  top: 25px;
+  left: 760px;*/
+  margin-top: 10px;
+  margin-bottom: 0px;
+  width: 180px; }
 
 /*# sourceMappingURL=style.css.map */

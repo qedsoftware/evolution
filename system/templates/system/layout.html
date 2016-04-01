@@ -17,6 +17,12 @@
         </div>
       {% endif %}
       <div class="left-pane">
+        <div class="logo">
+          <a href={{logo_link}}><img src="/static/logo-prototype.png"></a>
+        </div>
+        <div class="page-status">
+          {% block status %}{% endblock status %}
+        </div>
         {% include "system/left-pane.html" %}
       </div>
       <div class="page-content">

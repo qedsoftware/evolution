@@ -1,4 +1,18 @@
 {% extends "system/layout.html" %}
+{% block status %}
+	{# TODO it's dirty to use ul and li this way #}
+	<div class="contest-status">
+	<ul>
+		<li><strong>Verification:</strong></li>
+		<li> Opening: <strong>{{contest.verification_stage.begin}}</strong>
+		<li> Deadline: <strong>{{contest.verification_stage.end}}</strong></li>
+		<li><strong>Test:</strong></li>
+		<li> Opening: <strong>{{contest.test_stage.begin}}</strong></li>
+		<li> Deadline: <strong>{{contest.test_stage.end}}</strong></li>
+		<li>Timezone: <strong>UTC</strong></li>
+		<li>Team count: {{contest.team_set.count}}</li>
+	</div>
+{% endblock %}
 {% block content_title %}
     {% block contest_title %} {{content_title}} {% endblock contest_title %}
     {% if contest %}
