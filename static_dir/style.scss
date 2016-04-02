@@ -496,9 +496,11 @@ table {
 }
 
 .submission-table {
+    font-size: 14px;
     width: 100%;
     tr {
         cursor: pointer;
+        height: 30px;
         @extend .unselectable;
     }
     tr.submission_row:hover {
@@ -507,13 +509,26 @@ table {
     tr.submission_row:active {
         background-color: $link-darker-background-color;
     }
+    .selected-cell {
+        text-align: center;
+        vertical-align: center;
+        padding: 0px;
+    }
+    .result-cell {
+        padding: 6px;
+        width: 150px;
+        text-align: center;
+    }
+    .stage-cell {
+        text-align: center;
+    }
 }
 
 .result-part {
     text-align: center;
 }
 
-.submission-result {
+.main-result > .submission-result {
     width: 320px;
     text-align: center;
     font-size: 30px;
@@ -523,25 +538,29 @@ table {
     border: 1px solid black;
 }
 
-.submission-result.good-result {
+.submission-result.accepted-result {
     background-color: $success-background-color;
     .helptext {
         color: black;
     }
 }
 
-.submission-result.bad-result {
+.submission-result.rejected-result {
     background-color: $error-background-color;
     .helptext {
         color: black;
     }
 }
 
-.submission-result.strange-result {
+.submission-result.error-result {
     background-color: $attention-background-color;
     .helptext {
         color: black;
     }
+}
+
+.submission-result.strange-result {
+    @extend .error-result;
 }
 
 .submission-details {
@@ -595,12 +614,13 @@ table {
         position: relative;
         top: 3px;
     }
-    .selected-icon {
-        color: $ok-color;
-    }
-    .not-selected-icon {
-        color: $error-color;
-    }
+}
+
+.selected-icon {
+    color: $ok-color;
+}
+.not-selected-icon {
+    color: $error-color;
 }
 
 .teams-list > ol > li {

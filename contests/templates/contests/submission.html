@@ -1,6 +1,7 @@
 {% extends "contests/layout.html" %}
 
 {% load standard %}
+{% load contest %}
 
 {% block contest_title %} Submission {{ contest_submission.id }} (<em>{{stage_name}}</em>) {% endblock %}
 
@@ -9,35 +10,9 @@
     {% action_form 'rejudge-single' 'rejudge' rejudge_url %}
 {% endif %}
 
-{% if result == 'score' %}
-    <div class="submission-result">
-        Score: <strong>{{submission.score}}</strong>
-    </div>
-{% elif result == 'waiting' %}
-    <div class="submission-result">
-        Waiting for score...
-    </div>
-{% elif result == 'rejected' %}
-    <div class="submission-result bad-result">
-        Rejected
-        <div class="helptext">There is something wrong with your submission.</div>
-    </div>
-{% elif result == 'accepted' %}
-    <div class="submission-result good-result">
-        Accepted
-        <div class="helptext">Exact score is not available at this point.</div>
-    </div>
-{% elif result == 'error' %}
-    <div class="submission-result strange-result">
-        Grading Error
-        <div class="helptext">Don't worry. We'll take care of that.</div>
-    </div>
-{% else %}
-    <div class="submission-result strange-result">
-        ???
-        <div class="helptext">???</div>
-    </div>
-{% endif %}
+<div class="main-result">
+    {% submission_result contest_submission contest_context with_helptext=True %}
+</div>
 
 {% if contest_submission.stage.requires_selection %}
 <div class="selection-box">
@@ -88,9 +63,7 @@
                 Scoring Comment
             {% endif %}
         </h2>
-        <pre>
-            {{submission.scoring_msg}}
-        </pre>
+        <pre>{{submission.scoring_msg}}</pre>
     </div>
 {% endif %}
 

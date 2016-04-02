@@ -351,18 +351,30 @@ table {
   font-weight: normal; }
 
 .submission-table {
+  font-size: 14px;
   width: 100%; }
   .submission-table tr {
-    cursor: pointer; }
+    cursor: pointer;
+    height: 30px; }
   .submission-table tr.submission_row:hover {
     background-color: #f2f2ff; }
   .submission-table tr.submission_row:active {
     background-color: #ddf; }
+  .submission-table .selected-cell {
+    text-align: center;
+    vertical-align: center;
+    padding: 0px; }
+  .submission-table .result-cell {
+    padding: 6px;
+    width: 150px;
+    text-align: center; }
+  .submission-table .stage-cell {
+    text-align: center; }
 
 .result-part {
   text-align: center; }
 
-.submission-result {
+.main-result > .submission-result {
   width: 320px;
   text-align: center;
   font-size: 30px;
@@ -371,19 +383,19 @@ table {
   padding: 10px;
   border: 1px solid black; }
 
-.submission-result.good-result {
+.submission-result.accepted-result {
   background-color: #dfd; }
-  .submission-result.good-result .helptext {
+  .submission-result.accepted-result .helptext {
     color: black; }
 
-.submission-result.bad-result {
+.submission-result.rejected-result {
   background-color: #faa; }
-  .submission-result.bad-result .helptext {
+  .submission-result.rejected-result .helptext {
     color: black; }
 
-.submission-result.strange-result {
+.submission-result.error-result, .submission-result.strange-result {
   background-color: #FFFF7F; }
-  .submission-result.strange-result .helptext {
+  .submission-result.error-result .helptext, .submission-result.strange-result .helptext {
     color: black; }
 
 .submission-details {
@@ -424,10 +436,12 @@ table {
   .selection-state i.material-icons {
     position: relative;
     top: 3px; }
-  .selection-state .selected-icon {
-    color: #00BB00; }
-  .selection-state .not-selected-icon {
-    color: #B30000; }
+
+.selected-icon {
+  color: #00BB00; }
+
+.not-selected-icon {
+  color: #B30000; }
 
 .teams-list > ol > li {
   margin-bottom: 8px; }

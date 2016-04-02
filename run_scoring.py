@@ -6,13 +6,12 @@ import os
 import subprocess
 import json
 import resource
-import sys
+import signal
 
 prctl_enabled = False
 if os.getenv('prctl_disabled', None) != "1":
     prctl_enabled = True
     import prctl
-    import signal
     prctl.set_pdeathsig(signal.SIGKILL)
 
 

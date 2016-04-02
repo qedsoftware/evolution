@@ -3,25 +3,34 @@
 {% load standard %}
 {% load contest %}
 
-{% block contest_title %} Submissions {% endblock %}
+{% block contest_title %} My Submissions {% endblock %}
 
 {% block content %}
+
+{% if contest_context.is_contest_admin %}
+<div class="helptext">
+    You are the administrator of this contest, so this page shows all the technical submissions i.e. those sent by an administrator.
+    See <a href="{% url 'contests:submissions' contest.code %}">Submissions</a>
+    if you are interested in what was sent by contestants.
+</div>
+{% endif %}
+
 <div class="submission-table">
     <table class="submission-table">
     <tr>
         <th>Id</th>
-        <th>Team</th>
         <th>Stage</th>
         <th>Submission Time</th>
+        <th>Comment</th>
         <th>Selected</th>
         <th>Result</th>
     </tr>
     {% for submission in submissions %}
         <tr class="submission_row" onclick="document.location = '{% url 'contests:submission' contest.code submission.id %}';">
             <td class="id-cell">{{submission.id}}</td>
-            <td class="team-cell">{{submission.team}}</td>
             <td class="stage-cell">{% stage_name submission.stage contest_context %}</td>
             <td class="time-cell">{{submission.submission.created_at}}</td>
+            <td class="comment-cell">{{submission.comment}}</td>
             <td class="selected-cell">
                 {% submission_selection_state_icon submission %}
             </td>

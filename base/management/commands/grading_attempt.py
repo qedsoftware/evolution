@@ -11,7 +11,6 @@ prctl_enabled = False
 if os.getenv('prctl_disabled', None) != "1":
     prctl_enabled = True
     import prctl
-    import signal
     prctl.set_pdeathsig(signal.SIGKILL)
 
 logger = logging.getLogger(__name__)

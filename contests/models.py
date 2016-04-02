@@ -6,7 +6,7 @@ from django.utils import timezone
 from django.contrib.auth.models import User
 from django.conf import settings
 
-from system.models import Post, ClientInfo
+from system.models import Post
 
 from base.models import ScoringScript, DataGrader, Submission, \
     request_submission_grading, request_qs_grading
@@ -359,7 +359,7 @@ class ContestSubmissionEvent(models.Model):
 
     def __str__(self):
         return 'ContestSubmissionEvent for %d (%s)' % \
-            (submission.id, str(self.client_info))
+            (self.submission.id, str(self.client_info))
 
 
 class SubmissionData(object):

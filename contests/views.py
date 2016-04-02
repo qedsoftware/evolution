@@ -26,9 +26,9 @@ from .models import Team, TeamMember, TeamInvitation, leave_team, \
     accept_invitation, CannotJoin
 
 # submission stuff
-from .models import ContestSubmission, SubmissionData, submit, rejudge_submission, \
-    SelectionError, select_submission, unselect_submission, \
-    remaining_selections, ContestSubmissionEvent
+from .models import ContestSubmission, SubmissionData, submit, \
+    rejudge_submission, SelectionError, select_submission, \
+    unselect_submission, remaining_selections, ContestSubmissionEvent
 
 from .forms import ContestForm, ContestCreateForm, SubmitForm
 
@@ -324,7 +324,7 @@ class Submissions(UserPassesTestMixin, ContestMixin, ListView):
 
 class MySubmissions(UserPassesTestMixin, ContestMixin, ListView):
     context_object_name = 'submissions'
-    template_name = "contests/submissions.html"
+    template_name = "contests/my_submissions.html"
     paginate_by = 10
     title = "My Submissions"
 
