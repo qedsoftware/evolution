@@ -14,6 +14,8 @@ urlpatterns = [
         views.AdminDownload.as_view(), name='media_path'),
     url(r'^invite/$', views.InviteView.as_view(), name="invite"),
     url(r'^accounts/', include('allauth.urls')),
+    url(r'^superuser_manual/$', views.SuperuserManual.as_view(),
+        name='superuser_manual'),
     # below are the patterns made for front-end testing, they should not
     # be linked anywhere or change any data
     url(r'^test_view/messages$', views.messages_test_view),

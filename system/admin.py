@@ -33,7 +33,6 @@ admin.site.register(Invitation, InvitationAdmin)
 
 class SystemSettingsAdmin(admin.ModelAdmin):
     exclude = ['force_one']
-    list_display = ('global_message', 'footer')
 
 
 admin.site.register(SystemSettings, SystemSettingsAdmin)

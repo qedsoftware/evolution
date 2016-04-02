@@ -129,3 +129,17 @@ def messages_test_view(request):
         'content_title': 'Message Test',
         'text': "Nothing to do here"
     })
+
+
+class SuperuserManual(UserPassesTestMixin, PostDataView):
+    post_template_name = "contests/superuser_manual.md"
+    source_lang = 'markdown'
+    content_title = "Superuser Manual"
+
+    def test_func(self):
+        return self.request.user.is_superuser
+
+    def get_context_data(self, **kwargs):
+        context = super(SuperuserManual, self).get_context_data(**kwargs)
+        context['content_title'] = self.content_title
+        return context
