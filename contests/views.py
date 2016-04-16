@@ -33,6 +33,7 @@ from .models import ContestSubmission, SubmissionData, submit, \
 from .forms import ContestForm, ContestCreateForm, SubmitForm
 
 from base.models import GradingAttempt
+from system.models import ClientInfo
 from system.views import PostDataView, add_static_message
 from system.utils import calculate_once
 
@@ -300,7 +301,10 @@ class Submit(UserPassesTestMixin, ContestMixin, FormView):
             raise PermissionDenied()
         try:
             submission = submit(team, stage, data)
-            ContestSubmissionEvent.create(submission, self.request)
+            client_info = ClientInfo()
+            client_info.extract_from(self.request)
+            client_info.save()
+            ContestSubmissionEvent.create(submission, client_info)
         except StageIsClosed:
             raise PermissionDenied()  # TODO be nicer
         return super(Submit, self).form_valid(form)
