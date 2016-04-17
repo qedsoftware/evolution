@@ -440,6 +440,12 @@ class TeamInvitationTest(WebTest):
         return self.app.get(invitation_url, user=user). \
             forms['join_team'].submit().follow()
 
+    def test_no_code_join(self):
+        # it should fail with an error
+        url = reverse('contests:join_team', args=['contest', self.team.id])
+        page = self.accept_invitation_page(url, user=self.user)
+        page.mustcontain('Invalid Secret Code')
+
     def test_invite(self):
         page = self.app.get(reverse('contests:invite_to_team',
             args=['contest', self.team.id]), user=self.user)

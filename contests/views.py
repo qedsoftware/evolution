@@ -556,7 +556,7 @@ class JoinTeam(UserPassesTestMixin, TeamMixin, TemplateView):
 
     @calculate_once
     def secret_code(self):
-        return self.request.GET['code']
+        return self.request.GET.get('code', '')
 
     def post(self, request, *args, **kwargs):
         try:

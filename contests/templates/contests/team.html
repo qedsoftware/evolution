@@ -5,10 +5,6 @@
 {% block contest_title %} Team <em>{{team.name}}</em> {% endblock %}
 
 {% block content %}
-{% if can_join %}
-    {% url 'contests:join_team' contest.code team.id as join_url %}
-    {% action_form 'join-team' 'join' join_url %}
-{% endif %}
 {% if in_team %}
     {% url 'contests:leave_team' contest.code team.id as leave_url %}
     <a class="action-button" href={{leave_url}}>Leave</a>
