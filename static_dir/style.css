@@ -81,11 +81,15 @@ pre, code {
     .messages .message-box.error i.message-icon:after {
       content: 'error'; }
   .messages .message-icon {
-    height: 100%;
     font-size: 24px;
     display: inline-block;
     padding: 5px 7px; }
+  .messages div.message-icon {
+    text-align: center;
+    width: 42px;
+    padding: 0px; }
   .messages .message {
+    width: 568px;
     height: 100%;
     display: inline-block; }
 
