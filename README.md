@@ -112,3 +112,36 @@ Supporting strange resulutions and mobile devices is nice, it should be possible
 Be conservative.
 
 It is really painful to have unsupported/badly designed dependencies. So add them with care. In particular avoid unpopular django apps - these tend to go outdated quickly. If possible try to abstract away dependencies that are used in many places, so that they can be painlessly replaced.
+
+
+#### Why not Celery?
+
+In Django world Celery is quite standard solution for running jobs in the background. So it is understandable that people ask why we just poll the database. There are some good reasons, though.
+
+##### Simplicity
+
+There is just a single daemon that asks for submissions to judge.
+Having 1-1 relation between the db and what system is actually doing is very valuable. Monitoring is just trivial.
+
+##### Reliability
+
+We keep perfect information about the grading state in the database. We never have worry about losing any jobs. Remember that we have a lot of them, and often they come in bulk, so it may be hard to notice.
+
+Troubleshooting is very easy - we can always see what exactly the daemon is doing and what data is stored in the db. It is not so obvious with any queueing solution I know.
+
+RabbitMQ which is the recommended message queue for Celery sometimes fails. And this is a nightmare. Do we have any connoisseurs of Erlang dumps?
+
+##### Features
+
+Polling approach allows to add priorities or other more advanced ordering.
+
+It has some nice, natural properties:
+* If submission is marked for grading twice before the grading actually starts, then it is graded only once. Consider a busy contest and fixing data and rejudging two times in close succession.
+* If grading daemon is disabled, then nothing bad happens and once it comes back it just picks up any pending submission, without a problem.
+* If there's a need rejudging data directly from the database is easy.
+
+##### Experience of other projects
+
+Celery is a major pain point in SIO2 project. On the other hand there are other projects where polling approach worked great. In particular there were no performance problems with polling.
+
+
