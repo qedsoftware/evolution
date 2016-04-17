@@ -120,7 +120,7 @@ class GradingAttempt(models.Model):
     finished_at = models.DateTimeField(null=True)
     started = models.BooleanField(default=False)
     finished = models.BooleanField(default=False)
-    succed = models.BooleanField(default=False)
+    succeeded = models.BooleanField(default=False)
     aborted = models.BooleanField(default=False)
     log = models.FileField()
 
@@ -160,7 +160,7 @@ def choose_for_grading():
 def dummy_grade(attempt):
     attempt.score = 42
     attempt.finished = True
-    attempt.succed = True
+    attempt.succeeded = True
     attempt.submission.save()
     attempt.save()
 
@@ -214,7 +214,7 @@ def finish_grading(attempt):
     # TODO check this more carefully
     attempt.finished = True
     attempt.finished_at = timezone.now()
-    attempt.save(update_fields=['succed', 'score', 'scoring_msg',
+    attempt.save(update_fields=['succeeded', 'score', 'scoring_msg',
         'scoring_status', 'finished', 'finished_at'])
     submission = Submission.objects. \
         filter(current_attempt=attempt).select_for_update()
@@ -285,7 +285,7 @@ def attempt_grading(attempt):
         if attempt.aborted:
             attempt.scoring_status = "error"
             attempt.scoring_msg = "aborted"
-            attempt.succed = False
+            attempt.succeeded = False
             finish_grading(attempt)
             return
         try:
@@ -302,7 +302,7 @@ def attempt_grading(attempt):
     logger.debug('run_scoring.py finished')
     if process.returncode == 0:
         logger.debug('run_scoring finished successfully (code 0)')
-        attempt.succed = True
+        attempt.succeeded = True
         handle_run_scoring_output(output, attempt)
     else:
         logger.info("run_scoring.py failed with code %s", process.returncode)
@@ -313,6 +313,6 @@ def attempt_grading(attempt):
             output_prefix += '\nProbably scoring script crashed.'
         attempt.scoring_status = 'error'
         attempt.scoring_msg = '\n'.join([output_prefix, output])
-        attempt.succed = False
+        attempt.succeeded = False
     # We don't want to overwrite aborted etc.
     finish_grading(attempt)

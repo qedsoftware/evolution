@@ -38,7 +38,7 @@ class RunParams(object):
 
 
 class Result(object):
-    succed = None
+    succeeded = None
     output = None
 
 
@@ -77,15 +77,15 @@ def run(params):
                 preexec_fn=preexec, stdout=subprocess.PIPE, stderr=log_file)
 
             if (completed.returncode == 0):
-                result.succed = True
+                result.succeeded = True
                 result.output = completed.stdout.decode('utf-8',
                     errors='replace')
             else:
-                result.succed = False
+                result.succeeded = False
                 result.output = "Scoring script exited with code %s" % \
                     completed.returncode + "\n"
     except subprocess.TimeoutExpired:
-        result.succed = False
+        result.succeeded = False
         result.output = "Scoring script timed out\n"
     return result
 
@@ -103,7 +103,7 @@ def main():
         params = read_params()
         result = run(params)
         print(result.output, end="")
-        if result.succed:
+        if result.succeeded:
             sys.exit(0)
         else:
             sys.exit(1)

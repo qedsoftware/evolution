@@ -39,7 +39,7 @@ class Command(BaseCommand):
         try:
             attempt.refresh_from_db()
             if not attempt.finished:
-                attempt.succed = False
+                attempt.succeeded = False
                 attempt.score = None
                 attempt.scoring_status = 'error'
                 attempt.scoring_msg = "Dirty grading failure."

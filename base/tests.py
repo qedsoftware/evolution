@@ -74,7 +74,7 @@ class SubmissionTest(TestCase):
         sub.refresh_from_db()
         attempt.refresh_from_db()
         self.assertTrue(attempt.finished)
-        self.assertTrue(attempt.succed)
+        self.assertTrue(attempt.succeeded)
         self.assertEqual(attempt.score, 42)
 
 output_accepted_42 = \
@@ -196,7 +196,7 @@ class ScoringTest(TestCase):
         self.assertEqual(self.attempt.scoring_status, 'accepted')
         self.assertEqual(self.attempt.score, 42)
         self.assertEqual(self.attempt.finished, True)
-        self.assertEqual(self.attempt.succed, True)
+        self.assertEqual(self.attempt.succeeded, True)
         self.assertEqual(self.attempt.aborted, False)
 
     def test_attempt_aborted(self):
@@ -205,7 +205,7 @@ class ScoringTest(TestCase):
         attempt_grading(self.attempt)
         self.attempt.refresh_from_db()
         self.assertIsNone(self.attempt.score)
-        self.assertEqual(self.attempt.succed, False)
+        self.assertEqual(self.attempt.succeeded, False)
         self.assertEqual(self.attempt.finished, True)
         self.assertEqual(self.attempt.aborted, True)
         self.assertEqual(self.attempt.scoring_status, 'error')
@@ -233,7 +233,7 @@ class ScoringFailureTest(TestCase):
         self.assertIsNone(attempt.score)
         self.assertEqual(attempt.finished, True)
         self.assertEqual(attempt.aborted, False)
-        self.assertEqual(attempt.succed, False)
+        self.assertEqual(attempt.succeeded, False)
         self.assertTrue("script exited with code" in attempt.scoring_msg)
 
     def test_bad_format(self):
@@ -243,5 +243,5 @@ class ScoringFailureTest(TestCase):
         self.assertIsNone(attempt.score)
         self.assertEqual(attempt.finished, True)
         self.assertEqual(attempt.aborted, False)
-        self.assertEqual(attempt.succed, True)
+        self.assertEqual(attempt.succeeded, True)
         self.assertTrue("blah blah blah" in attempt.scoring_msg)

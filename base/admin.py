@@ -26,8 +26,8 @@ admin.site.register(DataGrader, DataGraderAdmin)
 
 class GradingAttemptAdmin(admin.ModelAdmin):
     list_display = ['id', 'created_at', 'finished_at', 'scoring_status',
-        'started', 'finished', 'succed', 'aborted']
-    list_filter = ['scoring_status', 'started', 'finished', 'succed',
+        'started', 'finished', 'succeeded', 'aborted']
+    list_filter = ['scoring_status', 'started', 'finished', 'succeeded',
         'aborted']
 
 admin.site.register(GradingAttempt, GradingAttemptAdmin)
