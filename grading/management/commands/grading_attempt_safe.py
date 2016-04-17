@@ -7,7 +7,7 @@ from django.conf import settings
 
 from django.core.management.base import BaseCommand, CommandError
 
-from base.models import GradingAttempt, finish_grading
+from grading.models import GradingAttempt, finish_grading
 
 logger = logging.getLogger(__name__)
 

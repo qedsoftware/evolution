@@ -5,8 +5,8 @@ from django.core.files.base import ContentFile
 from django.core.management import call_command
 from django.conf import settings
 
-from base.models import *
-from base.models import _mkdir_scoring, _prepare_scoring_dir, \
+from .models import *
+from .models import _mkdir_scoring, _prepare_scoring_dir, \
     _run_scoring_popen
 
 

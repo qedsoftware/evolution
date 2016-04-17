@@ -8,7 +8,7 @@ from django.conf import settings
 
 from system.models import Post
 
-from base.models import ScoringScript, DataGrader, Submission, \
+from grading.models import ScoringScript, DataGrader, Submission, \
     request_submission_grading, request_qs_grading
 
 
@@ -17,7 +17,7 @@ class Contest(models.Model):
     code = models.SlugField(unique=True)
     description = models.ForeignKey('system.Post', related_name='+')
     rules = models.ForeignKey('system.Post', related_name='+')
-    scoring_script = models.ForeignKey('base.ScoringScript')
+    scoring_script = models.ForeignKey('grading.ScoringScript')
     verification_stage = models.ForeignKey('ContestStage', related_name='+',
         null=True)
     test_stage = models.ForeignKey('ContestStage', related_name='+',
@@ -165,7 +165,7 @@ class ContestFactory(object):
 
 class ContestStage(models.Model):
     contest = models.ForeignKey('Contest', related_name='+')
-    grader = models.ForeignKey('base.DataGrader', related_name='+')
+    grader = models.ForeignKey('grading.DataGrader', related_name='+')
     begin = models.DateTimeField()
     end = models.DateTimeField()
     published_results = models.BooleanField(default=False)
@@ -323,7 +323,7 @@ def can_create_team(user, contest):
 
 class ContestSubmission(models.Model):
     stage = models.ForeignKey('ContestStage', related_name='+')
-    submission = models.OneToOneField('base.Submission')
+    submission = models.OneToOneField('grading.Submission')
     team = models.ForeignKey('Team', blank=True, null=True)
     comment = models.CharField(max_length=255, blank=True, default="")
     source = models.FileField(null=True, blank=True)

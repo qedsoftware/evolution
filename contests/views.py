@@ -32,7 +32,7 @@ from .models import ContestSubmission, SubmissionData, submit, \
 
 from .forms import ContestForm, ContestCreateForm, SubmitForm
 
-from base.models import GradingAttempt
+from grading.models import GradingAttempt
 from system.models import ClientInfo
 from system.views import PostDataView, add_static_message
 from system.utils import calculate_once

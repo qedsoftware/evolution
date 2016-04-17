@@ -5,7 +5,7 @@ import os
 
 from django.core.management.base import BaseCommand, CommandError
 
-from base.models import GradingAttempt, attempt_grading
+from grading.models import GradingAttempt, attempt_grading
 
 prctl_enabled = False
 if os.getenv('prctl_disabled', None) != "1":

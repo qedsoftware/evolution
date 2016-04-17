@@ -14,7 +14,7 @@ INSTALLED_APPS = (
     'django.contrib.staticfiles',
     'django.contrib.sites',  # required by allauth
     'debug_toolbar',
-    'base',
+    'grading',
     'system',
     'contests',
     # all auth
@@ -130,22 +130,22 @@ LOGGING = {
             'level': 'ERROR',
             'propagate': False,
         },
-        'base.models': {
+        'grading.models': {
             'handlers': ['console', 'grading_file'],
             'level': 'DEBUG',
             'propagate': True,
         },
-        'base.management.commands.grading': {
+        'grading.management.commands.grading': {
             'handlers': ['console', 'grading_overseer_file'],
             'level': 'DEBUG',
             'propagate': True,
         },
-        'base.management.commands.grading_attempt_safe': {
+        'grading.management.commands.grading_attempt_safe': {
             'handlers': ['console', 'grading_overseer_file'],
             'level': 'DEBUG',
             'propagate': True,
         },
-        'base.management.commands.grading_attempt': {
+        'grading.management.commands.grading_attempt': {
             'handlers': ['console', 'grading_file'],
             'level': 'DEBUG',
             'propagate': True,

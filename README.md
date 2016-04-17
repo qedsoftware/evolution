@@ -54,15 +54,15 @@ Views should only be an interface, the "adapter" from http to business logic. It
 
 #### Architecture
 
-The base app handles the grading. It doesn't know about the contests, the web interface. The queueing, setting up and running scoring mechanism belongs there. The running and isolating of the scoring script is done by an external mechanism (run_scoring.py). This external mechanism is likely to grow a lot. We may want to factor the grading logic out of the web app in the future.
+The ``grading`` app handles (surprise, surprise) the grading. It doesn't know about the contests, the web interface. The queueing, setting up and running scoring mechanism belongs there. The running and isolating of the scoring script is done by an external mechanism (run_scoring.py). This external mechanism is likely to grow a lot. We may want to factor the grading logic out of the web app in the future.
 
 The scoring has the following layers:
 1. ``./manage.py grading`` - a simple loop polling for jobs
 2. ``./manage.py grading_attempt_safe`` - runs already created grading attempt, isolating possible failures, by running next layer in a separate process
-3. ``./manage.py grading_attemt`` - actually runs the grading attempt, gets the grading params from the db and sets up the grading environment.
+3. ``./manage.py grading_attempt`` - actually runs the grading attempt, gets the grading params from the db and sets up the grading environment.
 4. ``run_scoring.py`` - runs scoring scripts, trying to prevent it from using too much resources. It is not a proper isolation, just something to prevent stupid bugs from bringing down the whole system.
 
-This system supports only a single contest type and it is the decision that allows it to stay simple. It is handles by the contests app. It handles all the contest-specific matters. Contests shouldn't care about the specifics of the grading, all of that should be handled by base.
+This system supports only a single contest type and it is the decision that allows it to stay simple. It is handled by the ``contests`` app. It handles all the contest-specific matters. Contests shouldn't care about the specifics of the grading, all of that should be handled by ``grading``.
 
 ### Code conventions
 
