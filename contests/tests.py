@@ -1,6 +1,5 @@
 from django.test import TestCase, RequestFactory, Client
 from django_webtest import WebTest
-from webtest import Upload
 from django.utils import timezone
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
@@ -10,7 +9,7 @@ from datetime import timedelta
 from .models import *
 from .views import ContestContext
 
-from grading.tests import script_always_42, data_2_and_2
+from grading.tests import script_always_42
 
 from system.models import PostData
 
@@ -389,6 +388,7 @@ class SubmitTest(WebTest):
         self.assertEqual(cs.comment, '')
         self.assertEqual(cs.submission.output.read(), b'output_data')
         self.assertEqual(cs.source.read(), b'source_data')
+
 
 class MySubmissionsTest(WebTest):
     def setUp(self):
