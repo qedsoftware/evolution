@@ -9,6 +9,7 @@ from datetime import timedelta
 from .models import *
 from .views import ContestContext
 
+from system.tests import new_user
 from grading.tests import script_always_42
 
 from system.models import PostData
@@ -18,6 +19,14 @@ past_time = timezone.now() - timedelta(weeks=1)
 
 
 class ContestFactoryTest(TestCase):
+
+    def empty_description(self):
+        factory = ContestFactory()
+        factory.name = "empty"
+        factory.code = "empty"
+        factory.description = ""
+        contest = factory.create()
+        self.assertEqual(contest.description, '')
 
     def example_contest(self):
         factory = ContestFactory()
@@ -39,6 +48,8 @@ class ContestFactoryTest(TestCase):
         return factory.create()
 
     def assert_example(self, contest):
+        self.assertEqual(str(contest), 'contest_code')
+        self.assertTrue('contest_code' in repr(contest))
         self.assertEqual(contest.code, "contest_code")
         self.assertEqual(contest.name, "contest name")
         self.assertEqual(contest.description.html, 'test')
@@ -96,18 +107,6 @@ class ContestFactoryTest(TestCase):
         self.assertEqual(contest.name, "test")
         self.assertEqual(contest.description.html, 'test')
         self.assertEqual(contest.rules.html, 'test')
-
-
-def new_user(username, admin=False):
-    user = User.objects.create_user(username, username + '@example.com',
-            'password')
-    user.first_name = username
-    user.last_name = username + 'son'
-    if admin:
-        user.is_superuser = True
-        user.is_staff = True
-    user.save()
-    return user
 
 
 class ContestContextTest(TestCase):
@@ -301,6 +300,7 @@ class ContestCreateAndSetupTest(WebTest):
         form['name'] = name
         form['code'] = 'contest-code'
         page = form.submit().follow()
+        # update contest
         contest = Contest.objects.get()
         self.assertEqual(contest.code, 'contest-code')
         self.assertEqual(contest.name, name)
@@ -318,6 +318,30 @@ class ContestCreateAndSetupTest(WebTest):
         self.assertEqual(contest.bigger_better, False)
         self.assertEqual(contest.verification_stage.published_results, True)
         self.assertEqual(contest.test_stage.published_results, True)
+
+
+class MinimalContestSetup(WebTest):
+    def setUp(self):
+        self.admin = new_user('admin', admin=True)
+
+    def test(self):
+        # add a contest
+        page = self.app.get(reverse('contests:setup_new'), user='admin')
+        self.assertContains(page, 'New Contest')
+        self.assertContains(page, 'Create')
+        name = 'contest name'
+        form = page.forms['create-contest-form']
+        form['name'] = name
+        form['code'] = 'contest-code'
+        page = form.submit().follow()
+        form = page.forms['contest-settings-form']
+        page = form.submit().follow()
+        page.mustcontain('Successfully updated')
+        contest = Contest.objects.get()
+        self.assertEqual(contest.code, 'contest-code')
+        self.assertEqual(contest.bigger_better, True)
+        self.assertEqual(contest.verification_stage.published_results, True)
+        self.assertEqual(contest.test_stage.published_results, False)
 
 
 class RulesAndDescriptionTest(WebTest):

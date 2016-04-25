@@ -31,5 +31,6 @@ setup(
         'psycopg2>=2.6.1',
         'django-webtest>=1.7.8',
         'django-allauth>=0.25.2',
+        'coverage>=4.0',
     ]
 )

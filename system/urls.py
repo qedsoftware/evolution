@@ -19,4 +19,5 @@ urlpatterns = [
     # below are the patterns made for front-end testing, they should not
     # be linked anywhere or change any data
     url(r'^test_view/messages$', views.messages_test_view),
+    url(r'^test_view/static_messages$', views.static_messages_test_view),
 ]

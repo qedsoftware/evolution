@@ -9,3 +9,5 @@
 */.sass-cache/*
 local_settings.py
 .vagrant/
+/htmlcov/
+.coverage

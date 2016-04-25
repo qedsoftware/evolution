@@ -1,13 +1,13 @@
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from django.views.generic import View, FormView
 from django.views.generic.base import ContextMixin
 from django.views.generic.list import ListView
 from django.contrib.auth.mixins import UserPassesTestMixin
+from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ImproperlyConfigured
 from django_downloadview import StorageDownloadView
 from django.template.loader import render_to_string
 from django.core.urlresolvers import reverse
-
 from django.utils.safestring import mark_safe
 from django.contrib import messages
 from django.contrib.messages.storage.base import Message
@@ -45,6 +45,7 @@ class NewsList(ListView):
     queryset = NewsItem.objects.select_related('content').all()
 
 
+@login_required
 def user_settings(request):
     return render(request, 'system/user_settings.html', {})
 
@@ -129,6 +130,20 @@ def messages_test_view(request):
         'content_title': 'Message Test',
         'text': "Nothing to do here"
     })
+
+
+def static_messages_test_view(request):
+    context = {
+        'title': title('Static Message Test View')
+    }
+    if request.method == 'GET':
+        add_static_message(context, messages.INFO, 'get1')
+        add_static_message(context, messages.INFO, 'get2')
+        return render(request, 'system/title_and_text.html', context)
+    else:
+        add_static_message(context, messages.INFO, 'other1')
+        add_static_message(context, messages.INFO, 'other2')
+        return redirect('/test_view/static_messages')
 
 
 class SuperuserManual(UserPassesTestMixin, PostDataView):

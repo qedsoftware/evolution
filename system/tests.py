@@ -1,9 +1,24 @@
 from django.test import TestCase, Client
+from django.db.utils import IntegrityError
+from django.core.urlresolvers import reverse
+from django.contrib.auth.models import User
 
 from django_webtest import WebTest
 
 from .models import PostData, Post, SystemSettings
 from .utils import calculate_once
+
+
+def new_user(username, admin=False):
+    user = User.objects.create_user(username, username + '@example.com',
+            'password')
+    user.first_name = username
+    user.last_name = username + 'son'
+    if admin:
+        user.is_superuser = True
+        user.is_staff = True
+    user.save()
+    return user
 
 
 class SimpleSanityCheck(TestCase):
@@ -110,6 +125,18 @@ class SystemSettingsTest(TestCase):
         self.assertContains(response, '__footer__')
 
 
+class AdditionalSettingsTest(TestCase):
+    def test_simple(self):
+        orig_settings = SystemSettings.get()
+        settings = SystemSettings()
+        self.assertRaises(IntegrityError, settings.save)
+
+    def test_changed_force_one(self):
+        settings = SystemSettings()
+        settings.force_one = 'y'
+        settings.save()
+
+
 class CalculateOnceTest(TestCase):
 
     foo_call_count = 0
@@ -134,3 +161,35 @@ class EmptySignupTest(WebTest):
         page = self.app.get('/accounts/signup/')
         form = page.forms['signup_form']
         form.submit()
+
+
+class MessagesTestViewTest(WebTest):
+    def test(self):
+        page = self.app.get('/test_view/messages')
+        page.mustcontain('Success', 'Warning', 'Error')
+
+
+class StaticMessagesTestViewTest(WebTest):
+    csrf_checks = False
+
+    def test(self):
+        page = self.app.post('/test_view/static_messages').follow()
+        page.mustcontain('get1', 'get2', no=['other1', 'other2'])
+
+
+class SuperuserManualTest(WebTest):
+    def test(self):
+        admin = new_user('admin', admin=True)
+        page = self.app.get(reverse('superuser_manual'), user=admin)
+
+
+class UserSettingsTest(WebTest):
+    def test_anonymous(self):
+        page = self.app.get(reverse('user_settings')).follow()
+        page.mustcontain('Please log in')
+
+    def test(self):
+        user = new_user('test')
+        page = self.app.get(reverse('user_settings'), user=user)
+        page.mustcontain('Change password')
+        page.mustcontain('Manage email address')

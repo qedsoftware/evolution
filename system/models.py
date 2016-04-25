@@ -159,11 +159,6 @@ class NewsItem(models.Model):
         return str(self.id) + ': ' + reprlib.repr(self.title)
 
 
-def validate_x(string):
-    if string != 'x':
-        raise ValidationError('%s is not \'x\'' % string)
-
-
 def validate_email_not_used(email):
     existing_email = EmailAddress.objects.filter(email=email). \
         first()
@@ -236,9 +231,11 @@ class SystemSettings(models.Model):
     class Meta:
         verbose_name = "System settings"
         verbose_name_plural = "System settings"
+
     # hack to ensure there is only one settings row
-    force_one = models.CharField(max_length=1, default='x', unique=True,
-        validators=[validate_x])
+    # TODO ensure no one changes this value
+    force_singleton = models.CharField(max_length=1, default='x', unique=True)
+
     global_message = models.ForeignKey('Post', related_name='+', null=True)
     footer = models.ForeignKey('Post', related_name='+', null=True)
 
@@ -246,3 +243,10 @@ class SystemSettings(models.Model):
     @transaction.atomic
     def get(cls):
         return cls.objects.get_or_create()[0]
+
+
+def validate_x(whatever):
+    """
+    django migrations won't let me delete it
+    """
+    pass
