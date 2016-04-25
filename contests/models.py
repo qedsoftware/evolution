@@ -42,8 +42,8 @@ class ContestFactory(object):
     Creates and updates a contest, with all the related objects.
 
     It presents simple, flat interface for creating and modifying contests.
-    May seem repetitive, but it is crucial to keep views clean and helps with
-    tests.
+    May seem repetitive, but it is crucial to keep views clean and it
+    helps with testing.
     """
     # TODO "automate" some trivial parts
     name = None
@@ -74,7 +74,7 @@ class ContestFactory(object):
         factory.answer_for_verification = data.get('answer_for_verification')
         factory.verification_begin = data.get('verification_begin')
         factory.verification_end = data.get('verification_end')
-        factory.answer_for_verification = data.get('answer_for_test')
+        factory.answer_for_test = data.get('answer_for_test')
         factory.test_begin = data.get('test_begin')
         factory.test_end = data.get('test_end')
         factory.published_final_results = data.get('published_final_results')
@@ -371,7 +371,7 @@ class StageIsClosed(Exception):
 
 
 @transaction.atomic
-def submit(team, stage, submission_data, client_info=None):
+def submit(team, stage, submission_data):
     if team and not stage.is_open():
         raise StageIsClosed()
     cs = ContestSubmission()
@@ -384,8 +384,6 @@ def submit(team, stage, submission_data, client_info=None):
     cs.save_source(submission_data.source)
     cs.comment = submission_data.comment
     cs.save()
-    if client_info:
-        ContestSubmissionEvent.create(cs, client_info)
     return cs
 
 

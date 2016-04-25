@@ -1,5 +1,6 @@
 from django.test import TestCase, RequestFactory, Client
 from django_webtest import WebTest
+from webtest import Upload
 from django.utils import timezone
 from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
@@ -8,6 +9,8 @@ from datetime import timedelta
 
 from .models import *
 from .views import ContestContext
+
+from grading.tests import script_always_42, data_2_and_2
 
 from system.models import PostData
 
@@ -24,8 +27,16 @@ class ContestFactoryTest(TestCase):
         factory.description = PostData.from_source("test", "html")
         factory.description.build_html()
         factory.rules = factory.description
+        factory.scoring_script = ContentFile('from __future__ import skynet')
+        factory.bigger_better = False
         factory.verification_begin = timezone.now()
         factory.verification_end = timezone.now()
+        factory.answer_for_verification = ContentFile('bla')
+        factory.test_begin = timezone.now()
+        factory.test_end = timezone.now()
+        factory.answer_for_test = ContentFile('blabla')
+        factory.published_final_results = False
+        factory.selected_limit = 17
         return factory.create()
 
     def assert_example(self, contest):
@@ -33,6 +44,20 @@ class ContestFactoryTest(TestCase):
         self.assertEqual(contest.name, "contest name")
         self.assertEqual(contest.description.html, 'test')
         self.assertEqual(contest.rules.html, 'test')
+        verification = contest.verification_stage
+        test = contest.test_stage
+        self.assertEqual(verification.grader.scoring_script,
+                         test.grader.scoring_script)
+        scoring_script = verification.grader.scoring_script
+        self.assertEqual(scoring_script.source.read(),
+                         b'from __future__ import skynet')
+        self.assertEqual(verification.grader.answer.read(), b'bla')
+        self.assertEqual(test.grader.answer.read(), b'blabla')
+        self.assertEqual(verification.published_results, True)
+        self.assertEqual(test.published_results, False)
+        self.assertEqual(verification.requires_selection, False)
+        self.assertEqual(test.requires_selection, True)
+        self.assertEqual(test.selected_limit, 17)
 
     def test_create(self):
         self.example_contest()
@@ -42,10 +67,22 @@ class ContestFactoryTest(TestCase):
     def test_from_dict(self):
         description = PostData.from_source("test", "plaintext")
         description.build_html()
-        factory = ContestFactory.from_dict({'name': 'contest name',
-            'code': 'contest_code', 'description': description,
-            'rules': description, 'verification_begin': timezone.now(),
-            'verification_end': timezone.now()})
+        factory = ContestFactory.from_dict({
+            'name': 'contest name',
+            'code': 'contest_code',
+            'description': description,
+            'rules': description,
+            'scoring_script': ContentFile('from __future__ import skynet'),
+            'bigger_better': False,
+            'verification_begin': timezone.now(),
+            'verification_end': timezone.now(),
+            'answer_for_verification': ContentFile('bla'),
+            'test_begin': timezone.now(),
+            'test_end': timezone.now(),
+            'answer_for_test': ContentFile('blabla'),
+            'published_final_results': False,
+            'selected_limit': 17
+        })
         factory.create()
         from_db = Contest.objects.get()
         self.assert_example(from_db)
@@ -321,7 +358,9 @@ class SubmitTest(WebTest):
             'verification_begin': past_time,
             'verification_end': future_time,
             'test_begin': past_time,
-            'test_end': past_time
+            'test_end': past_time,
+            'scoring_script': ContentFile(script_always_42),
+            'answer_for_verification': ContentFile('meh')
         }).create()
         self.team = Team(contest=self.contest, name='Team')
         self.team.save()
@@ -337,7 +376,19 @@ class SubmitTest(WebTest):
         page = self.app.get(reverse('contests:submit',
             args=[self.contest.code]), user='user')
         page.mustcontain('Send Submission')
-
+        submit_form = page.forms['submit-form']
+        submit_form['stage'] = '1'  # verification
+        submit_form['output_file'] = 'output', b'output_data'
+        submit_form['source_code'] = 'source', b'source_data'
+        submit_form['comment'] = ''
+        page = submit_form.submit().follow()
+        self.assertEqual(ContestSubmission.objects.count(), 1)
+        cs = ContestSubmission.objects.get()
+        self.assertEqual(cs.stage, self.contest.verification_stage)
+        self.assertEqual(cs.team, self.team)
+        self.assertEqual(cs.comment, '')
+        self.assertEqual(cs.submission.output.read(), b'output_data')
+        self.assertEqual(cs.source.read(), b'source_data')
 
 class MySubmissionsTest(WebTest):
     def setUp(self):

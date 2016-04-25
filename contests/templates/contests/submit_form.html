@@ -11,7 +11,7 @@ You are the administator of this contest. Your submission will be considered <st
 </p>
 {% endif %}
 
-<form class="standard-form" action="{% url 'contests:submit' contest.code %}" enctype="multipart/form-data" method="post">
+<form id="submit-form" class="standard-form" action="{% url 'contests:submit' contest.code %}" enctype="multipart/form-data" method="post">
     {% csrf_token %}
     <ul>
         {{ form.as_ul }}

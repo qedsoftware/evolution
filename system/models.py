@@ -224,9 +224,9 @@ class ClientInfo(models.Model):
 
     def extract_from(self, request):
         self.client_address = request.META.get('HTTP_X_FORWARDED_FOR',
-            request.META['REMOTE_ADDR'])
-        self.user_agent = request.META['HTTP_USER_AGENT']
-        self.referer = request.META['HTTP_REFERER']
+            request.META.get('REMOTE_ADDR', 'unknown'))
+        self.user_agent = request.META.get('HTTP_USER_AGENT', 'unknown')
+        self.referer = request.META.get('HTTP_REFERER', 'unknown')
 
     def __str__(self):
         return ' '.join([self.client_address, self.user_agent, self.referer])
