@@ -90,6 +90,14 @@ But testing the business layer is also very useful - allows testing more reliabl
 
 Avoid writing "fragile" tests - broken with every change, even if the code still works correctly. The most important point here is to avoid hardcoding full html chunks. Use beutiful soup if you have to. And if you can avoid looking too much at the html at all.
 
+#### Coverage
+
+We use ``coverage`` (https://pypi.python.org/pypi/coverage).
+
+You can simply run ``./coverage.sh`` and the results will be found in ``htmlcov/`` directory.
+
+For more advanced usage see: https://coverage.readthedocs.org/en/coverage-4.0.3/
+
 ### UX
 
 Usable, simple, clean.
