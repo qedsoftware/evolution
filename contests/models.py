@@ -364,6 +364,8 @@ class ContestSubmissionEvent(models.Model):
 
 class SubmissionData(object):
     output = None
+    source = None
+    comment = None
 
 
 class StageIsClosed(Exception):
@@ -659,8 +661,6 @@ class ContestContext(object):
 
     def visible_submission_result(self, submission):
         status = submission.submission.scoring_status
-        if status is None:
-            return 'waiting'
         if status == 'accepted':
             if self.is_contest_admin or submission.stage.published_results:
                 return 'score'

@@ -116,7 +116,9 @@ class ContestContextTest(TestCase):
         self.admin_user = new_user('admin_user', admin=True)
         self.contest = ContestFactory.from_dict({
             'name': 'Contest',
-            'code': 'contest'
+            'code': 'contest',
+            'test_begin': past_time,
+            'test_end': future_time
         }).create()
         self.another_contest = ContestFactory.from_dict({
             'name': 'AnotherContest',
@@ -133,7 +135,7 @@ class ContestContextTest(TestCase):
         request.user = user
         return request
 
-    def simple_test(self):
+    def test_simple(self):
         context = ContestContext(self.admin_user, self.contest)
         self.assertTrue(context.is_contest_admin)
         self.assertIsNone(context.user_team)
@@ -144,6 +146,60 @@ class ContestContextTest(TestCase):
         self.assertIsNone(context.user_team)
         context = ContestContext(self.regular_user, self.another_contest)
         self.assertEqual(context.user_team, self.another_team)
+
+    def test_repr(self):
+        context = ContestContext(self.admin_user, self.contest)
+        self.assertTrue('admin_user' in repr(context))
+        self.assertTrue('is_contest_admin: True' in repr(context))
+
+    def test_visible_submission_result(self):
+        join_team(self.regular_user, self.team)
+
+        sub = submit_with_score(self.team, self.contest.test_stage, 42)
+
+        self.assertFalse(self.contest.test_stage.published_results)
+        ctxt = ContestContext(self.regular_user, self.contest)
+        self.assertEqual(
+            ctxt.visible_submission_result(sub),
+            'accepted'
+        )
+
+        # rejudging doesn't change its visibility
+        # the user shouldn't have to notice the rejudge
+        rejudge_submission(sub)
+        sub.refresh_from_db()
+        ctxt = ContestContext(self.regular_user, self.contest)
+        self.assertEqual(
+            ctxt.visible_submission_result(sub),
+            'accepted'
+        )
+
+        # admin always sees the score
+        ctxt = ContestContext(self.admin_user, self.contest)
+        self.assertEqual(
+            ctxt.visible_submission_result(sub),
+            'score'
+        )
+
+        # new, waiting submission
+        sub_data = SubmissionData()
+        sub_data.output = ContentFile('')
+        sub_data.source = ContentFile('')
+        sub_data.comment = 'whatever'
+        sub = submit(self.team, self.contest.test_stage, sub_data)
+        ctxt = ContestContext(self.admin_user, self.contest)
+        self.assertEqual(
+            ctxt.visible_submission_result(sub),
+            'waiting'
+        )
+
+        # submission rejected
+        sub.submission.scoring_status = 'rejected'
+        ctxt = ContestContext(self.regular_user, self.contest)
+        self.assertEqual(
+            ctxt.visible_submission_result(sub),
+            'rejected'
+        )
 
 
 class Teams(WebTest):
@@ -203,6 +259,7 @@ def submit_with_score(team, stage, score, selected=False):
     cs.stage = stage
     submission = Submission.create(stage.grader, ContentFile('mock_file'))
     submission.score = score
+    submission.scoring_status = 'accepted'
     submission.save()
     cs.selected = selected
     cs.submission = submission
@@ -267,8 +324,6 @@ class LeaderboardTest(TestCase):
         self.assertEqual(entries_verification, [])
 
     def test_admin_submission(self):
-        data = SubmissionData()
-        data.output = ''
         submit_with_score(None, self.empty_contest.verification_stage, 42)
         entries = build_leaderboard(self.empty_contest,
             self.empty_contest.verification_stage)
