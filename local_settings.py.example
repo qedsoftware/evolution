@@ -15,5 +15,9 @@ DATABASES = {
     }
 }
 
-# uncomment that to disable prctl (usually what you want on Mac)
-os.environ['prctl_disabled']="1"
+# Replace that with proper email settings on production.
+# This version sends emails to stdout.
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# Uncomment that to disable prctl (usually what you want on Mac).
+# os.environ['prctl_disabled']="1"

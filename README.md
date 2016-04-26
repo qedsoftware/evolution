@@ -22,6 +22,14 @@ The most important ones are:
 
 ## Installation
 
+See ``deploy.sh`` for executable example.
+
+Put local settings into ``local_settings.py`` in the main directory. You can base it on ``local_settings.py.example``. Without this file the system won't run.
+
+Additionaly, you should install ``python-prctl``. This package is unavailable on OS X, though. You can add ``os.environ['prctl_disabled']="1"`` to local_settings.py to disable the use of this package.
+
+Create the first superuser by running ``./manage.py createsuperuser``.
+
 ## For developers
 
 We want everyone to be on the same page. All the matters in this section are open to discussion and may change.
