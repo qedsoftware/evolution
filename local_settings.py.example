@@ -8,6 +8,10 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
+#########################
+# Database
+#########################
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -15,9 +19,32 @@ DATABASES = {
     }
 }
 
-# Replace that with proper email settings on production.
+#########################
+# Email configuration
+#########################
+
 # This version sends emails to stdout.
 EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+
+# Production-like email configuration
+# SERVER_EMAIL='example-evolution-server@qed.ai'
+# DEFAULT_FROM_EMAIL='example-evolution-dev@qed.ai'
+
+# EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+
+# EMAIL_HOST = 'some.host.com'
+# EMAIL_PORT = 587
+# EMAIL_HOST_USER = 'user@host.com'
+# EMAIL_HOST_PASSWORD = 'secretpassword'
+# EMAIL_USE_TLS = True
+
+# Useful for email debugging
+# EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
+# EMAIL_FILE_PATH = '/tmp/evolution-messages'
+
+#########################
+# Development settings
+#########################
 
 # Uncomment that to disable prctl (usually what you want on Mac).
 # os.environ['prctl_disabled']="1"
