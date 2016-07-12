@@ -98,4 +98,4 @@ class SubmitForm(forms.Form):
     def __init__(self, *args, **kwargs):
         stages_available = kwargs.pop('stages_available')
         self.base_fields['stage'].choices = stages_available
-        super(SubmitForm, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)

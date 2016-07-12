@@ -10,7 +10,7 @@ class PostForm(forms.ModelForm):
         fields = ['source_lang', 'source']
 
     def save(self, commit=True):
-        post = super(PostForm, self).save(commit=False)
+        post = super().save(commit=False)
         post_data = post.to_data()
         post_data.build_html()
         post.from_data(post_data)
@@ -42,7 +42,7 @@ class SignupForm(forms.Form):
         user.save()
 
     def clean(self):
-        cleaned_data = super(SignupForm, self).clean()
+        cleaned_data = super().clean()
         secret = cleaned_data.get('secret_code')
         if not secret:
             # the field is already required

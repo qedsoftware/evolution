@@ -97,7 +97,7 @@ class InviteView(UserPassesTestMixin, FormView):
         messages.add_message(self.request, messages.SUCCESS,
             mark_safe("Invitation sent to <strong>%s</strong>" %
                 invitation.invited_email))
-        return super(InviteView, self).form_valid(form)
+        return super().form_valid(form)
 
     def get_success_url(self):
         return reverse('invite')
@@ -155,6 +155,6 @@ class SuperuserManual(UserPassesTestMixin, PostDataView):
         return self.request.user.is_superuser
 
     def get_context_data(self, **kwargs):
-        context = super(SuperuserManual, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         context['content_title'] = self.content_title
         return context

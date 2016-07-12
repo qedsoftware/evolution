@@ -89,7 +89,7 @@ class ContestMixin(object):
         return reverse('contests:description', args=(self.contest.code,))
 
     def get_context_data(self, **kwargs):
-        context = super(ContestMixin, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         context['contest'] = self.contest
         context['contest_context'] = self.contest_context
         context['title'] = contest_title(self.contest, self.title)
@@ -131,7 +131,7 @@ class ContestCreate(LoginRequiredMixin, FormView):
     contest = None
 
     def get_context_data(self, **kwargs):
-        context = super(ContestCreate, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         context['title'] = 'New Contest'
         return context
 
@@ -141,7 +141,7 @@ class ContestCreate(LoginRequiredMixin, FormView):
         contest = factory.create()
         contest.observing.add(self.request.user)
         self.contest = contest
-        return super(ContestCreate, self).form_valid(form)
+        return super().form_valid(form)
 
     def get_success_url(self):
         messages.add_message(self.request, messages.SUCCESS,
@@ -163,7 +163,7 @@ class ContestUpdate(UserPassesTestMixin, ContestMixin, FormView):
         return self.kwargs['contests_code']
 
     def get_initial(self):
-        initial = super(ContestUpdate, self).get_initial()
+        initial = super().get_initial()
         contest = Contest.objects. \
             select_related('description'). \
             select_related('rules'). \
@@ -190,7 +190,7 @@ class ContestUpdate(UserPassesTestMixin, ContestMixin, FormView):
         return initial
 
     def get_context_data(self, **kwargs):
-        context = super(ContestUpdate, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         contest = Contest.objects.get(code=self.get_code())
         context['contest'] = contest
         return context
@@ -214,7 +214,7 @@ class ContestUpdate(UserPassesTestMixin, ContestMixin, FormView):
         factory.update(self.contest)
         self.contest.observing.add(self.request.user)
         self.contest.save()
-        return super(ContestUpdate, self).form_valid(form)
+        return super().form_valid(form)
 
     def get_success_url(self):
         messages.add_message(self.request, messages.SUCCESS,
@@ -227,7 +227,7 @@ class Description(LoginRequiredMixin, ContestMixin, TemplateView):
     title = "Description"
 
     def get_context_data(self, **kwargs):
-        context = super(Description, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         context['content_title'] = 'Description'
         context['text'] = self.contest.description.html
         return context
@@ -238,7 +238,7 @@ class Rules(LoginRequiredMixin, ContestMixin, TemplateView):
     title = "Rules"
 
     def get_context_data(self, **kwargs):
-        context = super(Rules, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         context['content_title'] = 'Rules'
         context['text'] = self.contest.rules.html
         return context
@@ -276,13 +276,13 @@ class Submit(UserPassesTestMixin, ContestMixin, FormView):
         return choices
 
     def get_form_kwargs(self):
-        kwargs = super(Submit, self).get_form_kwargs()
+        kwargs = super().get_form_kwargs()
         choices = self.stage_choices
         kwargs['stages_available'] = choices
         return kwargs
 
     def get_context_data(self, **kwargs):
-        context = super(Submit, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         if not self.stage_choices:
             add_static_message(context, messages.WARNING,
                 "Currently no stage is open for submissions.")
@@ -307,7 +307,7 @@ class Submit(UserPassesTestMixin, ContestMixin, FormView):
             ContestSubmissionEvent.create(submission, client_info)
         except StageIsClosed:
             raise PermissionDenied()  # TODO be nicer
-        return super(Submit, self).form_valid(form)
+        return super().form_valid(form)
 
 
 class Submissions(UserPassesTestMixin, ContestMixin, ListView):
@@ -364,8 +364,7 @@ class SubmissionMixin(ContestMixin):
     def selection_change_active(self):
         """
         If the user can change the selection. This shouldn't take
-        into account the number of selected submissions. Only the matters
-        specific to this submission and stage.
+        into account the number of selected submissions.
         """
         # Maybe move to model?
         return self.submission.stage.requires_selection and \
@@ -374,7 +373,7 @@ class SubmissionMixin(ContestMixin):
             self.contest_context.user_team == self.submission.team
 
     def get_context_data(self, **kwargs):
-        context = super(SubmissionMixin, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         context['contest_submission'] = self.submission
         context['submission'] = self.submission.submission
         context['selection_change_active'] = self.selection_change_active
@@ -398,7 +397,7 @@ class SubmissionView(UserPassesTestMixin, SubmissionMixin, TemplateView):
             '?next=' + self.request.path
 
     def get_context_data(self, **kwargs):
-        context = super(SubmissionView, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         cs = self.submission
         submission = self.submission.submission
         grading_history = GradingAttempt.objects. \
@@ -470,7 +469,7 @@ class Leaderboard(UserPassesTestMixin, ContestMixin, TemplateView):
         return self.contest_context.can_see_stage_leaderboard(self.stage)
 
     def get_context_data(self, **kwargs):
-        context = super(Leaderboard, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         if self.stage.contest != self.contest:
             raise SuspiciousOperation("Stage doesn't match contest")
         context['leaderboard'] = build_leaderboard(self.contest, self.stage)
@@ -527,7 +526,7 @@ class TeamCreate(UserPassesTestMixin, ContestMixin, CreateView):
             contest=self.contest
         )
         membership.save()
-        return super(TeamCreate, self).form_valid(form)
+        return super().form_valid(form)
 
     def get_success_url(self):
         return reverse('contests:team',
@@ -543,7 +542,7 @@ class TeamMixin(ContestMixin):
         return team
 
     def get_context_data(self, **kwargs):
-        context = super(TeamMixin, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         context['team'] = self.team
         return context
 
@@ -573,7 +572,7 @@ class JoinTeam(UserPassesTestMixin, TeamMixin, TemplateView):
 
 class TeamInvitationView(UserPassesTestMixin, TeamMixin, TemplateView):
     """
-    We generate new invitation on every get request.
+    We generate a new invitation on every get request.
 
     This is simple, but increases the likelyhood of creating invitation
     links by mistake. It doesn't seem to be a very big problem.
@@ -599,7 +598,7 @@ class TeamInvitationView(UserPassesTestMixin, TeamMixin, TemplateView):
         return url
 
     def get_context_data(self, **kwargs):
-        context = super(TeamInvitationView, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         context['team'] = self.team
         invitation = self.new_invitation()
         context['invitation_url'] = self.invitation_url(invitation)
@@ -615,7 +614,7 @@ class LeaveTeam(UserPassesTestMixin, TeamMixin, TemplateView):
         return self.contest_context.user_team == self.team
 
     def get_context_data(self, **kwargs):
-        context = super(LeaveTeam, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         context['team'] = self.team
         return context
 
@@ -633,7 +632,7 @@ class TeamView(LoginRequiredMixin, TeamMixin, TemplateView):
         return 'Team ' + self.team.name
 
     def get_context_data(self, **kwargs):
-        context = super(TeamView, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         members = TeamMember.objects.select_related('user'). \
             filter(team=self.team).all()
         context['team'] = self.team
@@ -715,6 +714,6 @@ class ContestAdminHints(UserPassesTestMixin, PostDataView):
         return self.request.user.is_superuser
 
     def get_context_data(self, **kwargs):
-        context = super(ContestAdminHints, self).get_context_data(**kwargs)
+        context = super().get_context_data(**kwargs)
         context['content_title'] = self.content_title
         return context
