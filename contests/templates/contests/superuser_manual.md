@@ -1,12 +1,18 @@
-## Admin panel vs standard interface
+## Admin Panel vs standard interface
 
-If possible use standard interface. It is simple and safe.
+If possible use the standard interface. It is simple and quite safe.
 
-Admin panel is only for advanced superuser operations. It is by design very close to being 1-1 with database. It means that it is possible to achieve non-standard settings and modify data in unrestricted way. This can prove useful when handling complaints for instance - you could make a retrospective submission if it is justified. Or post-factum change which submissions are selected. But this also is also allows you to make incredible mess. So be careful.
+*Admin Panel* is only for advanced superuser operations.
+It is by design very close to being 1-1 with database.
+It means that it is possible to achieve non-standard settings and modify the data in an unrestricted way.
+This can prove useful when handling complaints, for instance.
+You can make a retrospective submission or change which submissions are selected after the contest.
+Of course this also allows you to make incredible mess. So be **careful**.
 
 ## Adding News
 
-For now you have to do it from the admin interface. Once you are there, use "+" sign to add the content. Don't alias the same content across multiple news items.
+For now you have to do it from the admin panel.
+Once you are there, use "+" sign to add the content. Don't alias the same content across multiple news items.
 You can later modify the content.
 
 ## Global Message & Footer

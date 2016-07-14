@@ -99,7 +99,8 @@ def validate_email_not_used(email):
 
 
 class Invitation(models.Model):
-    invited_email = models.EmailField(validators=[validate_email_not_used])
+    invited_email = models.EmailField(validators=[validate_email_not_used],
+        verbose_name="User email")
     invited_by = models.ForeignKey('auth.User', null=True)
     secret_code = models.CharField(max_length=100, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -126,7 +127,7 @@ You have been invited to use {site_name}. We hope you'll like it.
 
 Invited email: {invited_email}
 Secret code: {secret_code}
-Sign up url: {full_signup_url}
+Signup url: {full_signup_url}
 
 Enjoy,
 {site_name} Team

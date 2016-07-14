@@ -1,11 +1,12 @@
 from django.test import TestCase, Client
 from django.db.utils import IntegrityError
+from django.core import mail
 from django.core.urlresolvers import reverse
 from django.contrib.auth.models import User
 
 from django_webtest import WebTest
 
-from .models import PostData, Post, SystemSettings
+from .models import PostData, Post, SystemSettings, Invitation
 from .utils import calculate_once
 
 
@@ -193,3 +194,60 @@ class UserSettingsTest(WebTest):
         page = self.app.get(reverse('user_settings'), user=user)
         page.mustcontain('Change password')
         page.mustcontain('Manage email address')
+
+
+class SystemInvitationTest(WebTest):
+
+    def find_signup_url_in_email_body(self, body):
+        BEFORE_SIGNUP_URL = 'Signup url: '
+        for line in body.splitlines():
+            if line.startswith(BEFORE_SIGNUP_URL):
+                return line[len(BEFORE_SIGNUP_URL):]
+        self.fail("No signup url in the email body")
+
+
+    def test(self):
+        #send invitation
+        admin = new_user('admin', admin=True)
+        page = self.app.get(reverse('invite'), user=admin)
+        page.mustcontain('User email')
+        form = page.forms['invite-user-form']
+        invited_email = 'test@example.com'
+        form['invited_email'] = invited_email
+        page = form.submit().follow()
+        page.mustcontain('Invitation sent')
+
+        invitation = Invitation.objects.get()
+        self.assertEqual(invitation.invited_email, invited_email)
+        self.assertIsNotNone(invitation.secret_code)
+        self.assertFalse(invitation.accepted)
+
+        # see if the mail makes sense
+        self.assertEqual(len(mail.outbox), 1)
+        email = mail.outbox[0]
+        self.assertIn('Invitation', email.subject)
+        self.assertIn('Invited email: ' + invitation.invited_email,
+                      email.body)
+        self.assertIn('Secret code: ' + invitation.secret_code,
+                      email.body)
+        self.assertIn('Signup url: http', email.body)
+        self.assertEqual(email.to, [invitation.invited_email])
+
+        signup_url = self.find_signup_url_in_email_body(email.body)
+        self.assertIn('http', signup_url)
+
+        # receive invitation
+        page = self.app.get(signup_url).follow()
+        form = page.forms['signup_form']
+        form['first_name'] = 'Joe'
+        form['last_name'] = 'Doe'
+        form['secret_code'] = invitation.secret_code
+        form['username'] = 'johndoe'
+        form['email'] = invited_email
+        form['password1'] = 'dupa.8'
+        form['password2'] = 'dupa.8'
+
+        form.submit().follow()
+
+        user = User.objects.filter(username='johndoe').get()
+        self.assertEqual(user.first_name, 'Joe')
