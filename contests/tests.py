@@ -1,7 +1,6 @@
 from django.test import TestCase, RequestFactory, Client
 from django_webtest import WebTest
 from django.utils import timezone
-from django.contrib.auth.models import User
 from django.core.urlresolvers import reverse
 from django.core.files.base import ContentFile
 from datetime import timedelta

@@ -265,6 +265,7 @@ class Submit(UserPassesTestMixin, ContestMixin, FormView):
             raise PermissionDenied()
         return stage
 
+    # TODO extract as available_stages, leave here pairing with stage.id
     @calculate_once
     def stage_choices(self):
         choices = []

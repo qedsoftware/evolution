@@ -49,7 +49,7 @@ ALLOWED_CSS_CLASSES = ['highlight', 'bp', 'c', 'c1', 'cm', 'cp', 'cs', 'err',
       'ss', 'sx', 'vc', 'vg', 'vi', 'w']
 
 
-def safe_class(name, value):
+def safe_class(tag, name, value):
     return name == "class" and value in ALLOWED_CSS_CLASSES
 
 

@@ -128,7 +128,7 @@ class SystemSettingsTest(TestCase):
 
 class AdditionalSettingsTest(TestCase):
     def test_simple(self):
-        orig_settings = SystemSettings.get()
+        SystemSettings.get()
         settings = SystemSettings()
         self.assertRaises(IntegrityError, settings.save)
 
@@ -181,7 +181,7 @@ class StaticMessagesTestViewTest(WebTest):
 class SuperuserManualTest(WebTest):
     def test(self):
         admin = new_user('admin', admin=True)
-        page = self.app.get(reverse('superuser_manual'), user=admin)
+        self.app.get(reverse('superuser_manual'), user=admin)
 
 
 class UserSettingsTest(WebTest):
@@ -205,9 +205,8 @@ class SystemInvitationTest(WebTest):
                 return line[len(BEFORE_SIGNUP_URL):]
         self.fail("No signup url in the email body")
 
-
     def test(self):
-        #send invitation
+        # send invitation
         admin = new_user('admin', admin=True)
         page = self.app.get(reverse('invite'), user=admin)
         page.mustcontain('User email')
